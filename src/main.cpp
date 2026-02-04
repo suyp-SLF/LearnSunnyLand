@@ -1,0 +1,11 @@
+#include <iostream>
+#include "engine/core/game_app.h"
+#include <spdlog/spdlog.h>
+
+int main(int, char**){
+    spdlog::set_level(spdlog::level::debug); // Set global log level to debug
+
+    engine::core::GameApp app;
+    app.run();
+    return 0;
+}

@@ -1,0 +1,29 @@
+
+# Consider dependencies only in project.
+set(CMAKE_DEPENDS_IN_PROJECT_ONLY OFF)
+
+# The set of languages for which implicit dependencies are needed:
+set(CMAKE_DEPENDS_LANGUAGES
+  )
+
+# The set of dependency files which are needed:
+set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/game_app.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o.d"
+  "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/time.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/time.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/time.cpp.o.d"
+  "/Users/suyp/C++/Projects/LearnSunnyLand/src/main.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/main.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/main.cpp.o.d"
+  "/Users/suyp/C++/Projects/LearnSunnyLand/src/resource/audio_manager.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o.d"
+  "/Users/suyp/C++/Projects/LearnSunnyLand/src/resource/font_manager.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/font_manager.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/font_manager.cpp.o.d"
+  "/Users/suyp/C++/Projects/LearnSunnyLand/src/resource/resource_manager.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/resource_manager.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/resource_manager.cpp.o.d"
+  "/Users/suyp/C++/Projects/LearnSunnyLand/src/resource/texture_manager.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/texture_manager.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/texture_manager.cpp.o.d"
+  )
+
+# Targets to which this target links which contain Fortran sources.
+set(CMAKE_Fortran_TARGET_LINKED_INFO_FILES
+  )
+
+# Targets to which this target links which contain Fortran sources.
+set(CMAKE_Fortran_TARGET_FORWARD_LINKED_INFO_FILES
+  )
+
+# Fortran module output directory.
+set(CMAKE_Fortran_TARGET_MODULE_DIR "")
