@@ -177,6 +177,54 @@ src/engine/core/time.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/time.cpp.s
 .PHONY : src/engine/core/time.cpp.s
 
+src/engine/render/camera.o: src/engine/render/camera.cpp.o
+.PHONY : src/engine/render/camera.o
+
+# target to build an object file
+src/engine/render/camera.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/camera.cpp.o
+.PHONY : src/engine/render/camera.cpp.o
+
+src/engine/render/camera.i: src/engine/render/camera.cpp.i
+.PHONY : src/engine/render/camera.i
+
+# target to preprocess a source file
+src/engine/render/camera.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/camera.cpp.i
+.PHONY : src/engine/render/camera.cpp.i
+
+src/engine/render/camera.s: src/engine/render/camera.cpp.s
+.PHONY : src/engine/render/camera.s
+
+# target to generate assembly for a file
+src/engine/render/camera.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/camera.cpp.s
+.PHONY : src/engine/render/camera.cpp.s
+
+src/engine/render/renderer.o: src/engine/render/renderer.cpp.o
+.PHONY : src/engine/render/renderer.o
+
+# target to build an object file
+src/engine/render/renderer.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/renderer.cpp.o
+.PHONY : src/engine/render/renderer.cpp.o
+
+src/engine/render/renderer.i: src/engine/render/renderer.cpp.i
+.PHONY : src/engine/render/renderer.i
+
+# target to preprocess a source file
+src/engine/render/renderer.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/renderer.cpp.i
+.PHONY : src/engine/render/renderer.cpp.i
+
+src/engine/render/renderer.s: src/engine/render/renderer.cpp.s
+.PHONY : src/engine/render/renderer.s
+
+# target to generate assembly for a file
+src/engine/render/renderer.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/renderer.cpp.s
+.PHONY : src/engine/render/renderer.cpp.s
+
 src/main.o: src/main.cpp.o
 .PHONY : src/main.o
 
@@ -312,6 +360,12 @@ help:
 	@echo "... src/engine/core/time.o"
 	@echo "... src/engine/core/time.i"
 	@echo "... src/engine/core/time.s"
+	@echo "... src/engine/render/camera.o"
+	@echo "... src/engine/render/camera.i"
+	@echo "... src/engine/render/camera.s"
+	@echo "... src/engine/render/renderer.o"
+	@echo "... src/engine/render/renderer.i"
+	@echo "... src/engine/render/renderer.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"

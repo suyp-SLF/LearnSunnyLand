@@ -10,6 +10,8 @@ set(CMAKE_DEPENDS_LANGUAGES
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/game_app.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/time.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/time.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/time.cpp.o.d"
+  "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/camera.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/camera.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/camera.cpp.o.d"
+  "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/renderer.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/renderer.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/renderer.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/main.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/main.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/main.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/resource/audio_manager.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/resource/font_manager.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/font_manager.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/font_manager.cpp.o.d"
