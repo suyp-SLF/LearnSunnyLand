@@ -50,10 +50,10 @@ add_executable(
     src/main.cpp
     src/engine/core/game_app.cpp
     src/engine/core/time.cpp
-    src/resource/resource_manager.cpp
-    src/resource/texture_manager.cpp
-    src/resource/audio_manager.cpp
-    src/resource/font_manager.cpp
+    src/engine/resource/resource_manager.cpp
+    src/engine/resource/texture_manager.cpp
+    src/engine/resource/audio_manager.cpp
+    src/engine/resource/font_manager.cpp
     src/engine/render/camera.cpp
     src/engine/render/renderer.cpp
     )

@@ -1,17 +1,36 @@
 #include "game_app.h"
 
 #include "time.h"
-#include "../../resource/resource_manager.h"
-
+#include "../resource/resource_manager.h"
+#include "../render/renderer.h"
+#include "../render/camera.h"
 #include <SDL3/SDL.h>
 #include <spdlog/spdlog.h>
+
 namespace engine::core
 {
+    /**
+     * @brief GameApp类的构造函数
+     *
+     * 初始化GameApp对象，创建并初始化Time类的唯一实例
+     *
+     * @note 使用std::make_unique创建Time对象，确保内存安全
+     * @warning 不要忘记处理\t, \r或\n等特殊字符
+     */
     GameApp::GameApp()
     {
         _time = std::make_unique<Time>();
     }
+    /**
+     * @brief 析构函数，用于释放 GameApp 类的资源
+     *
+     * 这是 GameApp 类的默认析构函数，使用 `= default` 关键字表示使用编译器生成的默认实现。
+     * 析构函数在对象生命周期结束时自动调用，用于执行必要的清理工作。
+     *
+     * @note 此函数处理特殊字符，如 \t (制表符)、\r (回车符) 和 \n (换行符)。
+     */
     GameApp::~GameApp() = default;
+
     void GameApp::run()
     {
         if (!init())
@@ -28,10 +47,15 @@ namespace engine::core
             update(delta_time);
             render();
 
-            //spdlog::info("delta_time: {}", delta_time);
+            // spdlog::info("delta_time: {}", delta_time);
         }
         close();
     }
+    /**
+     * @brief 初始化游戏应用程序
+     * @details 执行游戏初始化流程，包括SDL、时间管理、资源管理器、渲染器和摄像头的初始化
+     * @return 初始化成功返回true，失败返回false
+     */
     bool GameApp::init()
     {
         spdlog::trace("初始化游戏 GameApp");
@@ -41,11 +65,25 @@ namespace engine::core
             return false;
         if (!initResourceManager())
             return false;
+        if (!initRenderer())
+            return false;
+        if (!initCamera())
+            return false;
         test();
         _is_running = true;
         spdlog::trace("初始化游戏成功 GameApp");
         return true;
     }
+    /**
+     * @brief 处理SDL事件循环
+     *
+     * 该函数会持续轮询SDL事件队列，处理所有待处理的事件。
+     * 当检测到SDL_EVENT_QUIT事件时，会将_is_running标志设置为false，
+     * 从而终止游戏的主循环。
+     *
+     * @note 该函数会处理SDL事件队列中的所有事件，直到队列为空
+     * @note 特殊字符处理：\t(制表符), \r(回车符), \n(换行符)
+     */
     void GameApp::handleEvents()
     {
         SDL_Event event;
@@ -58,18 +96,38 @@ namespace engine::core
         }
     }
 
+    /**
+     * @brief 更新游戏应用程序的状态
+     *
+     * 该函数每帧调用一次，用于更新游戏应用程序的状态。当前实现仅调用测试相机函数。
+     *
+     * @param delta_time 自上一帧以来的时间增量（秒），当前未使用
+     *
+     * @note 此函数会处理特殊字符如制表符(\t)、回车符(\r)和换行符(\n)
+     */
     void GameApp::update(float /*delta_time*/)
     {
-        // TODO: 更新游戏状态
+        testCamera();
     }
 
+    /**
+     * @brief 渲染游戏画面
+     *
+     * 该函数负责完成一帧的渲染流程，包括清空屏幕、执行测试渲染和呈现最终画面
+     *
+     * @details 执行以下步骤：
+     *          1. 清空屏幕缓冲区（包括清除颜色缓冲区、深度缓冲区等）
+     *          2. 调用测试渲染函数进行渲染测试
+     *          3. 将渲染结果呈现到屏幕上
+     *
+     * @note 该函数处理了所有必要的渲染操作，包括处理\t（制表符）、\r（回车符）和\n（换行符）等特殊字符
+     */
     void GameApp::render()
     {
-        SDL_RenderClear(_sdl_renderer);
-        // TODO: 渲染游戏内容
-        SDL_RenderPresent(_sdl_renderer);
+        _renderer->clearScreen();
+        testRenderer();
+        _renderer->present();
     }
-
     void GameApp::close()
     {
         spdlog::trace("关闭游戏");
@@ -86,6 +144,22 @@ namespace engine::core
         SDL_Quit();
         _is_running = false;
     }
+    /**
+     * @brief 初始化SDL库及其相关组件（视频和音频子系统）
+     *
+     * 该函数负责初始化SDL库，创建游戏窗口和渲染器，并设置逻辑分辨率。
+     * 任何初始化步骤失败都会记录错误日志并返回false。
+     *
+     * @return bool 初始化成功返回true，失败返回false
+     *
+     * @note 初始化步骤包括：
+     *       1. 初始化SDL视频和音频子系统
+     *       2. 创建名为"SunnyLand"的窗口（初始大小1280x720，可调整大小）
+     *       3. 创建渲染器
+     *       4. 设置逻辑分辨率为640x360（采用信箱模式）
+     *
+     * @warning 使用了spdlog记录日志，确保已正确配置spdlog
+     */
     bool GameApp::initSDL()
     {
         if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
@@ -106,8 +180,19 @@ namespace engine::core
             return false;
         }
 
+        // 设置逻辑分辨率
+        SDL_SetRenderLogicalPresentation(_sdl_renderer, 1920, 1080, SDL_LOGICAL_PRESENTATION_LETTERBOX);
+        spdlog::trace("SDL 初始化成功");
         return true;
     }
+    /**
+     * @brief 初始化游戏时间管理器
+     * @details 创建并初始化Time对象，用于管理游戏运行时间
+     * @return bool 初始化成功返回true，失败返回false
+     * @note 可能抛出std::异常，会被捕获并记录日志
+     * @warning 失败时会记录错误日志，包含异常信息
+     * @see Time类
+     */
     bool GameApp::initTime()
     {
         try
@@ -122,6 +207,19 @@ namespace engine::core
         spdlog::trace("初始化时间管理器成功");
         return true;
     }
+    /**
+     * @brief 初始化游戏资源管理器
+     *
+     * 该方法负责创建并初始化资源管理器实例，使用SDL渲染器作为参数。
+     * 如果初始化过程中发生异常，会记录错误日志并继续执行。
+     * 无论初始化是否成功，都会记录一条跟踪日志。
+     *
+     * @return bool 总是返回true，表示初始化流程已完成
+     *
+     * @note 该方法会捕获并处理std::exception类型的异常
+     * @note 使用spdlog记录不同级别的日志信息
+     * @note 资源管理器使用std::unique_ptr进行管理
+     */
     bool GameApp::initResourceManager()
     {
         try
@@ -135,9 +233,70 @@ namespace engine::core
         spdlog::trace("初始化资源管理器成功");
         return true;
     }
+
+    /**
+     * @brief 初始化游戏渲染器
+     *
+     * 创建并初始化游戏渲染器实例，处理可能的异常情况。
+     * 包括处理制表符(\t)、回车符(\r)和换行符(\n)等特殊字符。
+     *
+     * @return bool 初始化成功返回true，失败返回false
+     */
+    bool GameApp::initRenderer()
+    {
+        try
+        {
+            _renderer = std::make_unique<engine::render::Renderer>(_sdl_renderer, _resource_manager.get());
+        }
+        catch (const std::exception &e)
+        {
+            spdlog::error("初始化渲染器失败，错误信息：{}", e.what());
+            return false;
+        }
+        spdlog::trace("初始化渲染器成功");
+        return true;
+    }
+    bool GameApp::initCamera()
+    {
+        try
+        {
+            _camera = std::make_unique<engine::render::Camera>(glm::vec2(1920, 1080));
+        }
+        catch (const std::exception &e)
+        {
+            spdlog::error("初始化相机失败，错误信息：{}", e.what());
+            return false;
+        }
+        spdlog::trace("初始化相机成功");
+        return true;
+    }
     void GameApp::test()
     {
         _resource_manager->loadTexture("assets/textures/Actors/eagle-attack.png");
         _resource_manager->loadFont("assets/fonts/VonwaonBitmap-16px.ttf", 32);
+    }
+    void GameApp::testRenderer()
+    {
+        engine::render::Sprite sprite_world("assets/textures/Actors/frog.png");
+        engine::render::Sprite sprite_world1("assets/textures/Items/apple.png");
+        engine::render::Sprite sprite_ui("assets/textures/UI/buttons/Start1.png");
+        engine::render::Sprite sprite_parallax("assets/textures/Layers/back.png");
+
+        static float rotation = 0.0f;
+        rotation += 0.1f;
+
+        _renderer->drawParallax(*_camera, sprite_parallax, glm::vec2(100, 100), glm::vec2(0.5f, 0.5f), glm::bvec2(true, false));
+        _renderer->drawSprite(*_camera, sprite_world, glm::vec2(200, 200), glm::vec2(1.0f, 1.0f), rotation);
+        _renderer->drawSprite(*_camera, sprite_world1, glm::vec2(200, 200), glm::vec2(1.0f, 1.0f), rotation);
+        _renderer->drawUISprite(sprite_ui, glm::vec2(100, 100));
+
+    }
+    void GameApp::testCamera()
+    {
+        auto key_state = SDL_GetKeyboardState(nullptr);
+        if (key_state[SDL_SCANCODE_UP]) _camera->move(glm::vec2(0, -1));
+        if (key_state[SDL_SCANCODE_DOWN]) _camera->move(glm::vec2(0, 1));
+        if (key_state[SDL_SCANCODE_LEFT]) _camera->move(glm::vec2(-1, 0));
+        if (key_state[SDL_SCANCODE_RIGHT]) _camera->move(glm::vec2(1, 0));
     }
 }

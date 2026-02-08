@@ -225,6 +225,102 @@ src/engine/render/renderer.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/renderer.cpp.s
 .PHONY : src/engine/render/renderer.cpp.s
 
+src/engine/resource/audio_manager.o: src/engine/resource/audio_manager.cpp.o
+.PHONY : src/engine/resource/audio_manager.o
+
+# target to build an object file
+src/engine/resource/audio_manager.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/audio_manager.cpp.o
+.PHONY : src/engine/resource/audio_manager.cpp.o
+
+src/engine/resource/audio_manager.i: src/engine/resource/audio_manager.cpp.i
+.PHONY : src/engine/resource/audio_manager.i
+
+# target to preprocess a source file
+src/engine/resource/audio_manager.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/audio_manager.cpp.i
+.PHONY : src/engine/resource/audio_manager.cpp.i
+
+src/engine/resource/audio_manager.s: src/engine/resource/audio_manager.cpp.s
+.PHONY : src/engine/resource/audio_manager.s
+
+# target to generate assembly for a file
+src/engine/resource/audio_manager.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/audio_manager.cpp.s
+.PHONY : src/engine/resource/audio_manager.cpp.s
+
+src/engine/resource/font_manager.o: src/engine/resource/font_manager.cpp.o
+.PHONY : src/engine/resource/font_manager.o
+
+# target to build an object file
+src/engine/resource/font_manager.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/font_manager.cpp.o
+.PHONY : src/engine/resource/font_manager.cpp.o
+
+src/engine/resource/font_manager.i: src/engine/resource/font_manager.cpp.i
+.PHONY : src/engine/resource/font_manager.i
+
+# target to preprocess a source file
+src/engine/resource/font_manager.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/font_manager.cpp.i
+.PHONY : src/engine/resource/font_manager.cpp.i
+
+src/engine/resource/font_manager.s: src/engine/resource/font_manager.cpp.s
+.PHONY : src/engine/resource/font_manager.s
+
+# target to generate assembly for a file
+src/engine/resource/font_manager.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/font_manager.cpp.s
+.PHONY : src/engine/resource/font_manager.cpp.s
+
+src/engine/resource/resource_manager.o: src/engine/resource/resource_manager.cpp.o
+.PHONY : src/engine/resource/resource_manager.o
+
+# target to build an object file
+src/engine/resource/resource_manager.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/resource_manager.cpp.o
+.PHONY : src/engine/resource/resource_manager.cpp.o
+
+src/engine/resource/resource_manager.i: src/engine/resource/resource_manager.cpp.i
+.PHONY : src/engine/resource/resource_manager.i
+
+# target to preprocess a source file
+src/engine/resource/resource_manager.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/resource_manager.cpp.i
+.PHONY : src/engine/resource/resource_manager.cpp.i
+
+src/engine/resource/resource_manager.s: src/engine/resource/resource_manager.cpp.s
+.PHONY : src/engine/resource/resource_manager.s
+
+# target to generate assembly for a file
+src/engine/resource/resource_manager.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/resource_manager.cpp.s
+.PHONY : src/engine/resource/resource_manager.cpp.s
+
+src/engine/resource/texture_manager.o: src/engine/resource/texture_manager.cpp.o
+.PHONY : src/engine/resource/texture_manager.o
+
+# target to build an object file
+src/engine/resource/texture_manager.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/texture_manager.cpp.o
+.PHONY : src/engine/resource/texture_manager.cpp.o
+
+src/engine/resource/texture_manager.i: src/engine/resource/texture_manager.cpp.i
+.PHONY : src/engine/resource/texture_manager.i
+
+# target to preprocess a source file
+src/engine/resource/texture_manager.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/texture_manager.cpp.i
+.PHONY : src/engine/resource/texture_manager.cpp.i
+
+src/engine/resource/texture_manager.s: src/engine/resource/texture_manager.cpp.s
+.PHONY : src/engine/resource/texture_manager.s
+
+# target to generate assembly for a file
+src/engine/resource/texture_manager.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/texture_manager.cpp.s
+.PHONY : src/engine/resource/texture_manager.cpp.s
+
 src/main.o: src/main.cpp.o
 .PHONY : src/main.o
 
@@ -249,102 +345,6 @@ src/main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/main.cpp.s
 .PHONY : src/main.cpp.s
 
-src/resource/audio_manager.o: src/resource/audio_manager.cpp.o
-.PHONY : src/resource/audio_manager.o
-
-# target to build an object file
-src/resource/audio_manager.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o
-.PHONY : src/resource/audio_manager.cpp.o
-
-src/resource/audio_manager.i: src/resource/audio_manager.cpp.i
-.PHONY : src/resource/audio_manager.i
-
-# target to preprocess a source file
-src/resource/audio_manager.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.i
-.PHONY : src/resource/audio_manager.cpp.i
-
-src/resource/audio_manager.s: src/resource/audio_manager.cpp.s
-.PHONY : src/resource/audio_manager.s
-
-# target to generate assembly for a file
-src/resource/audio_manager.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.s
-.PHONY : src/resource/audio_manager.cpp.s
-
-src/resource/font_manager.o: src/resource/font_manager.cpp.o
-.PHONY : src/resource/font_manager.o
-
-# target to build an object file
-src/resource/font_manager.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/font_manager.cpp.o
-.PHONY : src/resource/font_manager.cpp.o
-
-src/resource/font_manager.i: src/resource/font_manager.cpp.i
-.PHONY : src/resource/font_manager.i
-
-# target to preprocess a source file
-src/resource/font_manager.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/font_manager.cpp.i
-.PHONY : src/resource/font_manager.cpp.i
-
-src/resource/font_manager.s: src/resource/font_manager.cpp.s
-.PHONY : src/resource/font_manager.s
-
-# target to generate assembly for a file
-src/resource/font_manager.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/font_manager.cpp.s
-.PHONY : src/resource/font_manager.cpp.s
-
-src/resource/resource_manager.o: src/resource/resource_manager.cpp.o
-.PHONY : src/resource/resource_manager.o
-
-# target to build an object file
-src/resource/resource_manager.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/resource_manager.cpp.o
-.PHONY : src/resource/resource_manager.cpp.o
-
-src/resource/resource_manager.i: src/resource/resource_manager.cpp.i
-.PHONY : src/resource/resource_manager.i
-
-# target to preprocess a source file
-src/resource/resource_manager.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/resource_manager.cpp.i
-.PHONY : src/resource/resource_manager.cpp.i
-
-src/resource/resource_manager.s: src/resource/resource_manager.cpp.s
-.PHONY : src/resource/resource_manager.s
-
-# target to generate assembly for a file
-src/resource/resource_manager.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/resource_manager.cpp.s
-.PHONY : src/resource/resource_manager.cpp.s
-
-src/resource/texture_manager.o: src/resource/texture_manager.cpp.o
-.PHONY : src/resource/texture_manager.o
-
-# target to build an object file
-src/resource/texture_manager.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/texture_manager.cpp.o
-.PHONY : src/resource/texture_manager.cpp.o
-
-src/resource/texture_manager.i: src/resource/texture_manager.cpp.i
-.PHONY : src/resource/texture_manager.i
-
-# target to preprocess a source file
-src/resource/texture_manager.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/texture_manager.cpp.i
-.PHONY : src/resource/texture_manager.cpp.i
-
-src/resource/texture_manager.s: src/resource/texture_manager.cpp.s
-.PHONY : src/resource/texture_manager.s
-
-# target to generate assembly for a file
-src/resource/texture_manager.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/texture_manager.cpp.s
-.PHONY : src/resource/texture_manager.cpp.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -366,21 +366,21 @@ help:
 	@echo "... src/engine/render/renderer.o"
 	@echo "... src/engine/render/renderer.i"
 	@echo "... src/engine/render/renderer.s"
+	@echo "... src/engine/resource/audio_manager.o"
+	@echo "... src/engine/resource/audio_manager.i"
+	@echo "... src/engine/resource/audio_manager.s"
+	@echo "... src/engine/resource/font_manager.o"
+	@echo "... src/engine/resource/font_manager.i"
+	@echo "... src/engine/resource/font_manager.s"
+	@echo "... src/engine/resource/resource_manager.o"
+	@echo "... src/engine/resource/resource_manager.i"
+	@echo "... src/engine/resource/resource_manager.s"
+	@echo "... src/engine/resource/texture_manager.o"
+	@echo "... src/engine/resource/texture_manager.i"
+	@echo "... src/engine/resource/texture_manager.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
-	@echo "... src/resource/audio_manager.o"
-	@echo "... src/resource/audio_manager.i"
-	@echo "... src/resource/audio_manager.s"
-	@echo "... src/resource/font_manager.o"
-	@echo "... src/resource/font_manager.i"
-	@echo "... src/resource/font_manager.s"
-	@echo "... src/resource/resource_manager.o"
-	@echo "... src/resource/resource_manager.i"
-	@echo "... src/resource/resource_manager.s"
-	@echo "... src/resource/texture_manager.o"
-	@echo "... src/resource/texture_manager.i"
-	@echo "... src/resource/texture_manager.s"
 .PHONY : help
 
 

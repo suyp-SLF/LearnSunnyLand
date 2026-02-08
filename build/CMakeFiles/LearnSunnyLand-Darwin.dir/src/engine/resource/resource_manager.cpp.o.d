@@ -1,7 +1,7 @@
-CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o: \
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/resource_manager.cpp.o: \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/share/asan_ignorelist.txt \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/game_app.cpp \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/game_app.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/resource_manager.cpp \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/resource_manager.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/memory \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__config \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__config_site \
@@ -513,42 +513,6 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__iterator/sortable.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__iterator/unreachable_sentinel.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/stdexcept \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/time.h \
-  /opt/homebrew/include/SDL3/SDL_stdinc.h \
-  /opt/homebrew/include/SDL3/SDL_platform_defines.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/AvailabilityMacros.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/TargetConditionals.h \
-  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdarg.h \
-  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/__stdarg_header_macro.h \
-  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/__stdarg___gnuc_va_list.h \
-  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/__stdarg_va_list.h \
-  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/__stdarg_va_arg.h \
-  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/__stdarg___va_copy.h \
-  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/__stdarg_va_copy.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/wchar.h \
-  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/__stddef_rsize_t.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/wchar.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_wchar.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/stdio.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/stdio.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_stdio.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_va_list.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/stdio.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_printf.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_seek_set.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_ctermid.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_off_t.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/__wctype.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/___wctype.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_wint_t.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_wctype_t.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/ctype.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/ctype.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_ctype.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/runetype.h \
-  /opt/homebrew/include/SDL3/SDL_begin_code.h \
-  /opt/homebrew/include/SDL3/SDL_close_code.h \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../resource/resource_manager.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/string \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/max.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/max_element.h \
@@ -562,10 +526,38 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cwchar \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cwctype \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cctype \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/ctype.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/ctype.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_ctype.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/runetype.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_wint_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/wctype.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/wctype.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_wctype.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_wctrans_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/__wctype.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/___wctype.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_wctype_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/wchar.h \
+  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/__stddef_rsize_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/wchar.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_wchar.h \
+  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdarg.h \
+  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/__stdarg_header_macro.h \
+  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/__stdarg___gnuc_va_list.h \
+  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/__stdarg_va_list.h \
+  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/__stdarg_va_arg.h \
+  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/__stdarg___va_copy.h \
+  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/__stdarg_va_copy.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/stdio.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/stdio.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_stdio.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_va_list.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/stdio.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_printf.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_seek_set.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_ctermid.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_off_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/find_if.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/remove_if.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__debug_utils/sanitizers.h \
@@ -1103,18 +1095,20 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o: \
   /opt/homebrew/include/glm/vector_relational.hpp \
   /opt/homebrew/include/glm/integer.hpp \
   /opt/homebrew/include/glm/detail/func_integer.inl \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../render/renderer.h \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../render/sprite.h \
-  /opt/homebrew/include/SDL3/SDL_rect.h \
-  /opt/homebrew/include/SDL3/SDL_error.h \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../render/camera.h \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../render/../utils/math.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/texture_manager.h \
   /opt/homebrew/include/SDL3/SDL.h \
+  /opt/homebrew/include/SDL3/SDL_stdinc.h \
+  /opt/homebrew/include/SDL3/SDL_platform_defines.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/AvailabilityMacros.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/TargetConditionals.h \
+  /opt/homebrew/include/SDL3/SDL_begin_code.h \
+  /opt/homebrew/include/SDL3/SDL_close_code.h \
   /opt/homebrew/include/SDL3/SDL_assert.h \
   /opt/homebrew/include/SDL3/SDL_asyncio.h \
   /opt/homebrew/include/SDL3/SDL_atomic.h \
   /opt/homebrew/include/SDL3/SDL_audio.h \
   /opt/homebrew/include/SDL3/SDL_endian.h \
+  /opt/homebrew/include/SDL3/SDL_error.h \
   /opt/homebrew/include/SDL3/SDL_mutex.h \
   /opt/homebrew/include/SDL3/SDL_thread.h \
   /opt/homebrew/include/SDL3/SDL_properties.h \
@@ -1124,6 +1118,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o: \
   /opt/homebrew/include/SDL3/SDL_camera.h \
   /opt/homebrew/include/SDL3/SDL_pixels.h \
   /opt/homebrew/include/SDL3/SDL_surface.h \
+  /opt/homebrew/include/SDL3/SDL_rect.h \
   /opt/homebrew/include/SDL3/SDL_clipboard.h \
   /opt/homebrew/include/SDL3/SDL_cpuinfo.h \
   /opt/homebrew/include/SDL3/SDL_dialog.h \
@@ -1163,6 +1158,11 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o: \
   /opt/homebrew/include/SDL3/SDL_tray.h \
   /opt/homebrew/include/SDL3/SDL_version.h \
   /opt/homebrew/include/SDL3/SDL_oldnames.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/audio_manager.h \
+  /Users/suyp/C++/Library/build/include/SDL3_mixer/SDL_mixer.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/font_manager.h \
+  /opt/homebrew/include/SDL3_ttf/SDL_ttf.h \
+  /opt/homebrew/include/SDL3_image/SDL_image.h \
   /opt/homebrew/include/spdlog/spdlog.h \
   /opt/homebrew/include/spdlog/common.h \
   /opt/homebrew/include/spdlog/details/null_mutex.h \

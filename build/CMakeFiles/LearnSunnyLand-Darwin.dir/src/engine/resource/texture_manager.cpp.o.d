@@ -1,7 +1,7 @@
-CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o: \
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/texture_manager.cpp.o: \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/share/asan_ignorelist.txt \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/resource/audio_manager.cpp \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/resource/audio_manager.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/texture_manager.cpp \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/texture_manager.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/memory \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__config \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__config_site \
@@ -513,35 +513,11 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__iterator/sortable.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__iterator/unreachable_sentinel.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/stdexcept \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/string \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/max.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/max_element.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/remove.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/find.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/find_segment_if.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__bit/countr.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__bit/rotate.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__bit/invert_if.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__fwd/bit_reference.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cwchar \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cwctype \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cctype \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/ctype.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/ctype.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_ctype.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/runetype.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_wint_t.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/wctype.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/wctype.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_wctype.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_wctrans_t.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/__wctype.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/___wctype.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_wctype_t.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/wchar.h \
-  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/__stddef_rsize_t.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/wchar.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_wchar.h \
+  /opt/homebrew/include/SDL3/SDL.h \
+  /opt/homebrew/include/SDL3/SDL_stdinc.h \
+  /opt/homebrew/include/SDL3/SDL_platform_defines.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/AvailabilityMacros.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/TargetConditionals.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdarg.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/__stdarg_header_macro.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/__stdarg___gnuc_va_list.h \
@@ -549,6 +525,10 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o: \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/__stdarg_va_arg.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/__stdarg___va_copy.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/__stdarg_va_copy.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/wchar.h \
+  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/__stddef_rsize_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/wchar.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_wchar.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/stdio.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/stdio.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_stdio.h \
@@ -558,28 +538,134 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_seek_set.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_ctermid.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_off_t.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/find_if.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/remove_if.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__debug_utils/sanitizers.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/enable_insertable.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__ios/fpos.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__iterator/bounded_iter.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__memory/noexcept_move_assign_container.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__memory/swap_allocator.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__memory_resource/polymorphic_allocator.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__memory_resource/memory_resource.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__ranges/container_compatible_range.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__ranges/from_range.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__string/char_traits.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/__wctype.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/___wctype.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_wint_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_wctype_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/ctype.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/ctype.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_ctype.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/runetype.h \
+  /opt/homebrew/include/SDL3/SDL_begin_code.h \
+  /opt/homebrew/include/SDL3/SDL_close_code.h \
+  /opt/homebrew/include/SDL3/SDL_assert.h \
+  /opt/homebrew/include/SDL3/SDL_asyncio.h \
+  /opt/homebrew/include/SDL3/SDL_atomic.h \
+  /opt/homebrew/include/SDL3/SDL_audio.h \
+  /opt/homebrew/include/SDL3/SDL_endian.h \
+  /opt/homebrew/include/SDL3/SDL_error.h \
+  /opt/homebrew/include/SDL3/SDL_mutex.h \
+  /opt/homebrew/include/SDL3/SDL_thread.h \
+  /opt/homebrew/include/SDL3/SDL_properties.h \
+  /opt/homebrew/include/SDL3/SDL_iostream.h \
+  /opt/homebrew/include/SDL3/SDL_bits.h \
+  /opt/homebrew/include/SDL3/SDL_blendmode.h \
+  /opt/homebrew/include/SDL3/SDL_camera.h \
+  /opt/homebrew/include/SDL3/SDL_pixels.h \
+  /opt/homebrew/include/SDL3/SDL_surface.h \
+  /opt/homebrew/include/SDL3/SDL_rect.h \
+  /opt/homebrew/include/SDL3/SDL_clipboard.h \
+  /opt/homebrew/include/SDL3/SDL_cpuinfo.h \
+  /opt/homebrew/include/SDL3/SDL_dialog.h \
+  /opt/homebrew/include/SDL3/SDL_video.h \
+  /opt/homebrew/include/SDL3/SDL_dlopennote.h \
+  /opt/homebrew/include/SDL3/SDL_events.h \
+  /opt/homebrew/include/SDL3/SDL_gamepad.h \
+  /opt/homebrew/include/SDL3/SDL_guid.h \
+  /opt/homebrew/include/SDL3/SDL_joystick.h \
+  /opt/homebrew/include/SDL3/SDL_power.h \
+  /opt/homebrew/include/SDL3/SDL_sensor.h \
+  /opt/homebrew/include/SDL3/SDL_keyboard.h \
+  /opt/homebrew/include/SDL3/SDL_keycode.h \
+  /opt/homebrew/include/SDL3/SDL_scancode.h \
+  /opt/homebrew/include/SDL3/SDL_mouse.h \
+  /opt/homebrew/include/SDL3/SDL_pen.h \
+  /opt/homebrew/include/SDL3/SDL_touch.h \
+  /opt/homebrew/include/SDL3/SDL_filesystem.h \
+  /opt/homebrew/include/SDL3/SDL_gpu.h \
+  /opt/homebrew/include/SDL3/SDL_haptic.h \
+  /opt/homebrew/include/SDL3/SDL_hidapi.h \
+  /opt/homebrew/include/SDL3/SDL_hints.h \
+  /opt/homebrew/include/SDL3/SDL_init.h \
+  /opt/homebrew/include/SDL3/SDL_loadso.h \
+  /opt/homebrew/include/SDL3/SDL_locale.h \
+  /opt/homebrew/include/SDL3/SDL_log.h \
+  /opt/homebrew/include/SDL3/SDL_messagebox.h \
+  /opt/homebrew/include/SDL3/SDL_metal.h \
+  /opt/homebrew/include/SDL3/SDL_misc.h \
+  /opt/homebrew/include/SDL3/SDL_platform.h \
+  /opt/homebrew/include/SDL3/SDL_process.h \
+  /opt/homebrew/include/SDL3/SDL_render.h \
+  /opt/homebrew/include/SDL3/SDL_storage.h \
+  /opt/homebrew/include/SDL3/SDL_system.h \
+  /opt/homebrew/include/SDL3/SDL_time.h \
+  /opt/homebrew/include/SDL3/SDL_timer.h \
+  /opt/homebrew/include/SDL3/SDL_tray.h \
+  /opt/homebrew/include/SDL3/SDL_version.h \
+  /opt/homebrew/include/SDL3/SDL_oldnames.h \
+  /opt/homebrew/include/glm/glm.hpp \
+  /opt/homebrew/include/glm/detail/_fixes.hpp \
+  /opt/homebrew/include/glm/detail/setup.hpp \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cassert \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/assert.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_static_assert.h \
+  /opt/homebrew/include/glm/detail/../simd/platform.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cfloat \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/float.h \
+  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/float.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/float.h \
+  /opt/homebrew/include/glm/fwd.hpp \
+  /opt/homebrew/include/glm/detail/qualifier.hpp \
+  /opt/homebrew/include/glm/vec2.hpp \
+  /opt/homebrew/include/glm/./ext/vector_bool2.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/type_vec2.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/qualifier.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/type_vec2.inl \
+  /opt/homebrew/include/glm/./ext/../detail/./compute_vector_relational.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/./setup.hpp \
+  /opt/homebrew/include/glm/./ext/vector_bool2_precision.hpp \
+  /opt/homebrew/include/glm/./ext/vector_float2.hpp \
+  /opt/homebrew/include/glm/./ext/vector_float2_precision.hpp \
+  /opt/homebrew/include/glm/./ext/vector_double2.hpp \
+  /opt/homebrew/include/glm/./ext/vector_double2_precision.hpp \
+  /opt/homebrew/include/glm/./ext/vector_int2.hpp \
+  /opt/homebrew/include/glm/./ext/vector_int2_sized.hpp \
+  /opt/homebrew/include/glm/./ext/../ext/vector_int2.hpp \
+  /opt/homebrew/include/glm/./ext/../ext/scalar_int_sized.hpp \
+  /opt/homebrew/include/glm/./ext/../ext/../detail/setup.hpp \
+  /opt/homebrew/include/glm/./ext/vector_uint2.hpp \
+  /opt/homebrew/include/glm/./ext/vector_uint2_sized.hpp \
+  /opt/homebrew/include/glm/./ext/../ext/vector_uint2.hpp \
+  /opt/homebrew/include/glm/./ext/../ext/scalar_uint_sized.hpp \
+  /opt/homebrew/include/glm/vec3.hpp \
+  /opt/homebrew/include/glm/./ext/vector_bool3.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/type_vec3.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/type_vec3.inl \
+  /opt/homebrew/include/glm/./ext/../detail/compute_vector_relational.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/compute_vector_decl.hpp \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/functional \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/binary_negate.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/bind.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/binder1st.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/binder2nd.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/mem_fn.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/mem_fun_ref.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/pointer_to_binary_function.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/pointer_to_unary_function.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/unary_negate.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/function.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__memory/builtin_new_allocator.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/strip_signature.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/boyer_moore_searcher.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/fill_n.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/find_end.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/search.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/find_first_of.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cstdio \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__string/extern_template_lists.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/is_allocator.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/string_view \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__fwd/string_view.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__fwd/bit_reference.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/array \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/equal.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/lexicographical_compare.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/lexicographical_compare_three_way.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/three_way_comp_ref_type.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/swap_ranges.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__utility/empty.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/algorithm \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/adjacent_find.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/all_of.h \
@@ -591,12 +677,27 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/copy_if.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/copy_n.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/count.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__bit/invert_if.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__bit/popcount.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__bit/rotate.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/count_if.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/equal.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/equal_range.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/upper_bound.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/fill.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/find.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/find_segment_if.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__bit/countr.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cwchar \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cwctype \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cctype \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/wctype.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/wctype.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_wctype.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_wctrans_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/find_end.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/search.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/find_first_of.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/find_if.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/find_if_not.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/for_each.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__ranges/movable_box.h \
@@ -607,7 +708,6 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/inplace_merge.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/rotate.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/move_backward.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/swap_ranges.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__memory/destruct_n.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/is_heap.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/is_heap_until.h \
@@ -615,9 +715,10 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/is_permutation.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/is_sorted.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/is_sorted_until.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/lexicographical_compare.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/make_heap.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/sift_down.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/max.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/max_element.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/merge.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/minmax.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/minmax_element.h \
@@ -643,8 +744,10 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/partition_copy.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/partition_point.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/prev_permutation.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/remove.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/remove_copy.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/remove_copy_if.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/remove_if.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/replace.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/replace_copy.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/replace_copy_if.h \
@@ -674,8 +777,6 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/in_in_out_result.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/in_in_result.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/in_out_out_result.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/lexicographical_compare_three_way.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/three_way_comp_ref_type.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/min_max_result.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/ranges_adjacent_find.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/ranges_all_of.h \
@@ -777,112 +878,55 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/unordered_map \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/is_transparent.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__hash_table \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__memory/swap_allocator.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/can_extract_key.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/remove_const_ref.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__iterator/erase_if_container.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__iterator/ranges_iterator_traits.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__memory_resource/polymorphic_allocator.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__memory_resource/memory_resource.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__node_handle \
-  /Users/suyp/C++/Library/build/include/SDL3_mixer/SDL_mixer.h \
-  /opt/homebrew/include/SDL3/SDL.h \
-  /opt/homebrew/include/SDL3/SDL_stdinc.h \
-  /opt/homebrew/include/SDL3/SDL_platform_defines.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/AvailabilityMacros.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/TargetConditionals.h \
-  /opt/homebrew/include/SDL3/SDL_begin_code.h \
-  /opt/homebrew/include/SDL3/SDL_close_code.h \
-  /opt/homebrew/include/SDL3/SDL_assert.h \
-  /opt/homebrew/include/SDL3/SDL_asyncio.h \
-  /opt/homebrew/include/SDL3/SDL_atomic.h \
-  /opt/homebrew/include/SDL3/SDL_audio.h \
-  /opt/homebrew/include/SDL3/SDL_endian.h \
-  /opt/homebrew/include/SDL3/SDL_error.h \
-  /opt/homebrew/include/SDL3/SDL_mutex.h \
-  /opt/homebrew/include/SDL3/SDL_thread.h \
-  /opt/homebrew/include/SDL3/SDL_properties.h \
-  /opt/homebrew/include/SDL3/SDL_iostream.h \
-  /opt/homebrew/include/SDL3/SDL_bits.h \
-  /opt/homebrew/include/SDL3/SDL_blendmode.h \
-  /opt/homebrew/include/SDL3/SDL_camera.h \
-  /opt/homebrew/include/SDL3/SDL_pixels.h \
-  /opt/homebrew/include/SDL3/SDL_surface.h \
-  /opt/homebrew/include/SDL3/SDL_rect.h \
-  /opt/homebrew/include/SDL3/SDL_clipboard.h \
-  /opt/homebrew/include/SDL3/SDL_cpuinfo.h \
-  /opt/homebrew/include/SDL3/SDL_dialog.h \
-  /opt/homebrew/include/SDL3/SDL_video.h \
-  /opt/homebrew/include/SDL3/SDL_dlopennote.h \
-  /opt/homebrew/include/SDL3/SDL_events.h \
-  /opt/homebrew/include/SDL3/SDL_gamepad.h \
-  /opt/homebrew/include/SDL3/SDL_guid.h \
-  /opt/homebrew/include/SDL3/SDL_joystick.h \
-  /opt/homebrew/include/SDL3/SDL_power.h \
-  /opt/homebrew/include/SDL3/SDL_sensor.h \
-  /opt/homebrew/include/SDL3/SDL_keyboard.h \
-  /opt/homebrew/include/SDL3/SDL_keycode.h \
-  /opt/homebrew/include/SDL3/SDL_scancode.h \
-  /opt/homebrew/include/SDL3/SDL_mouse.h \
-  /opt/homebrew/include/SDL3/SDL_pen.h \
-  /opt/homebrew/include/SDL3/SDL_touch.h \
-  /opt/homebrew/include/SDL3/SDL_filesystem.h \
-  /opt/homebrew/include/SDL3/SDL_gpu.h \
-  /opt/homebrew/include/SDL3/SDL_haptic.h \
-  /opt/homebrew/include/SDL3/SDL_hidapi.h \
-  /opt/homebrew/include/SDL3/SDL_hints.h \
-  /opt/homebrew/include/SDL3/SDL_init.h \
-  /opt/homebrew/include/SDL3/SDL_loadso.h \
-  /opt/homebrew/include/SDL3/SDL_locale.h \
-  /opt/homebrew/include/SDL3/SDL_log.h \
-  /opt/homebrew/include/SDL3/SDL_messagebox.h \
-  /opt/homebrew/include/SDL3/SDL_metal.h \
-  /opt/homebrew/include/SDL3/SDL_misc.h \
-  /opt/homebrew/include/SDL3/SDL_platform.h \
-  /opt/homebrew/include/SDL3/SDL_process.h \
-  /opt/homebrew/include/SDL3/SDL_render.h \
-  /opt/homebrew/include/SDL3/SDL_storage.h \
-  /opt/homebrew/include/SDL3/SDL_system.h \
-  /opt/homebrew/include/SDL3/SDL_time.h \
-  /opt/homebrew/include/SDL3/SDL_timer.h \
-  /opt/homebrew/include/SDL3/SDL_tray.h \
-  /opt/homebrew/include/SDL3/SDL_version.h \
-  /opt/homebrew/include/SDL3/SDL_oldnames.h \
-  /opt/homebrew/include/spdlog/spdlog.h \
-  /opt/homebrew/include/spdlog/common.h \
-  /opt/homebrew/include/spdlog/details/null_mutex.h \
-  /opt/homebrew/include/spdlog/tweakme.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/chrono \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/file_clock.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/calendar.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/day.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/exception.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/hh_mm_ss.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/literals.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/year.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/local_info.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/month.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/month_weekday.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/weekday.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/monthday.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/sys_info.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/year_month.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/year_month_day.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/year_month_weekday.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/formatter.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/concepts.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/convert_to_tm.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/statically_widen.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__ranges/container_compatible_range.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__ranges/from_range.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/is_allocator.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/vector \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__bit_reference \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__debug_utils/sanitizers.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/enable_insertable.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/formatter.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__fwd/format.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/formatter_bool.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/concepts.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/format_parse_context.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/format_error.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__fwd/format.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/zoned_time.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/ostream.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/format_functions.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/string_view \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__fwd/string_view.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__iterator/bounded_iter.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__string/char_traits.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cstdio \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/formatter_integral.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__charconv/to_chars_integral.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__charconv/tables.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__charconv/to_chars_base_10.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__charconv/to_chars_result.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__system_error/errc.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cerrno \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__charconv/traits.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/make_32_64_or_128_bit.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/formatter_output.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/buffer.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/format_to_n_result.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/parser_std_format_spec.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/format_arg.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/format_arg_store.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/format_args.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/format_context.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/format_string.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/unicode.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/extended_grapheme_cluster_table.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/indic_conjunct_break_table.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/width_estimation_table.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/string \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__ios/fpos.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__memory/noexcept_move_assign_container.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__string/extern_template_lists.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__locale \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__locale_dir/locale_base_api.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/xlocale.h \
@@ -905,46 +949,14 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/clocale \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/locale.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/locale.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/format_string.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/formatter.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/formatter_bool.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/formatter_integral.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__charconv/to_chars_integral.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__charconv/tables.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__charconv/to_chars_base_10.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__charconv/to_chars_result.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__system_error/errc.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cerrno \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__charconv/traits.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/make_32_64_or_128_bit.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/formatter_output.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/parser_std_format_spec.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/unicode.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/extended_grapheme_cluster_table.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/indic_conjunct_break_table.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/width_estimation_table.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/array \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__utility/empty.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/formatter_char.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/write_escaped.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/escaped_output_table.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/formatter_floating_point.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__charconv/chars_format.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__utility/to_underlying.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__charconv/to_chars_floating_point.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/formatter_integer.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/formatter_pointer.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/formatter_string.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/parser_std_format_spec.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/sstream \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__ostream/basic_ostream.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__system_error/error_code.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__system_error/error_category.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__system_error/error_condition.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/bitset \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__bit_reference \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/is_char_like_type.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__fwd/vector.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__memory/temp_value.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__split_buffer \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/locale \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/ios \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__system_error/error_category.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__system_error/error_code.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__system_error/error_condition.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__system_error/system_error.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/mutex \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__condition_variable/condition_variable.h \
@@ -954,7 +966,6 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__mutex/lock_guard.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__thread/id.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/system_error \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/locale \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/streambuf \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/nl_types.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/types.h \
@@ -985,6 +996,213 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_nl_item.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__locale_dir/locale_base_api/bsd_locale_defaults.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cstdarg \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/default_searcher.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/not_fn.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/perfect_forward.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/bind_back.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/bind_front.h \
+  /opt/homebrew/include/glm/./ext/../detail/_vectorize.hpp \
+  /opt/homebrew/include/glm/./ext/vector_bool3_precision.hpp \
+  /opt/homebrew/include/glm/./ext/vector_float3.hpp \
+  /opt/homebrew/include/glm/./ext/vector_float3_precision.hpp \
+  /opt/homebrew/include/glm/./ext/vector_double3.hpp \
+  /opt/homebrew/include/glm/./ext/vector_double3_precision.hpp \
+  /opt/homebrew/include/glm/./ext/vector_int3.hpp \
+  /opt/homebrew/include/glm/./ext/vector_int3_sized.hpp \
+  /opt/homebrew/include/glm/./ext/../ext/vector_int3.hpp \
+  /opt/homebrew/include/glm/./ext/vector_uint3.hpp \
+  /opt/homebrew/include/glm/./ext/vector_uint3_sized.hpp \
+  /opt/homebrew/include/glm/./ext/../ext/vector_uint3.hpp \
+  /opt/homebrew/include/glm/vec4.hpp \
+  /opt/homebrew/include/glm/./ext/vector_bool4.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/type_vec4.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/type_vec4.inl \
+  /opt/homebrew/include/glm/./ext/vector_bool4_precision.hpp \
+  /opt/homebrew/include/glm/./ext/vector_float4.hpp \
+  /opt/homebrew/include/glm/./ext/vector_float4_precision.hpp \
+  /opt/homebrew/include/glm/./ext/vector_double4.hpp \
+  /opt/homebrew/include/glm/./ext/vector_double4_precision.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/setup.hpp \
+  /opt/homebrew/include/glm/./ext/vector_int4.hpp \
+  /opt/homebrew/include/glm/./ext/vector_int4_sized.hpp \
+  /opt/homebrew/include/glm/./ext/../ext/vector_int4.hpp \
+  /opt/homebrew/include/glm/./ext/vector_uint4.hpp \
+  /opt/homebrew/include/glm/./ext/vector_uint4_sized.hpp \
+  /opt/homebrew/include/glm/./ext/../ext/vector_uint4.hpp \
+  /opt/homebrew/include/glm/mat2x2.hpp \
+  /opt/homebrew/include/glm/./ext/matrix_double2x2.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/type_mat2x2.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/type_mat2x2.inl \
+  /opt/homebrew/include/glm/./ext/../detail/../matrix.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/../detail/qualifier.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/../detail/setup.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/../vec2.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/../vec3.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/../vec4.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/../mat2x2.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/../mat2x3.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_double2x3.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/type_mat2x3.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/type_vec2.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/type_vec3.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/type_mat2x3.inl \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_double2x3_precision.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_float2x3.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_float2x3_precision.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/../mat2x4.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_double2x4.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/type_mat2x4.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/type_vec4.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/type_mat2x4.inl \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_double2x4_precision.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_float2x4.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_float2x4_precision.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/../mat3x2.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_double3x2.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/type_mat3x2.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/type_mat3x2.inl \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_double3x2_precision.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_float3x2.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_float3x2_precision.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/../mat3x3.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_double3x3.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/type_mat3x3.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/type_mat3x3.inl \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../matrix.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../common.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../detail/qualifier.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../detail/_fixes.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../detail/func_common.inl \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../detail/../vector_relational.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../detail/../detail/qualifier.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../detail/../detail/setup.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../detail/../detail/func_vector_relational.inl \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../detail/compute_common.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../detail/setup.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../detail/type_vec1.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../detail/type_vec1.inl \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../detail/./compute_vector_relational.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../detail/type_vec2.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../detail/type_vec3.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../detail/type_vec4.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../detail/_vectorize.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_double3x3_precision.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_float3x3.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_float3x3_precision.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/../mat3x4.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_double3x4.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/type_mat3x4.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/type_mat3x4.inl \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_double3x4_precision.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_float3x4.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_float3x4_precision.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/../mat4x2.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_double4x2.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/type_mat4x2.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/type_mat4x2.inl \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_double4x2_precision.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_float4x2.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_float4x2_precision.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/type_mat2x2.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/../mat4x3.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_double4x3.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/type_mat4x3.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/type_mat4x3.inl \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_double4x3_precision.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_float4x3.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_float4x3_precision.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/../mat4x4.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_double4x4.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/type_mat4x4.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/type_mat4x4.inl \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../geometric.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../detail/func_geometric.inl \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../detail/../exponential.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../detail/../detail/type_vec1.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../detail/../detail/type_vec2.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../detail/../detail/type_vec3.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../detail/../detail/type_vec4.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../detail/../detail/func_exponential.inl \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../detail/../detail/../vector_relational.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../detail/../detail/_vectorize.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/../detail/../detail/../common.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_double4x4_precision.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_float4x4.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/.././ext/matrix_float4x4_precision.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/../detail/func_matrix.inl \
+  /opt/homebrew/include/glm/./ext/../detail/../detail/../geometric.hpp \
+  /opt/homebrew/include/glm/./ext/matrix_double2x2_precision.hpp \
+  /opt/homebrew/include/glm/./ext/matrix_float2x2.hpp \
+  /opt/homebrew/include/glm/./ext/matrix_float2x2_precision.hpp \
+  /opt/homebrew/include/glm/mat2x3.hpp \
+  /opt/homebrew/include/glm/mat2x4.hpp \
+  /opt/homebrew/include/glm/mat3x2.hpp \
+  /opt/homebrew/include/glm/mat3x3.hpp \
+  /opt/homebrew/include/glm/mat3x4.hpp \
+  /opt/homebrew/include/glm/mat4x2.hpp \
+  /opt/homebrew/include/glm/mat4x3.hpp \
+  /opt/homebrew/include/glm/mat4x4.hpp \
+  /opt/homebrew/include/glm/trigonometric.hpp \
+  /opt/homebrew/include/glm/detail/func_trigonometric.inl \
+  /opt/homebrew/include/glm/detail/_vectorize.hpp \
+  /opt/homebrew/include/glm/exponential.hpp \
+  /opt/homebrew/include/glm/common.hpp \
+  /opt/homebrew/include/glm/packing.hpp \
+  /opt/homebrew/include/glm/detail/func_packing.inl \
+  /opt/homebrew/include/glm/detail/../common.hpp \
+  /opt/homebrew/include/glm/detail/type_half.hpp \
+  /opt/homebrew/include/glm/detail/type_half.inl \
+  /opt/homebrew/include/glm/geometric.hpp \
+  /opt/homebrew/include/glm/matrix.hpp \
+  /opt/homebrew/include/glm/vector_relational.hpp \
+  /opt/homebrew/include/glm/integer.hpp \
+  /opt/homebrew/include/glm/detail/func_integer.inl \
+  /opt/homebrew/include/spdlog/spdlog.h \
+  /opt/homebrew/include/spdlog/common.h \
+  /opt/homebrew/include/spdlog/details/null_mutex.h \
+  /opt/homebrew/include/spdlog/tweakme.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/chrono \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/file_clock.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/calendar.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/day.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/exception.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/hh_mm_ss.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/literals.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/year.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/local_info.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/month.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/month_weekday.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/weekday.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/monthday.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/sys_info.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/year_month.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/year_month_day.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/year_month_weekday.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/formatter.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/concepts.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/convert_to_tm.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/statically_widen.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/zoned_time.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/ostream.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/format_functions.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/format_arg_store.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/format_args.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/format_context.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/formatter_char.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/write_escaped.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/escaped_output_table.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/formatter_floating_point.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__charconv/chars_format.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__utility/to_underlying.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__charconv/to_chars_floating_point.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/formatter_integer.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/formatter_pointer.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/formatter_string.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/parser_std_format_spec.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/sstream \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__ostream/basic_ostream.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/bitset \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/is_char_like_type.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/istream \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/ostream \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/format \
@@ -993,34 +1211,11 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/range_formatter.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__fwd/queue.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__fwd/deque.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__fwd/vector.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__fwd/stack.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__ranges/ref_view.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/formatter_tuple.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/queue \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/deque \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__memory/temp_value.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__split_buffer \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/functional \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/binary_negate.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/bind.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/binder1st.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/binder2nd.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/mem_fn.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/mem_fun_ref.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/pointer_to_binary_function.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/pointer_to_unary_function.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/unary_negate.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/function.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__memory/builtin_new_allocator.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/strip_signature.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/boyer_moore_searcher.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/vector \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/default_searcher.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/not_fn.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/perfect_forward.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/bind_back.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/bind_front.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/stack \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/print \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/unistd.h \
@@ -1050,9 +1245,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o: \
   /opt/homebrew/include/spdlog/logger.h \
   /opt/homebrew/include/spdlog/details/backtracer.h \
   /opt/homebrew/include/spdlog/details/circular_q.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cassert \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/assert.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_static_assert.h \
   /opt/homebrew/include/spdlog/details/log_msg_buffer.h \
   /opt/homebrew/include/spdlog/details/log_msg.h \
-  /opt/homebrew/include/spdlog/version.h
+  /opt/homebrew/include/spdlog/version.h \
+  /opt/homebrew/include/SDL3_image/SDL_image.h

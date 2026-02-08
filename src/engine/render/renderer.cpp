@@ -80,7 +80,7 @@ namespace engine::render
                               scaled_width,
                               scaled_height};
         // 不在屏幕内不绘制
-        if (isRectInViewport(camera, dst_rect))
+        if (!isRectInViewport(camera, dst_rect))
             return;
 
         // 执行绘制
@@ -88,6 +88,7 @@ namespace engine::render
         {
             spdlog::error("渲染旋转纹理失败，ID：{}：{}", sprite.getTextureId(), SDL_GetError());
         }
+        spdlog::trace("渲染精灵，ID：{}", sprite.getTextureId());
     }
     void Renderer::drawParallax(const Camera &camera, const Sprite &sprite, const glm::vec2 &position, const glm::vec2 &scroll_factor, const glm::bvec2 &repeat, const glm::vec2 &scale, double angle)
     {
@@ -139,7 +140,7 @@ namespace engine::render
                 SDL_FRect dst_rect = {x, y, scaled_width, scaled_height};
                 if (!SDL_RenderTexture(_renderer, texture, nullptr, &dst_rect))
                 {
-                    spdlog::error("渲染纹理失败，ID：{}：{}", sprite.getTextureId(), SDL_GetError());
+                    spdlog::error("渲染纹理失败，ID {}：{}", sprite.getTextureId(), SDL_GetError());
                     return;
                 }
             }
@@ -291,6 +292,7 @@ namespace engine::render
                 spdlog::error("源矩形尺寸无效，ID：{}", sprite.getTextureId());
                 return std::nullopt;
             }
+            spdlog::debug("获取源矩形成功，ID：{}，矩形：{}x{}", sprite.getTextureId(), src_rect.value().w, src_rect.value().h);
             return src_rect;
         }
         else
@@ -301,6 +303,7 @@ namespace engine::render
                 spdlog::error("无法获取纹理尺寸，ID：{}", sprite.getTextureId());
                 return std::nullopt;
             }
+            spdlog::debug("获取纹理尺寸成功，ID：{}，尺寸：{}x{}", sprite.getTextureId(), result.w, result.h);
             return result;
         }
     }

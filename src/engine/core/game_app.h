@@ -5,8 +5,15 @@
 struct SDL_Window;
 struct SDL_Renderer;
 
-namespace engine::resource {
-    class ResourceManager; 
+namespace engine::resource
+{
+    class ResourceManager;
+}
+
+namespace engine::render
+{
+    class Renderer;
+    class Camera;
 }
 
 namespace engine::core
@@ -23,9 +30,11 @@ namespace engine::core
         SDL_Renderer *_sdl_renderer = nullptr; // SDL渲染器指针，用于在窗口上绘制图形
         bool _is_running = false;              // 游戏运行状态标志，true表示游戏正在运行
 
-        //引擎组件
+        // 引擎组件
         std::unique_ptr<engine::core::Time> _time;
         std::unique_ptr<engine::resource::ResourceManager> _resource_manager;
+        std::unique_ptr<engine::render::Renderer> _renderer;
+        std::unique_ptr<engine::render::Camera> _camera;
 
     public:
         GameApp();  // 构造函数，初始化游戏应用程序
@@ -46,10 +55,14 @@ namespace engine::core
         void render();
         void close();
         // 初始化函数
-        bool initSDL();
-        bool initTime();
-        bool initResourceManager();
+        [[nodiscard]] bool initSDL();
+        [[nodiscard]] bool initTime();
+        [[nodiscard]] bool initResourceManager();
+        [[nodiscard]] bool initRenderer();
+        [[nodiscard]] bool initCamera();
 
-        void test(); 
+        void test();
+        void testRenderer();
+        void testCamera();
     };
 }

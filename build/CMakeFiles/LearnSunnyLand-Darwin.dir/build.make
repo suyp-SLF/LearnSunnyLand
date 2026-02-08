@@ -114,61 +114,61 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/time.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/time.cpp.s"
 	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/time.cpp -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/time.cpp.s
 
-CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/resource_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
-CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/resource_manager.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/resource/resource_manager.cpp
-CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/resource_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/resource_manager.cpp.o"
-	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/resource_manager.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/resource_manager.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/resource_manager.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/resource/resource_manager.cpp
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/resource_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/resource_manager.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/resource_manager.cpp
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/resource_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/resource_manager.cpp.o"
+	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/resource_manager.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/resource_manager.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/resource_manager.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/resource_manager.cpp
 
-CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/resource_manager.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/resource_manager.cpp.i"
-	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/suyp/C++/Projects/LearnSunnyLand/src/resource/resource_manager.cpp > CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/resource_manager.cpp.i
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/resource_manager.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/resource_manager.cpp.i"
+	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/resource_manager.cpp > CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/resource_manager.cpp.i
 
-CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/resource_manager.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/resource_manager.cpp.s"
-	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/suyp/C++/Projects/LearnSunnyLand/src/resource/resource_manager.cpp -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/resource_manager.cpp.s
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/resource_manager.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/resource_manager.cpp.s"
+	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/resource_manager.cpp -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/resource_manager.cpp.s
 
-CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/texture_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
-CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/texture_manager.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/resource/texture_manager.cpp
-CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/texture_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/texture_manager.cpp.o"
-	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/texture_manager.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/texture_manager.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/texture_manager.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/resource/texture_manager.cpp
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/texture_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/texture_manager.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/texture_manager.cpp
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/texture_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/texture_manager.cpp.o"
+	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/texture_manager.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/texture_manager.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/texture_manager.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/texture_manager.cpp
 
-CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/texture_manager.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/texture_manager.cpp.i"
-	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/suyp/C++/Projects/LearnSunnyLand/src/resource/texture_manager.cpp > CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/texture_manager.cpp.i
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/texture_manager.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/texture_manager.cpp.i"
+	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/texture_manager.cpp > CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/texture_manager.cpp.i
 
-CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/texture_manager.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/texture_manager.cpp.s"
-	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/suyp/C++/Projects/LearnSunnyLand/src/resource/texture_manager.cpp -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/texture_manager.cpp.s
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/texture_manager.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/texture_manager.cpp.s"
+	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/texture_manager.cpp -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/texture_manager.cpp.s
 
-CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
-CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/resource/audio_manager.cpp
-CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o"
-	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/resource/audio_manager.cpp
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/audio_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/audio_manager.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/audio_manager.cpp
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/audio_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/audio_manager.cpp.o"
+	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/audio_manager.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/audio_manager.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/audio_manager.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/audio_manager.cpp
 
-CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.i"
-	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/suyp/C++/Projects/LearnSunnyLand/src/resource/audio_manager.cpp > CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.i
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/audio_manager.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/audio_manager.cpp.i"
+	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/audio_manager.cpp > CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/audio_manager.cpp.i
 
-CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.s"
-	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/suyp/C++/Projects/LearnSunnyLand/src/resource/audio_manager.cpp -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.s
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/audio_manager.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/audio_manager.cpp.s"
+	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/audio_manager.cpp -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/audio_manager.cpp.s
 
-CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/font_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
-CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/font_manager.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/resource/font_manager.cpp
-CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/font_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/font_manager.cpp.o"
-	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/font_manager.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/font_manager.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/font_manager.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/resource/font_manager.cpp
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/font_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/font_manager.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/font_manager.cpp
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/font_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/font_manager.cpp.o"
+	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/font_manager.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/font_manager.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/font_manager.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/font_manager.cpp
 
-CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/font_manager.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/font_manager.cpp.i"
-	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/suyp/C++/Projects/LearnSunnyLand/src/resource/font_manager.cpp > CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/font_manager.cpp.i
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/font_manager.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/font_manager.cpp.i"
+	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/font_manager.cpp > CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/font_manager.cpp.i
 
-CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/font_manager.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/font_manager.cpp.s"
-	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/suyp/C++/Projects/LearnSunnyLand/src/resource/font_manager.cpp -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/font_manager.cpp.s
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/font_manager.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/font_manager.cpp.s"
+	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/font_manager.cpp -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/font_manager.cpp.s
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/camera.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/camera.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/camera.cpp
@@ -203,10 +203,10 @@ LearnSunnyLand__Darwin_OBJECTS = \
 "CMakeFiles/LearnSunnyLand-Darwin.dir/src/main.cpp.o" \
 "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o" \
 "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/time.cpp.o" \
-"CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/resource_manager.cpp.o" \
-"CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/texture_manager.cpp.o" \
-"CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o" \
-"CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/font_manager.cpp.o" \
+"CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/resource_manager.cpp.o" \
+"CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/texture_manager.cpp.o" \
+"CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/audio_manager.cpp.o" \
+"CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/font_manager.cpp.o" \
 "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/camera.cpp.o" \
 "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/renderer.cpp.o"
 
@@ -216,10 +216,10 @@ LearnSunnyLand__Darwin_EXTERNAL_OBJECTS =
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/main.cpp.o
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/time.cpp.o
-/Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/resource_manager.cpp.o
-/Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/texture_manager.cpp.o
-/Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o
-/Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/font_manager.cpp.o
+/Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/resource_manager.cpp.o
+/Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/texture_manager.cpp.o
+/Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/audio_manager.cpp.o
+/Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/font_manager.cpp.o
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/camera.cpp.o
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/renderer.cpp.o
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/build.make

@@ -25,7 +25,8 @@ namespace engine::render
         void drawSprite(const Camera &camera, const Sprite &sprite, const glm::vec2 &position,
                         const glm::vec2 &scale, double angle = 0.0f);
         void drawParallax(const Camera &camera, const Sprite &sprite, const glm::vec2 &position,
-                          const glm::vec2 &scroll_factor, const glm::bvec2 &repeat = {true, true}, const glm::vec2 &scale = {1.0f, 1.0f}, double angle = 0.0f);
+                          const glm::vec2 &scroll_factor, const glm::bvec2 &repeat = {true, true}, 
+                          const glm::vec2 &scale = {1.0f, 1.0f}, double angle = 0.0f);
 
         void drawUISprite(const Sprite &sprite, const glm::vec2 &position, const std::optional<glm::vec2> &size = std::nullopt);
 

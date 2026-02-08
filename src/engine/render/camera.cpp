@@ -8,10 +8,13 @@ namespace engine::render
           _position(position),
           _limit_bounds(limit_bounds)
     {
-        spdlog::trace("Camera 初始化成功，位置: {}, 限制边界: {}， 大小: {}", _position, limit_bounds, viewport_size);
+        spdlog::trace("Camera 初始化成功，位置: ({}, {}), 限制边界: {}, 大小: ({}, {})",
+                      _position.x, _position.y,
+                      _limit_bounds.has_value() ? "Has Value" : "None",
+                      _viewport_size.x, _viewport_size.y);
     }
 
-    void Camera::update(float delta_timer)
+    void Camera::update(float /*delta_timer*/)
     {
         // to do
     }

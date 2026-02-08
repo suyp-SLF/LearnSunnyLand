@@ -19,27 +19,27 @@
 },
 {
   "directory": "/Users/suyp/C++/Projects/LearnSunnyLand/build",
-  "command": "/usr/bin/clang++ -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -isystem /Users/suyp/C++/Library/build/include -isystem /opt/homebrew/include -O3 -DNDEBUG -std=gnu++20 -arch arm64 -fsanitize=address -fno-omit-frame-pointer -g -Wall -Wextra -Wpedantic -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/resource_manager.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/resource/resource_manager.cpp",
-  "file": "/Users/suyp/C++/Projects/LearnSunnyLand/src/resource/resource_manager.cpp",
-  "output": "CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/resource_manager.cpp.o"
+  "command": "/usr/bin/clang++ -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -isystem /Users/suyp/C++/Library/build/include -isystem /opt/homebrew/include -O3 -DNDEBUG -std=gnu++20 -arch arm64 -fsanitize=address -fno-omit-frame-pointer -g -Wall -Wextra -Wpedantic -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/resource_manager.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/resource_manager.cpp",
+  "file": "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/resource_manager.cpp",
+  "output": "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/resource_manager.cpp.o"
 },
 {
   "directory": "/Users/suyp/C++/Projects/LearnSunnyLand/build",
-  "command": "/usr/bin/clang++ -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -isystem /Users/suyp/C++/Library/build/include -isystem /opt/homebrew/include -O3 -DNDEBUG -std=gnu++20 -arch arm64 -fsanitize=address -fno-omit-frame-pointer -g -Wall -Wextra -Wpedantic -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/texture_manager.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/resource/texture_manager.cpp",
-  "file": "/Users/suyp/C++/Projects/LearnSunnyLand/src/resource/texture_manager.cpp",
-  "output": "CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/texture_manager.cpp.o"
+  "command": "/usr/bin/clang++ -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -isystem /Users/suyp/C++/Library/build/include -isystem /opt/homebrew/include -O3 -DNDEBUG -std=gnu++20 -arch arm64 -fsanitize=address -fno-omit-frame-pointer -g -Wall -Wextra -Wpedantic -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/texture_manager.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/texture_manager.cpp",
+  "file": "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/texture_manager.cpp",
+  "output": "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/texture_manager.cpp.o"
 },
 {
   "directory": "/Users/suyp/C++/Projects/LearnSunnyLand/build",
-  "command": "/usr/bin/clang++ -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -isystem /Users/suyp/C++/Library/build/include -isystem /opt/homebrew/include -O3 -DNDEBUG -std=gnu++20 -arch arm64 -fsanitize=address -fno-omit-frame-pointer -g -Wall -Wextra -Wpedantic -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/resource/audio_manager.cpp",
-  "file": "/Users/suyp/C++/Projects/LearnSunnyLand/src/resource/audio_manager.cpp",
-  "output": "CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/audio_manager.cpp.o"
+  "command": "/usr/bin/clang++ -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -isystem /Users/suyp/C++/Library/build/include -isystem /opt/homebrew/include -O3 -DNDEBUG -std=gnu++20 -arch arm64 -fsanitize=address -fno-omit-frame-pointer -g -Wall -Wextra -Wpedantic -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/audio_manager.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/audio_manager.cpp",
+  "file": "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/audio_manager.cpp",
+  "output": "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/audio_manager.cpp.o"
 },
 {
   "directory": "/Users/suyp/C++/Projects/LearnSunnyLand/build",
-  "command": "/usr/bin/clang++ -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -isystem /Users/suyp/C++/Library/build/include -isystem /opt/homebrew/include -O3 -DNDEBUG -std=gnu++20 -arch arm64 -fsanitize=address -fno-omit-frame-pointer -g -Wall -Wextra -Wpedantic -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/font_manager.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/resource/font_manager.cpp",
-  "file": "/Users/suyp/C++/Projects/LearnSunnyLand/src/resource/font_manager.cpp",
-  "output": "CMakeFiles/LearnSunnyLand-Darwin.dir/src/resource/font_manager.cpp.o"
+  "command": "/usr/bin/clang++ -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -isystem /Users/suyp/C++/Library/build/include -isystem /opt/homebrew/include -O3 -DNDEBUG -std=gnu++20 -arch arm64 -fsanitize=address -fno-omit-frame-pointer -g -Wall -Wextra -Wpedantic -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/font_manager.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/font_manager.cpp",
+  "file": "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/font_manager.cpp",
+  "output": "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/font_manager.cpp.o"
 },
 {
   "directory": "/Users/suyp/C++/Projects/LearnSunnyLand/build",
