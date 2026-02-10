@@ -1140,34 +1140,10 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o: \
   /opt/homebrew/include/SDL3/SDL_mouse.h \
   /opt/homebrew/include/SDL3/SDL_pen.h \
   /opt/homebrew/include/SDL3/SDL_touch.h \
-  /opt/homebrew/include/SDL3/SDL_gpu.h /opt/homebrew/include/SDL3/SDL.h \
-  /opt/homebrew/include/SDL3/SDL_assert.h \
-  /opt/homebrew/include/SDL3/SDL_asyncio.h \
-  /opt/homebrew/include/SDL3/SDL_bits.h \
-  /opt/homebrew/include/SDL3/SDL_clipboard.h \
-  /opt/homebrew/include/SDL3/SDL_cpuinfo.h \
-  /opt/homebrew/include/SDL3/SDL_dialog.h \
-  /opt/homebrew/include/SDL3/SDL_dlopennote.h \
-  /opt/homebrew/include/SDL3/SDL_filesystem.h \
-  /opt/homebrew/include/SDL3/SDL_haptic.h \
-  /opt/homebrew/include/SDL3/SDL_hidapi.h \
-  /opt/homebrew/include/SDL3/SDL_hints.h \
-  /opt/homebrew/include/SDL3/SDL_init.h \
-  /opt/homebrew/include/SDL3/SDL_loadso.h \
-  /opt/homebrew/include/SDL3/SDL_locale.h \
-  /opt/homebrew/include/SDL3/SDL_log.h \
-  /opt/homebrew/include/SDL3/SDL_messagebox.h \
-  /opt/homebrew/include/SDL3/SDL_metal.h \
-  /opt/homebrew/include/SDL3/SDL_misc.h \
-  /opt/homebrew/include/SDL3/SDL_platform.h \
-  /opt/homebrew/include/SDL3/SDL_process.h \
-  /opt/homebrew/include/SDL3/SDL_storage.h \
-  /opt/homebrew/include/SDL3/SDL_system.h \
-  /opt/homebrew/include/SDL3/SDL_time.h \
-  /opt/homebrew/include/SDL3/SDL_timer.h \
-  /opt/homebrew/include/SDL3/SDL_tray.h \
-  /opt/homebrew/include/SDL3/SDL_version.h \
-  /opt/homebrew/include/SDL3/SDL_oldnames.h \
+  /opt/homebrew/include/SDL3/SDL_gpu.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../object/game_object.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../object/../component/component.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/typeindex \
   /opt/homebrew/include/spdlog/spdlog.h \
   /opt/homebrew/include/spdlog/common.h \
   /opt/homebrew/include/spdlog/details/null_mutex.h \
@@ -1258,4 +1234,32 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o: \
   /opt/homebrew/include/spdlog/details/circular_q.h \
   /opt/homebrew/include/spdlog/details/log_msg_buffer.h \
   /opt/homebrew/include/spdlog/details/log_msg.h \
-  /opt/homebrew/include/spdlog/version.h
+  /opt/homebrew/include/spdlog/version.h \
+  /opt/homebrew/include/SDL3/SDL.h \
+  /opt/homebrew/include/SDL3/SDL_assert.h \
+  /opt/homebrew/include/SDL3/SDL_asyncio.h \
+  /opt/homebrew/include/SDL3/SDL_bits.h \
+  /opt/homebrew/include/SDL3/SDL_clipboard.h \
+  /opt/homebrew/include/SDL3/SDL_cpuinfo.h \
+  /opt/homebrew/include/SDL3/SDL_dialog.h \
+  /opt/homebrew/include/SDL3/SDL_dlopennote.h \
+  /opt/homebrew/include/SDL3/SDL_filesystem.h \
+  /opt/homebrew/include/SDL3/SDL_haptic.h \
+  /opt/homebrew/include/SDL3/SDL_hidapi.h \
+  /opt/homebrew/include/SDL3/SDL_hints.h \
+  /opt/homebrew/include/SDL3/SDL_init.h \
+  /opt/homebrew/include/SDL3/SDL_loadso.h \
+  /opt/homebrew/include/SDL3/SDL_locale.h \
+  /opt/homebrew/include/SDL3/SDL_log.h \
+  /opt/homebrew/include/SDL3/SDL_messagebox.h \
+  /opt/homebrew/include/SDL3/SDL_metal.h \
+  /opt/homebrew/include/SDL3/SDL_misc.h \
+  /opt/homebrew/include/SDL3/SDL_platform.h \
+  /opt/homebrew/include/SDL3/SDL_process.h \
+  /opt/homebrew/include/SDL3/SDL_storage.h \
+  /opt/homebrew/include/SDL3/SDL_system.h \
+  /opt/homebrew/include/SDL3/SDL_time.h \
+  /opt/homebrew/include/SDL3/SDL_timer.h \
+  /opt/homebrew/include/SDL3/SDL_tray.h \
+  /opt/homebrew/include/SDL3/SDL_version.h \
+  /opt/homebrew/include/SDL3/SDL_oldnames.h

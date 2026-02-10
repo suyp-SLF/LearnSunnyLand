@@ -6,6 +6,7 @@
 #include "../render/renderer.h"
 #include "../render/camera.h"
 #include "../input/input_manager.h"
+#include "../object/game_object.h"
 #include <SDL3/SDL.h>
 #include <spdlog/spdlog.h>
 
@@ -77,6 +78,8 @@ namespace engine::core
         if (!initInputManager())
             return false;
         test();
+        testGameObject();
+
         _is_running = true;
         spdlog::trace("初始化游戏成功 GameApp");
         return true;
@@ -351,20 +354,25 @@ namespace engine::core
             "move_right",
             "attack",
         };
-        for (const auto& action : actions)
+        for (const auto &action : actions)
         {
-            if(_input_manager->isActionPressed(action))
+            if (_input_manager->isActionPressed(action))
             {
                 spdlog::info("Action {} is pressed", action);
             }
-            if(_input_manager->isActionReleased(action))
+            if (_input_manager->isActionReleased(action))
             {
                 spdlog::info("Action {} is released", action);
             }
-            if(_input_manager->isActionDown(action))
+            if (_input_manager->isActionDown(action))
             {
                 spdlog::info("Action {} is held", action);
             }
         }
+    }
+    void GameApp::testGameObject()
+    {
+        engine::object::GameObject go("test_go");
+        go.addComponent<engine::component::Component>();
     }
 }

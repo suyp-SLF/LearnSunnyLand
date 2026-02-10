@@ -225,6 +225,30 @@ src/engine/input/input_manager.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.s
 .PHONY : src/engine/input/input_manager.cpp.s
 
+src/engine/object/game_object.o: src/engine/object/game_object.cpp.o
+.PHONY : src/engine/object/game_object.o
+
+# target to build an object file
+src/engine/object/game_object.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/object/game_object.cpp.o
+.PHONY : src/engine/object/game_object.cpp.o
+
+src/engine/object/game_object.i: src/engine/object/game_object.cpp.i
+.PHONY : src/engine/object/game_object.i
+
+# target to preprocess a source file
+src/engine/object/game_object.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/object/game_object.cpp.i
+.PHONY : src/engine/object/game_object.cpp.i
+
+src/engine/object/game_object.s: src/engine/object/game_object.cpp.s
+.PHONY : src/engine/object/game_object.s
+
+# target to generate assembly for a file
+src/engine/object/game_object.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/object/game_object.cpp.s
+.PHONY : src/engine/object/game_object.cpp.s
+
 src/engine/render/camera.o: src/engine/render/camera.cpp.o
 .PHONY : src/engine/render/camera.o
 
@@ -414,6 +438,9 @@ help:
 	@echo "... src/engine/input/input_manager.o"
 	@echo "... src/engine/input/input_manager.i"
 	@echo "... src/engine/input/input_manager.s"
+	@echo "... src/engine/object/game_object.o"
+	@echo "... src/engine/object/game_object.i"
+	@echo "... src/engine/object/game_object.s"
 	@echo "... src/engine/render/camera.o"
 	@echo "... src/engine/render/camera.i"
 	@echo "... src/engine/render/camera.s"

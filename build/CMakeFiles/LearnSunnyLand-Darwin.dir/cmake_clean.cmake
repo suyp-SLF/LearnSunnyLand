@@ -9,6 +9,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/time.cpp.o.d"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.o"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.o.d"
+  "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/object/game_object.cpp.o"
+  "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/object/game_object.cpp.o.d"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/camera.cpp.o"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/camera.cpp.o.d"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/renderer.cpp.o"
