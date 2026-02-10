@@ -16,6 +16,11 @@ namespace engine::render
     class Camera;   // 相机类
 }
 
+namespace engine::input
+{
+    class InputManager; // 输入管理器类
+}
+
 namespace engine::core
 {
     class Time;   // 时间管理类
@@ -37,6 +42,7 @@ namespace engine::core
         std::unique_ptr<engine::resource::ResourceManager> _resource_manager;
         std::unique_ptr<engine::render::Renderer> _renderer;
         std::unique_ptr<engine::render::Camera> _camera;
+        std::unique_ptr<engine::input::InputManager> _input_manager;
 
     public:
         GameApp();  // 构造函数，初始化游戏应用程序
@@ -63,9 +69,11 @@ namespace engine::core
         [[nodiscard]] bool initResourceManager();
         [[nodiscard]] bool initRenderer();
         [[nodiscard]] bool initCamera();
+        [[nodiscard]] bool initInputManager();
 
         void test();
         void testRenderer();
         void testCamera();
+        void testInputManager();
     };
-}
+}; // namespace engine::core

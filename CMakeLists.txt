@@ -60,7 +60,7 @@ add_executable(
     src/engine/render/camera.cpp
     src/engine/render/renderer.cpp
 
-
+    src/engine/input/input_manager.cpp
     )
 
 # 这样编译器才能进入 /Users/suyp/C++/Library/build/include 找到 SDL3_mixer 文件夹

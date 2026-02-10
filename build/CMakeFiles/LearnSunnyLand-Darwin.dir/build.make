@@ -212,6 +212,20 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/renderer.cpp.s: cmake_for
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/renderer.cpp.s"
 	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/renderer.cpp -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/renderer.cpp.s
 
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/input/input_manager.cpp
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.o"
+	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/input/input_manager.cpp
+
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.i"
+	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/input/input_manager.cpp > CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.i
+
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.s"
+	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/input/input_manager.cpp -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.s
+
 # Object files for target LearnSunnyLand-Darwin
 LearnSunnyLand__Darwin_OBJECTS = \
 "CMakeFiles/LearnSunnyLand-Darwin.dir/src/main.cpp.o" \
@@ -223,7 +237,8 @@ LearnSunnyLand__Darwin_OBJECTS = \
 "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/audio_manager.cpp.o" \
 "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/font_manager.cpp.o" \
 "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/camera.cpp.o" \
-"CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/renderer.cpp.o"
+"CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/renderer.cpp.o" \
+"CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.o"
 
 # External object files for target LearnSunnyLand-Darwin
 LearnSunnyLand__Darwin_EXTERNAL_OBJECTS =
@@ -238,6 +253,7 @@ LearnSunnyLand__Darwin_EXTERNAL_OBJECTS =
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/font_manager.cpp.o
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/camera.cpp.o
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/renderer.cpp.o
+/Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.o
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/build.make
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: /opt/homebrew/lib/libSDL3_image.0.2.6.dylib
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: /Users/suyp/C++/Library/build/lib/libSDL3_mixer.0.1.0.dylib
@@ -247,7 +263,7 @@ LearnSunnyLand__Darwin_EXTERNAL_OBJECTS =
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: /opt/homebrew/lib/libSDL3.0.dylib
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: /opt/homebrew/lib/libfmt.12.1.0.dylib
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Linking CXX executable /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Linking CXX executable /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/LearnSunnyLand-Darwin.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

@@ -56,6 +56,7 @@ namespace engine::core
         {
             spdlog::error("配置文件 {} 保存失败: {}", json_path, e.what());
         }
+        return false;
     }
 
     void Config::fromJson(const nlohmann::json &json)
