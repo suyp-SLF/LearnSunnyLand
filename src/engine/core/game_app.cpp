@@ -1,6 +1,7 @@
 #include "game_app.h"
 
 #include "time.h"
+#include "config.h"
 #include "../resource/resource_manager.h"
 #include "../render/renderer.h"
 #include "../render/camera.h"
@@ -38,7 +39,6 @@ namespace engine::core
             spdlog::error("初始化失败，无法运行。");
             return;
         }
-        _time->setTargetFPS(144);
         while (_is_running)
         {
             _time->update();
@@ -59,6 +59,8 @@ namespace engine::core
     bool GameApp::init()
     {
         spdlog::trace("初始化游戏 GameApp");
+        if (!initConfig())
+            return false;
         if (!initSDL())
             return false;
         if (!initTime())
@@ -144,6 +146,20 @@ namespace engine::core
         SDL_Quit();
         _is_running = false;
     }
+    bool GameApp::initConfig()
+    {
+        try
+        {
+            _config = std::make_unique<engine::core::Config>("assets/config.json");
+        }
+        catch(const std::exception& e)
+        {
+            spdlog::error("初始化配置失败，错误信息：{}", e.what());
+            return false;
+        }
+        spdlog::trace("初始化配置成功");
+        return true;
+    }
     /**
      * @brief 初始化SDL库及其相关组件（视频和音频子系统）
      *
@@ -167,7 +183,8 @@ namespace engine::core
             spdlog::error("SDL初始化失败，SDL错误信息：{}", SDL_GetError());
             return false;
         }
-        _window = SDL_CreateWindow("SunnyLand", 1280, 720, SDL_WINDOW_RESIZABLE);
+        int resize_mode = _config->_window_resizable ? SDL_WINDOW_RESIZABLE : 0;
+        _window = SDL_CreateWindow(_config->_window_title.c_str(), _config->_window_width, _config->_window_height, resize_mode);
         if (!_window)
         {
             spdlog::error("SDL窗口创建失败，SDL错误信息：{}", SDL_GetError());
@@ -180,8 +197,12 @@ namespace engine::core
             return false;
         }
 
+        // 设置VSync
+        int vsync_mode = _config->_vsync_enabled ? SDL_RENDERER_VSYNC_ADAPTIVE : SDL_RENDERER_VSYNC_DISABLED;
+        SDL_SetRenderVSync(_sdl_renderer, vsync_mode);
+        spdlog::trace("SDL 渲染器VSync模式：{}", vsync_mode == SDL_RENDERER_VSYNC_ADAPTIVE ? "自适应" : "禁用");
         // 设置逻辑分辨率
-        SDL_SetRenderLogicalPresentation(_sdl_renderer, 1920, 1080, SDL_LOGICAL_PRESENTATION_LETTERBOX);
+        SDL_SetRenderLogicalPresentation(_sdl_renderer, _config->_logical_width, _config->_logical_height, SDL_LOGICAL_PRESENTATION_LETTERBOX);
         spdlog::trace("SDL 初始化成功");
         return true;
     }
@@ -204,6 +225,7 @@ namespace engine::core
             spdlog::error("初始化时间管理器失败，错误信息：{}", e.what());
             return false;
         }
+        _time->setTargetFPS(_config->_target_fps);
         spdlog::trace("初始化时间管理器成功");
         return true;
     }
@@ -260,7 +282,7 @@ namespace engine::core
     {
         try
         {
-            _camera = std::make_unique<engine::render::Camera>(glm::vec2(1920, 1080));
+            _camera = std::make_unique<engine::render::Camera>(glm::vec2(_config->_camera_width, _config->_camera_height));
         }
         catch (const std::exception &e)
         {

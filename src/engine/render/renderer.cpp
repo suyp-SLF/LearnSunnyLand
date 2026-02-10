@@ -73,16 +73,18 @@ namespace engine::render
         // 应用相机变换
         glm::vec2 position_screen = camera.worldToScreen(position);
         // 计算目标矩形
-        float scaled_width = src_rect.value().w * scale.x;
-        float scaled_height = src_rect.value().h * scale.y;
+        float scaled_width = src_rect.value().w;// * scale.x;
+        float scaled_height = src_rect.value().h;// * scale.y;
         SDL_FRect dst_rect = {position_screen.x,
                               position_screen.y,
                               scaled_width,
                               scaled_height};
         // 不在屏幕内不绘制
         if (!isRectInViewport(camera, dst_rect))
+        {
+            spdlog::trace("精灵不在屏幕内，ID：{}", sprite.getTextureId());
             return;
-
+        }
         // 执行绘制
         if (!SDL_RenderTextureRotated(_renderer, texture, &src_rect.value(), &dst_rect, angle, nullptr, sprite.isFlipped() ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE))
         {
@@ -303,7 +305,7 @@ namespace engine::render
                 spdlog::error("无法获取纹理尺寸，ID：{}", sprite.getTextureId());
                 return std::nullopt;
             }
-            spdlog::debug("获取纹理尺寸成功，ID：{}，尺寸：{}x{}", sprite.getTextureId(), result.w, result.h);
+            spdlog::trace("获取纹理尺寸成功，ID：{}，尺寸：{}x{}", sprite.getTextureId(), result.w, result.h);
             return result;
         }
     }
@@ -320,7 +322,7 @@ namespace engine::render
     bool Renderer::isRectInViewport(const Camera &camera, const SDL_FRect &rect)
     {
         glm::vec2 viewport_size = camera.getViewportSize();
-        return rect.x > -rect.w && rect.x + rect.w < viewport_size.x &&
-               rect.y > -rect.h && rect.y + rect.h < viewport_size.y;
+        return rect.x >= -rect.w && rect.x <= viewport_size.x &&
+               rect.y >= -rect.h && rect.y <= viewport_size.y;
     }
 }

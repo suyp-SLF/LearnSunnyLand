@@ -28,6 +28,6 @@ namespace engine::core
         int getTargetFPS() const;          // 获取当前设置的目标帧率
 
     private:
-        void limitFrameRate(float current_delta_time); // 限制帧率，确保达到目标帧率
+        void limitFrameRate(double current_delta_time); // 限制帧率，确保达到目标帧率
     };
 }; // namespace engine::core

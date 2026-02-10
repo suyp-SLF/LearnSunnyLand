@@ -24,19 +24,22 @@ namespace engine::core
      */
     void Time::update()
     {
-        // 获取当前帧的开始时间（纳秒级精度）
         _frame_start_time = SDL_GetTicksNS();
-        // 计算当前帧与上一帧的时间差（转换为秒）
-        auto current_delta_timer = static_cast<double>(_frame_start_time - _last_time) / 1000000000.0;
-        // 如果设置了目标帧率时间（大于0），则进行帧率限制
-        if (_target_frame_time > 0)
+        // 实际经过的纳秒
+        Uint64 frame_ns = _frame_start_time - _last_time;
+        double current_delta = static_cast<double>(frame_ns) / 1e9;
+
+        if (_target_frame_time > 0 && current_delta < _target_frame_time)
         {
-            // 调用帧率限制函数，确保帧率不超过目标值
-            limitFrameRate(current_delta_timer);
+            double time_to_wait = _target_frame_time - current_delta;
+            SDL_DelayNS(static_cast<Uint64>(time_to_wait * 1e9));
+
+            // 重新计算补偿后的 delta
+            _delta_time = static_cast<float>(SDL_GetTicksNS() - _last_time) / 1e9f;
         }
         else
         {
-            _delta_time = current_delta_timer;
+            _delta_time = static_cast<float>(current_delta);
         }
 
         _last_time = SDL_GetTicksNS();
@@ -84,7 +87,16 @@ namespace engine::core
      */
     void Time::setTargetFPS(int fps)
     {
-        _target_fps = fps; // 将传入的帧率值赋给成员变量_target_fps
+        spdlog::info("设置目标帧率：{}", fps);
+        _target_fps = fps;
+        if (fps > 0)
+        {
+            _target_frame_time = 1.0 / static_cast<double>(fps);
+        }
+        else
+        {
+            _target_frame_time = 0;
+        }
     }
 
     /**
@@ -99,19 +111,17 @@ namespace engine::core
      * 限制帧率函数，确保渲染帧率不超过目标帧率
      * @param current_delta_time 当前帧的增量时间（秒）
      */
-    void Time::limitFrameRate(float current_delta_time)
+    void Time::limitFrameRate(double current_delta_time) // 建议用double保持精度
     {
-        // 如果当前帧时间大于目标帧时间，说明渲染过快，需要延迟
-        if (current_delta_time > _target_frame_time)
+        // 如果实际耗时小于目标耗时，说明跑快了，需要等待
+        if (current_delta_time < _target_frame_time)
         {
-            // 计算需要等待的时间（秒）
-            double timer_to_wait = _target_frame_time - current_delta_time;
-            // 将等待时间转换为纳秒
-            Uint64 ns_to_wait = static_cast<Uint64>(timer_to_wait * 1000000000.0);
-            // 使用SDL_Delay函数进行延迟
+            double time_to_wait = _target_frame_time - current_delta_time;
+            Uint64 ns_to_wait = static_cast<Uint64>(time_to_wait * 1000000000.0);
             SDL_DelayNS(ns_to_wait);
-            // 更新delta_time为实际经过的时间
-            _delta_time = static_cast<float>(SDL_GetTicksNS() - _last_time) / 1000000000.0;
         }
+
+        // 无论是否延迟，最终更新 delta_time 为从上一帧结束到现在实际经过的时间
+        _delta_time = static_cast<float>(SDL_GetTicksNS() - _last_time) / 1e9f;
     }
 }

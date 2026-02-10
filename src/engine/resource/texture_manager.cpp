@@ -28,7 +28,7 @@ namespace engine::resource
             return nullptr;
         }
         _textures.emplace(path, std::unique_ptr<SDL_Texture, SDLTextureDeleter>(raw_texture));
-        spdlog::debug("加载纹理成功:'{}'", path);
+        spdlog::info("加载纹理成功:'{}'", path);
         return raw_texture;
     }
 
@@ -40,7 +40,7 @@ namespace engine::resource
             spdlog::trace("纹理已存在:'{}'", path);
             return it->second.get();
         }
-        spdlog::warn("纹理不存在:'{}',尝试加载", path);
+        spdlog::warn("纹理不存在，尝试加载:'{}',", path);
         return loadTexture(path);
     }
     glm::vec2 TextureManager::getTextureSize(const std::string &path)

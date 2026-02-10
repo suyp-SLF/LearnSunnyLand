@@ -1,6 +1,8 @@
 file(REMOVE_RECURSE
   "/Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin"
   "/Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin.pdb"
+  "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/config.cpp.o"
+  "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/config.cpp.o.d"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o.d"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/time.cpp.o"

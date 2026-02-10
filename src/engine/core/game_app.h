@@ -7,18 +7,19 @@ struct SDL_Renderer;
 
 namespace engine::resource
 {
-    class ResourceManager;
+    class ResourceManager; // 资源管理器类
 }
 
 namespace engine::render
 {
-    class Renderer;
-    class Camera;
+    class Renderer; // 渲染器类
+    class Camera;   // 相机类
 }
 
 namespace engine::core
 {
-    class Time;
+    class Time;   // 时间管理类
+    class Config; // 游戏配置类
     /**
      * @brief GameApp 类，表示游戏应用程序的主类
      * 该类使用SDL库创建窗口和渲染器，并管理游戏的主循环状态
@@ -32,6 +33,7 @@ namespace engine::core
 
         // 引擎组件
         std::unique_ptr<engine::core::Time> _time;
+        std::unique_ptr<engine::core::Config> _config;
         std::unique_ptr<engine::resource::ResourceManager> _resource_manager;
         std::unique_ptr<engine::render::Renderer> _renderer;
         std::unique_ptr<engine::render::Camera> _camera;
@@ -55,6 +57,7 @@ namespace engine::core
         void render();
         void close();
         // 初始化函数
+        [[nodiscard]] bool initConfig();
         [[nodiscard]] bool initSDL();
         [[nodiscard]] bool initTime();
         [[nodiscard]] bool initResourceManager();

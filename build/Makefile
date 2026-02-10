@@ -129,6 +129,30 @@ LearnSunnyLand-Darwin/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/build
 .PHONY : LearnSunnyLand-Darwin/fast
 
+src/engine/core/config.o: src/engine/core/config.cpp.o
+.PHONY : src/engine/core/config.o
+
+# target to build an object file
+src/engine/core/config.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/config.cpp.o
+.PHONY : src/engine/core/config.cpp.o
+
+src/engine/core/config.i: src/engine/core/config.cpp.i
+.PHONY : src/engine/core/config.i
+
+# target to preprocess a source file
+src/engine/core/config.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/config.cpp.i
+.PHONY : src/engine/core/config.cpp.i
+
+src/engine/core/config.s: src/engine/core/config.cpp.s
+.PHONY : src/engine/core/config.s
+
+# target to generate assembly for a file
+src/engine/core/config.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/config.cpp.s
+.PHONY : src/engine/core/config.cpp.s
+
 src/engine/core/game_app.o: src/engine/core/game_app.cpp.o
 .PHONY : src/engine/core/game_app.o
 
@@ -354,6 +378,9 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... LearnSunnyLand-Darwin"
+	@echo "... src/engine/core/config.o"
+	@echo "... src/engine/core/config.i"
+	@echo "... src/engine/core/config.s"
 	@echo "... src/engine/core/game_app.o"
 	@echo "... src/engine/core/game_app.i"
 	@echo "... src/engine/core/game_app.s"
