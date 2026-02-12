@@ -911,6 +911,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/bind_back.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/bind_front.h \
   /opt/homebrew/include/nlohmann/detail/abi_macros.hpp \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/context.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../resource/resource_manager.h \
   /opt/homebrew/include/glm/glm.hpp \
   /opt/homebrew/include/glm/detail/_fixes.hpp \
@@ -1110,13 +1111,12 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o: \
   /opt/homebrew/include/glm/detail/func_integer.inl \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../render/renderer.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../render/sprite.h \
-  /opt/homebrew/include/SDL3/SDL_rect.h \
-  /opt/homebrew/include/SDL3/SDL_error.h \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../render/camera.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../render/../utils/math.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../render/camera.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../input/input_manager.h \
   /opt/homebrew/include/SDL3/SDL_render.h \
   /opt/homebrew/include/SDL3/SDL_blendmode.h \
+  /opt/homebrew/include/SDL3/SDL_error.h \
   /opt/homebrew/include/SDL3/SDL_events.h \
   /opt/homebrew/include/SDL3/SDL_audio.h \
   /opt/homebrew/include/SDL3/SDL_endian.h \
@@ -1128,6 +1128,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o: \
   /opt/homebrew/include/SDL3/SDL_camera.h \
   /opt/homebrew/include/SDL3/SDL_pixels.h \
   /opt/homebrew/include/SDL3/SDL_surface.h \
+  /opt/homebrew/include/SDL3/SDL_rect.h \
   /opt/homebrew/include/SDL3/SDL_gamepad.h \
   /opt/homebrew/include/SDL3/SDL_guid.h \
   /opt/homebrew/include/SDL3/SDL_joystick.h \
@@ -1141,6 +1142,13 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o: \
   /opt/homebrew/include/SDL3/SDL_pen.h \
   /opt/homebrew/include/SDL3/SDL_touch.h \
   /opt/homebrew/include/SDL3/SDL_gpu.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../component/transform_component.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../component/./component.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../component/sprite_component.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../component/./transform_component.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../component/../utils/alignment.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../component/../render/sprite.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../component/../utils/math.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../object/game_object.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../object/../component/component.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/typeindex \

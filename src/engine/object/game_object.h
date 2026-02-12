@@ -1,11 +1,13 @@
 #pragma once
-
 #include "../component/component.h"
 #include <string>
 #include <unordered_map>
 #include <typeindex>
 #include <spdlog/spdlog.h>
 
+namespace engine::core {
+    class Context;
+}
 namespace engine::object
 {
     class GameObject final
@@ -89,9 +91,9 @@ namespace engine::object
             }
         }
 
-        void update(float delta_time);
-        void render();
+        void update(float delta_time, engine::core::Context& context);
+        void render(engine::core::Context& context);
         void clean();
-        void handleInput();
+        void handleInput(engine::core::Context& context);
     };
 }; // namespace GameObject

@@ -2,6 +2,7 @@
 #include "sprite.h"
 #include <optional>
 #include <glm/glm.hpp>
+#include <SDL3/SDL_stdinc.h>
 
 struct SDL_Renderer;
 struct SDL_FRect;
@@ -25,8 +26,7 @@ namespace engine::render
         void drawSprite(const Camera &camera, const Sprite &sprite, const glm::vec2 &position,
                         const glm::vec2 &scale, double angle = 0.0f);
         void drawParallax(const Camera &camera, const Sprite &sprite, const glm::vec2 &position,
-                          const glm::vec2 &scroll_factor, const glm::bvec2 &repeat = {true, true}, 
-                          const glm::vec2 &scale = {1.0f, 1.0f}, double angle = 0.0f);
+                          const glm::vec2 &scroll_factor, const glm::bvec2 &repeat = {true, true}, const glm::vec2 &scale = {1.0f, 1.0f}, double angle = 0.0f);
 
         void drawUISprite(const Sprite &sprite, const glm::vec2 &position, const std::optional<glm::vec2> &size = std::nullopt);
 
@@ -43,9 +43,8 @@ namespace engine::render
         Renderer &operator=(const Renderer &) = delete;
         Renderer(Renderer &&) = delete;
         Renderer &operator=(Renderer &&) = delete;
-
-    private:
+        private:
         std::optional<SDL_FRect> getSpriteRect(const Sprite &sprite);
-        bool isRectInViewport(const Camera &camera, const SDL_FRect &rect); // 判断矩形是否在视口内
+        bool isRectInViewport(const Camera &camera, const SDL_FRect &rect);
     };
-};
+} // namespace engine::render

@@ -1,5 +1,6 @@
 #include "game_object.h"
-#include "../component/component.h"
+#include "../component/transform_component.h" 
+#include "../component/sprite_component.h"
 
 namespace engine::object
 {
@@ -9,19 +10,19 @@ namespace engine::object
         spdlog::trace("创建对象: {}:{}", tag, name);
     }
 
-    void GameObject::update(float delta_time)
+    void GameObject::update(float delta_time, engine::core::Context& context)
     {
         for (auto &pair : _components)
         {
-            pair.second->update(delta_time);
+            pair.second->update(delta_time, context);
         }
     }
 
-    void GameObject::render()
+    void GameObject::render(engine::core::Context& context)
     {
         for (auto &pair : _components)
         {
-            pair.second->render();
+            pair.second->render(context);
         }
     }
 
@@ -34,11 +35,11 @@ namespace engine::object
         _components.clear();
     }
 
-    void GameObject::handleInput()
+    void GameObject::handleInput(engine::core::Context& context)
     {
         for (auto &pair : _components)
         {
-            pair.second->handleInput();
+            pair.second->handleInput(context);
         }
     }
 } // namespace engine::object

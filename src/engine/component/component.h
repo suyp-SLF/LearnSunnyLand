@@ -1,4 +1,8 @@
 #pragma once
+namespace engine::core
+{
+    class Context;
+}
 
 namespace engine::object
 {
@@ -27,13 +31,11 @@ namespace engine::component
         void setOwner(engine::object::GameObject *owner) { _owner = owner; };
         engine::object::GameObject *getOwner() const { return _owner; };
 
-        // 关键循环函数，由引擎调用
-        virtual void handleInput() {};
-        virtual void update(float) {};
-        virtual void render() {};
-        virtual void clean() {};
-
     protected:
         virtual void init() {};
+        virtual void handleInput(engine::core::Context&) {};
+        virtual void update(float, engine::core::Context&) = 0;
+        virtual void render(engine::core::Context&) = 0;
+        virtual void clean() {};
     };
 }; // namespace engine::component

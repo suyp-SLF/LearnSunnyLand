@@ -51,11 +51,15 @@ add_executable(
     src/engine/core/game_app.cpp
     src/engine/core/time.cpp
     src/engine/core/config.cpp
+    src/engine/core/context.cpp
 
     src/engine/resource/resource_manager.cpp
     src/engine/resource/texture_manager.cpp
     src/engine/resource/audio_manager.cpp
     src/engine/resource/font_manager.cpp
+
+    src/engine/component/sprite_component.cpp
+    src/engine/component/transform_component.cpp
 
     src/engine/object/game_object.cpp
 

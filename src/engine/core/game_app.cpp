@@ -2,16 +2,20 @@
 
 #include "time.h"
 #include "config.h"
+#include "context.h"
 #include "../resource/resource_manager.h"
 #include "../render/renderer.h"
 #include "../render/camera.h"
 #include "../input/input_manager.h"
+#include "../component/transform_component.h"
+#include "../component/sprite_component.h"
 #include "../object/game_object.h"
 #include <SDL3/SDL.h>
 #include <spdlog/spdlog.h>
 
 namespace engine::core
 {
+    engine::object::GameObject test_go("testgo");
     /**
      * @brief GameApp类的构造函数
      *
@@ -77,6 +81,8 @@ namespace engine::core
             return false;
         if (!initInputManager())
             return false;
+        if (!initContext())
+            return false;
         test();
         testGameObject();
 
@@ -135,6 +141,7 @@ namespace engine::core
     {
         _renderer->clearScreen();
         testRenderer();
+        test_go.render(*_context);
         _renderer->present();
     }
     void GameApp::close()
@@ -313,6 +320,19 @@ namespace engine::core
         spdlog::trace("初始化输入管理器成功");
         return true;
     }
+    bool GameApp::initContext()
+    {
+        try
+        {
+            _context = std::make_unique<engine::core::Context>(*_input_manager, *_renderer, *_camera, *_resource_manager);
+        }
+        catch (const std::exception &e)
+        {
+            spdlog::error("初始化上下文失败，错误信息：{}", e.what());
+            return false;
+        }
+        return true;
+    }
     void GameApp::test()
     {
         _resource_manager->loadTexture("assets/textures/Actors/eagle-attack.png");
@@ -372,7 +392,7 @@ namespace engine::core
     }
     void GameApp::testGameObject()
     {
-        engine::object::GameObject go("test_go");
-        go.addComponent<engine::component::Component>();
+        test_go.addComponent<engine::component::TransformComponent>(glm::vec2(100, 100));
+        test_go.addComponent<engine::component::SpriteComponent>("assets/textures/Props/bubble1.svg", *_resource_manager, engine::utils::Alignment::CENTER);
     }
 }

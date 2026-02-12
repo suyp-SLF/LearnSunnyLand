@@ -45,7 +45,7 @@
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 72,
+				"line" : 76,
 				"parent" : 0
 			},
 			{
@@ -89,7 +89,7 @@
 			{
 				"command" : 7,
 				"file" : 0,
-				"line" : 69,
+				"line" : 73,
 				"parent" : 0
 			}
 		]
@@ -217,7 +217,10 @@
 				10,
 				11,
 				12,
-				13
+				13,
+				14,
+				15,
+				16
 			]
 		}
 	],
@@ -344,7 +347,10 @@
 				10,
 				11,
 				12,
-				13
+				13,
+				14,
+				15,
+				16
 			]
 		}
 	],
@@ -387,6 +393,12 @@
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
+			"path" : "src/engine/core/context.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
 			"path" : "src/engine/resource/resource_manager.cpp",
 			"sourceGroupIndex" : 1
 		},
@@ -406,6 +418,18 @@
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
 			"path" : "src/engine/resource/font_manager.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/engine/component/sprite_component.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/engine/component/transform_component.cpp",
 			"sourceGroupIndex" : 1
 		},
 		{

@@ -129,6 +129,54 @@ LearnSunnyLand-Darwin/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/build
 .PHONY : LearnSunnyLand-Darwin/fast
 
+src/engine/component/sprite_component.o: src/engine/component/sprite_component.cpp.o
+.PHONY : src/engine/component/sprite_component.o
+
+# target to build an object file
+src/engine/component/sprite_component.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/sprite_component.cpp.o
+.PHONY : src/engine/component/sprite_component.cpp.o
+
+src/engine/component/sprite_component.i: src/engine/component/sprite_component.cpp.i
+.PHONY : src/engine/component/sprite_component.i
+
+# target to preprocess a source file
+src/engine/component/sprite_component.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/sprite_component.cpp.i
+.PHONY : src/engine/component/sprite_component.cpp.i
+
+src/engine/component/sprite_component.s: src/engine/component/sprite_component.cpp.s
+.PHONY : src/engine/component/sprite_component.s
+
+# target to generate assembly for a file
+src/engine/component/sprite_component.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/sprite_component.cpp.s
+.PHONY : src/engine/component/sprite_component.cpp.s
+
+src/engine/component/transform_component.o: src/engine/component/transform_component.cpp.o
+.PHONY : src/engine/component/transform_component.o
+
+# target to build an object file
+src/engine/component/transform_component.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/transform_component.cpp.o
+.PHONY : src/engine/component/transform_component.cpp.o
+
+src/engine/component/transform_component.i: src/engine/component/transform_component.cpp.i
+.PHONY : src/engine/component/transform_component.i
+
+# target to preprocess a source file
+src/engine/component/transform_component.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/transform_component.cpp.i
+.PHONY : src/engine/component/transform_component.cpp.i
+
+src/engine/component/transform_component.s: src/engine/component/transform_component.cpp.s
+.PHONY : src/engine/component/transform_component.s
+
+# target to generate assembly for a file
+src/engine/component/transform_component.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/transform_component.cpp.s
+.PHONY : src/engine/component/transform_component.cpp.s
+
 src/engine/core/config.o: src/engine/core/config.cpp.o
 .PHONY : src/engine/core/config.o
 
@@ -152,6 +200,30 @@ src/engine/core/config.s: src/engine/core/config.cpp.s
 src/engine/core/config.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/config.cpp.s
 .PHONY : src/engine/core/config.cpp.s
+
+src/engine/core/context.o: src/engine/core/context.cpp.o
+.PHONY : src/engine/core/context.o
+
+# target to build an object file
+src/engine/core/context.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/context.cpp.o
+.PHONY : src/engine/core/context.cpp.o
+
+src/engine/core/context.i: src/engine/core/context.cpp.i
+.PHONY : src/engine/core/context.i
+
+# target to preprocess a source file
+src/engine/core/context.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/context.cpp.i
+.PHONY : src/engine/core/context.cpp.i
+
+src/engine/core/context.s: src/engine/core/context.cpp.s
+.PHONY : src/engine/core/context.s
+
+# target to generate assembly for a file
+src/engine/core/context.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/context.cpp.s
+.PHONY : src/engine/core/context.cpp.s
 
 src/engine/core/game_app.o: src/engine/core/game_app.cpp.o
 .PHONY : src/engine/core/game_app.o
@@ -426,9 +498,18 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... LearnSunnyLand-Darwin"
+	@echo "... src/engine/component/sprite_component.o"
+	@echo "... src/engine/component/sprite_component.i"
+	@echo "... src/engine/component/sprite_component.s"
+	@echo "... src/engine/component/transform_component.o"
+	@echo "... src/engine/component/transform_component.i"
+	@echo "... src/engine/component/transform_component.s"
 	@echo "... src/engine/core/config.o"
 	@echo "... src/engine/core/config.i"
 	@echo "... src/engine/core/config.s"
+	@echo "... src/engine/core/context.o"
+	@echo "... src/engine/core/context.i"
+	@echo "... src/engine/core/context.s"
 	@echo "... src/engine/core/game_app.o"
 	@echo "... src/engine/core/game_app.i"
 	@echo "... src/engine/core/game_app.s"

@@ -8,7 +8,10 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/sprite_component.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/sprite_component.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/sprite_component.cpp.o.d"
+  "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/transform_component.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/transform_component.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/transform_component.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/config.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/config.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/config.cpp.o.d"
+  "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/context.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/context.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/context.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/game_app.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/time.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/time.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/time.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/input/input_manager.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.o.d"

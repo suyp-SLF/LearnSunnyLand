@@ -2,7 +2,9 @@
 #include "camera.h"
 #include "../resource/resource_manager.h"
 #include <SDL3_image/SDL_image.h>
+#include <SDL3/SDL.h>
 #include <spdlog/spdlog.h>
+
 
 namespace engine::render
 {
@@ -90,7 +92,7 @@ namespace engine::render
         {
             spdlog::error("渲染旋转纹理失败，ID：{}：{}", sprite.getTextureId(), SDL_GetError());
         }
-        spdlog::trace("渲染精灵，ID：{}", sprite.getTextureId());
+        spdlog::debug("渲染精灵，ID：{}", sprite.getTextureId());
     }
     void Renderer::drawParallax(const Camera &camera, const Sprite &sprite, const glm::vec2 &position, const glm::vec2 &scroll_factor, const glm::bvec2 &repeat, const glm::vec2 &scale, double angle)
     {
@@ -289,13 +291,25 @@ namespace engine::render
         auto src_rect = sprite.getSourceRect();
         if (src_rect.has_value())
         {
-            if (src_rect.value().w <= 0 || src_rect.value().h <= 0)
+            auto& r = src_rect.value();
+            // 映射关系：
+            // SDL_FRect.x = position.x
+            // SDL_FRect.y = position.y
+            // SDL_FRect.w = size.x (宽度)
+            // SDL_FRect.h = size.y (高度)
+            SDL_FRect t_src_rect = { 
+                r.position.x, 
+                r.position.y, 
+                r.size.x, 
+                r.size.y 
+            };
+            if (t_src_rect.w <= 0 || t_src_rect.h <= 0)
             {
                 spdlog::error("源矩形尺寸无效，ID：{}", sprite.getTextureId());
                 return std::nullopt;
             }
-            spdlog::debug("获取源矩形成功，ID：{}，矩形：{}x{}", sprite.getTextureId(), src_rect.value().w, src_rect.value().h);
-            return src_rect;
+            spdlog::debug("获取源矩形成功，ID：{}，矩形：{}x{}", sprite.getTextureId(), t_src_rect.w, t_src_rect.h);
+            return t_src_rect;
         }
         else
         {
