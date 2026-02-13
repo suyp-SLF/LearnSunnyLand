@@ -465,6 +465,78 @@ src/engine/resource/texture_manager.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/texture_manager.cpp.s
 .PHONY : src/engine/resource/texture_manager.cpp.s
 
+src/engine/scene/scene.o: src/engine/scene/scene.cpp.o
+.PHONY : src/engine/scene/scene.o
+
+# target to build an object file
+src/engine/scene/scene.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene.cpp.o
+.PHONY : src/engine/scene/scene.cpp.o
+
+src/engine/scene/scene.i: src/engine/scene/scene.cpp.i
+.PHONY : src/engine/scene/scene.i
+
+# target to preprocess a source file
+src/engine/scene/scene.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene.cpp.i
+.PHONY : src/engine/scene/scene.cpp.i
+
+src/engine/scene/scene.s: src/engine/scene/scene.cpp.s
+.PHONY : src/engine/scene/scene.s
+
+# target to generate assembly for a file
+src/engine/scene/scene.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene.cpp.s
+.PHONY : src/engine/scene/scene.cpp.s
+
+src/engine/scene/scene_manager.o: src/engine/scene/scene_manager.cpp.o
+.PHONY : src/engine/scene/scene_manager.o
+
+# target to build an object file
+src/engine/scene/scene_manager.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene_manager.cpp.o
+.PHONY : src/engine/scene/scene_manager.cpp.o
+
+src/engine/scene/scene_manager.i: src/engine/scene/scene_manager.cpp.i
+.PHONY : src/engine/scene/scene_manager.i
+
+# target to preprocess a source file
+src/engine/scene/scene_manager.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene_manager.cpp.i
+.PHONY : src/engine/scene/scene_manager.cpp.i
+
+src/engine/scene/scene_manager.s: src/engine/scene/scene_manager.cpp.s
+.PHONY : src/engine/scene/scene_manager.s
+
+# target to generate assembly for a file
+src/engine/scene/scene_manager.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene_manager.cpp.s
+.PHONY : src/engine/scene/scene_manager.cpp.s
+
+src/game/scene/game_scene.o: src/game/scene/game_scene.cpp.o
+.PHONY : src/game/scene/game_scene.o
+
+# target to build an object file
+src/game/scene/game_scene.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.o
+.PHONY : src/game/scene/game_scene.cpp.o
+
+src/game/scene/game_scene.i: src/game/scene/game_scene.cpp.i
+.PHONY : src/game/scene/game_scene.i
+
+# target to preprocess a source file
+src/game/scene/game_scene.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.i
+.PHONY : src/game/scene/game_scene.cpp.i
+
+src/game/scene/game_scene.s: src/game/scene/game_scene.cpp.s
+.PHONY : src/game/scene/game_scene.s
+
+# target to generate assembly for a file
+src/game/scene/game_scene.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.s
+.PHONY : src/game/scene/game_scene.cpp.s
+
 src/main.o: src/main.cpp.o
 .PHONY : src/main.o
 
@@ -540,6 +612,15 @@ help:
 	@echo "... src/engine/resource/texture_manager.o"
 	@echo "... src/engine/resource/texture_manager.i"
 	@echo "... src/engine/resource/texture_manager.s"
+	@echo "... src/engine/scene/scene.o"
+	@echo "... src/engine/scene/scene.i"
+	@echo "... src/engine/scene/scene.s"
+	@echo "... src/engine/scene/scene_manager.o"
+	@echo "... src/engine/scene/scene_manager.i"
+	@echo "... src/engine/scene/scene_manager.s"
+	@echo "... src/game/scene/game_scene.o"
+	@echo "... src/game/scene/game_scene.i"
+	@echo "... src/game/scene/game_scene.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"

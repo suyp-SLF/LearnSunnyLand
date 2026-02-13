@@ -1,6 +1,5 @@
 #pragma once
 #include "./component.h"
-#include "./transform_component.h"
 #include "../utils/alignment.h"
 #include "../render/sprite.h"
 #include "../utils/math.h"
@@ -24,12 +23,16 @@ namespace engine::resource
 
 namespace engine::component
 {
+    class TransformComponent; // 前向声明
     class SpriteComponent final
      : public engine::component::Component
     {
         friend class engine::object::GameObject;
 
     private:
+        // 用于监测变换组件的版本号，如果版本号发生变化，则更新sprite
+        uint32_t _last_transform_version = 0xFFFFFFFF; // 初始设为最大值，确保第一次会更新
+
         engine::resource::ResourceManager *_resource_manager = nullptr;
         TransformComponent *_transform_comp = nullptr;
 

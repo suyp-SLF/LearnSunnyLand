@@ -44,10 +44,8 @@ find_package(spdlog REQUIRED)
 # 添加可执行文件
 add_executable(
     ${TARGET} 
-    src/engine/render/sprite.h
-    src/engine/utils/math.h
-
     src/main.cpp
+
     src/engine/core/game_app.cpp
     src/engine/core/time.cpp
     src/engine/core/config.cpp
@@ -58,15 +56,23 @@ add_executable(
     src/engine/resource/audio_manager.cpp
     src/engine/resource/font_manager.cpp
 
-    src/engine/component/sprite_component.cpp
-    src/engine/component/transform_component.cpp
-
-    src/engine/object/game_object.cpp
-
+    src/engine/render/sprite.h
     src/engine/render/camera.cpp
     src/engine/render/renderer.cpp
 
+    src/engine/component/sprite_component.cpp
+    src/engine/component/transform_component.cpp
+
+    src/engine/scene/scene.cpp
+    src/engine/scene/scene_manager.cpp
+
+    src/engine/object/game_object.cpp
+
     src/engine/input/input_manager.cpp
+
+    src/engine/utils/math.h
+
+    src/game/scene/game_scene.cpp
     )
 
 # 这样编译器才能进入 /Users/suyp/C++/Library/build/include 找到 SDL3_mixer 文件夹

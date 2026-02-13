@@ -4,18 +4,20 @@
 #include "config.h"
 #include "context.h"
 #include "../resource/resource_manager.h"
+#include "../scene/scene_manager.h"
 #include "../render/renderer.h"
 #include "../render/camera.h"
 #include "../input/input_manager.h"
 #include "../component/transform_component.h"
 #include "../component/sprite_component.h"
 #include "../object/game_object.h"
+
+#include "../../game/scene/game_scene.h"
 #include <SDL3/SDL.h>
 #include <spdlog/spdlog.h>
 
 namespace engine::core
 {
-    engine::object::GameObject test_go("testgo");
     /**
      * @brief GameApp类的构造函数
      *
@@ -83,8 +85,11 @@ namespace engine::core
             return false;
         if (!initContext())
             return false;
-        test();
-        testGameObject();
+        if (!initSceneManager())
+            return false;
+        // 创建第一个场景并加载
+        auto scene = std::make_unique<game::scene::GameScene>("GameScene123", *_context, *_scene_manager);
+        _scene_manager->requestPushScene(std::move(scene));
 
         _is_running = true;
         spdlog::trace("初始化游戏成功 GameApp");
@@ -108,7 +113,6 @@ namespace engine::core
             _is_running = false;
             return;
         }
-        testInputManager();
     }
 
     /**
@@ -120,9 +124,12 @@ namespace engine::core
      *
      * @note 此函数会处理特殊字符如制表符(\t)、回车符(\r)和换行符(\n)
      */
-    void GameApp::update(float /*delta_time*/)
+    void GameApp::update(float delta_time)
     {
-        testCamera();
+        if (_scene_manager)
+        {
+            _scene_manager->update(delta_time);
+        }
     }
 
     /**
@@ -140,8 +147,10 @@ namespace engine::core
     void GameApp::render()
     {
         _renderer->clearScreen();
-        testRenderer();
-        test_go.render(*_context);
+        if (_scene_manager)
+        {
+            _scene_manager->render();
+        }
         _renderer->present();
     }
     void GameApp::close()
@@ -333,66 +342,75 @@ namespace engine::core
         }
         return true;
     }
-    void GameApp::test()
+    bool GameApp::initSceneManager()
     {
-        _resource_manager->loadTexture("assets/textures/Actors/eagle-attack.png");
-        _resource_manager->loadFont("assets/fonts/VonwaonBitmap-16px.ttf", 32);
-    }
-    void GameApp::testRenderer()
-    {
-        engine::render::Sprite sprite_world("assets/textures/Actors/frog.png");
-        engine::render::Sprite sprite_world1("assets/textures/Items/apple.png");
-        engine::render::Sprite sprite_ui("assets/textures/UI/buttons/Start1.png");
-        engine::render::Sprite sprite_parallax("assets/textures/Layers/back.png");
-
-        static float rotation = 0.0f;
-        rotation += 0.1f;
-
-        _renderer->drawParallax(*_camera, sprite_parallax, glm::vec2(100, 100), glm::vec2(0.5f, 0.5f), glm::bvec2(true, false));
-        _renderer->drawSprite(*_camera, sprite_world, glm::vec2(200, 200), glm::vec2(1.0f, 1.0f), rotation);
-        _renderer->drawSprite(*_camera, sprite_world1, glm::vec2(200, 200), glm::vec2(1.0f, 1.0f), rotation);
-        _renderer->drawUISprite(sprite_ui, glm::vec2(100, 100));
-    }
-    void GameApp::testCamera()
-    {
-        auto key_state = SDL_GetKeyboardState(nullptr);
-        if (key_state[SDL_SCANCODE_UP])
-            _camera->move(glm::vec2(0, -1));
-        if (key_state[SDL_SCANCODE_DOWN])
-            _camera->move(glm::vec2(0, 1));
-        if (key_state[SDL_SCANCODE_LEFT])
-            _camera->move(glm::vec2(-1, 0));
-        if (key_state[SDL_SCANCODE_RIGHT])
-            _camera->move(glm::vec2(1, 0));
-    }
-    void GameApp::testInputManager()
-    {
-        std::vector<std::string> actions = {
-            "move_up",
-            "move_down",
-            "move_left",
-            "move_right",
-            "attack",
-        };
-        for (const auto &action : actions)
+        try
         {
-            if (_input_manager->isActionPressed(action))
-            {
-                spdlog::info("Action {} is pressed", action);
-            }
-            if (_input_manager->isActionReleased(action))
-            {
-                spdlog::info("Action {} is released", action);
-            }
-            if (_input_manager->isActionDown(action))
-            {
-                spdlog::info("Action {} is held", action);
-            }
+            _scene_manager = std::make_unique<engine::scene::SceneManager>(*_context);
         }
+        catch (const std::exception &e)
+        {
+            spdlog::error("初始化场景管理器失败，错误信息：{}", e.what());
+            return false;
+        }
+        spdlog::trace("初始化场景管理器成功");
+        return true;
     }
-    void GameApp::testGameObject()
-    {
-        test_go.addComponent<engine::component::TransformComponent>(glm::vec2(100, 100));
-        test_go.addComponent<engine::component::SpriteComponent>("assets/textures/Props/bubble1.svg", *_resource_manager, engine::utils::Alignment::CENTER);
-    }
-}
+    // void GameApp::test()
+    // {
+    //     _resource_manager->loadTexture("assets/textures/Actors/eagle-attack.png");
+    //     _resource_manager->loadFont("assets/fonts/VonwaonBitmap-16px.ttf", 32);
+    // }
+    // void GameApp::testRenderer()
+    // {
+    //     engine::render::Sprite sprite_world("assets/textures/Actors/frog.png");
+    //     engine::render::Sprite sprite_world1("assets/textures/Items/apple.png");
+    //     engine::render::Sprite sprite_ui("assets/textures/UI/buttons/Start1.png");
+    //     engine::render::Sprite sprite_parallax("assets/textures/Layers/back.png");
+
+    //     static float rotation = 0.0f;
+    //     rotation += 0.1f;
+
+    //     _renderer->drawParallax(*_camera, sprite_parallax, glm::vec2(100, 100), glm::vec2(0.5f, 0.5f), glm::bvec2(true, false));
+    //     _renderer->drawSprite(*_camera, sprite_world, glm::vec2(200, 200), glm::vec2(1.0f, 1.0f), rotation);
+    //     _renderer->drawSprite(*_camera, sprite_world1, glm::vec2(200, 200), glm::vec2(1.0f, 1.0f), rotation);
+    //     _renderer->drawUISprite(sprite_ui, glm::vec2(100, 100));
+    // }
+    // void GameApp::testCamera()
+    // {
+    //     auto key_state = SDL_GetKeyboardState(nullptr);
+    //     if (key_state[SDL_SCANCODE_UP])
+    //         _camera->move(glm::vec2(0, -1));
+    //     if (key_state[SDL_SCANCODE_DOWN])
+    //         _camera->move(glm::vec2(0, 1));
+    //     if (key_state[SDL_SCANCODE_LEFT])
+    //         _camera->move(glm::vec2(-1, 0));
+    //     if (key_state[SDL_SCANCODE_RIGHT])
+    //         _camera->move(glm::vec2(1, 0));
+    // }
+    // void GameApp::testInputManager()
+    // {
+    //     std::vector<std::string> actions = {
+    //         "move_up",
+    //         "move_down",
+    //         "move_left",
+    //         "move_right",
+    //         "attack",
+    //     };
+    //     for (const auto &action : actions)
+    //     {
+    //         if (_input_manager->isActionPressed(action))
+    //         {
+    //             spdlog::info("Action {} is pressed", action);
+    //         }
+    //         if (_input_manager->isActionReleased(action))
+    //         {
+    //             spdlog::info("Action {} is released", action);
+    //         }
+    //         if (_input_manager->isActionDown(action))
+    //         {
+    //             spdlog::info("Action {} is held", action);
+    //         }
+    //     }
+    // }
+} // namespace engine

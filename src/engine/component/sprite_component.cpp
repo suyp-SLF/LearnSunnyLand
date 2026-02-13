@@ -1,5 +1,5 @@
 #include "sprite_component.h"
-#include "transform_component.h"
+#include "./transform_component.h"
 #include "../resource/resource_manager.h"
 #include "../utils/alignment.h"
 #include "../object/game_object.h"
@@ -51,6 +51,15 @@ namespace engine::component
         {
             return;
         }
+
+        // 检查 Transform 是否变动过
+        if (_transform_comp->getVersion() != _last_transform_version)
+        {
+            updateOffset();
+            _last_transform_version = _transform_comp->getVersion();
+            spdlog::trace("Transform 版本变更，Sprite 更新偏移量");
+        }
+        
         // 获得变换信息（考虑偏移量）
         const glm::vec2 &pos = _transform_comp->getPosition() + _offset;
         const glm::vec2 &scale = _transform_comp->getScale();

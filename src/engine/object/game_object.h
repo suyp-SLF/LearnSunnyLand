@@ -30,7 +30,7 @@ namespace engine::object
         // GETTER
         std::string getName() const { return _name; };
         std::string getTag() const { return _tag; };
-        bool getNeedRemove() const { return _need_remove; };
+        bool isNeedRemove() const { return _need_remove; };
 
         // SETTER
         void setName(const std::string &name) { _name = name; };

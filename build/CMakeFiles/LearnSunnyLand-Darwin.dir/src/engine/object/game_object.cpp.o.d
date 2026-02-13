@@ -1021,7 +1021,6 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/object/game_object.cpp.o: \
   /opt/homebrew/include/glm/./ext/../ext/vector_uint2.hpp \
   /opt/homebrew/include/glm/./ext/../ext/scalar_uint_sized.hpp \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/object/../component/sprite_component.h \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/object/../component/./transform_component.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/object/../component/../utils/alignment.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/object/../component/../render/sprite.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/object/../component/../render/../utils/math.h \

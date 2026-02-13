@@ -22,6 +22,9 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/font_manager.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/font_manager.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/font_manager.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/resource_manager.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/resource_manager.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/resource_manager.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/texture_manager.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/texture_manager.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/texture_manager.cpp.o.d"
+  "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/scene/scene.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene.cpp.o.d"
+  "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/scene/scene_manager.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene_manager.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene_manager.cpp.o.d"
+  "/Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/game_scene.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/main.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/main.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/main.cpp.o.d"
   )
 
