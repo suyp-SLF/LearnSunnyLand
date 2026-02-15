@@ -20,6 +20,8 @@ else()
     add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+set(CMAKE_BUILD_TYPE Debug)
+
 # 设置编译输出目录
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR})
@@ -59,8 +61,10 @@ add_executable(
     src/engine/resource/shader_manager.cpp
 
     src/engine/render/sprite.h
-    src/engine/render/camera.cpp
+    src/engine/render/render_types.h
     src/engine/render/renderer.h
+
+    src/engine/render/camera.cpp
     src/engine/render/sdl_renderer.cpp
     src/engine/render/sprite_render_system.cpp
     src/engine/render/vulkan_renderer.cpp

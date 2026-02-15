@@ -1,5 +1,7 @@
 #include "camera.h"
 #include <spdlog/spdlog.h>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace engine::render
 {
@@ -25,6 +27,42 @@ namespace engine::render
         clampPosition();
     }
 
+    bool Camera::isBoxInView(const glm::vec2 &position, const glm::vec2 &size) const
+    {
+        // 获取相机在世界空间中的可视边界
+        float cam_left = _position.x;
+        float cam_right = _position.x + _viewport_size.x;
+        float cam_top = _position.y;
+        float cam_bottom = _position.y + _viewport_size.y;
+
+        // 物体的边界
+        float obj_left = position.x;
+        float obj_right = position.x + size.x;
+        float obj_top = position.y;
+        float obj_bottom = position.y + size.y;
+
+        // AABB 碰撞检测逻辑：如果物体不完全在相机边界之外，则可见
+        return !(obj_right < cam_left ||
+                 obj_left > cam_right ||
+                 obj_bottom < cam_top ||
+                 obj_top > cam_bottom);
+    }
+
+    glm::mat4 Camera::getViewMatrix() const
+    {
+        glm::mat4 view = glm::mat4(1.0f);
+        // 先缩放，再平移
+        view = glm::scale(view, glm::vec3(_zoom, _zoom, 1.0f));
+        // 关键：相机的 position 是 (x, y)，那么物体应该平移 (-x, -y)
+        view = glm::translate(view, glm::vec3(-_position.x, -_position.y, 0.0f));
+        return view;
+    }
+    glm::mat4 Camera::getProjectionMatrix() const
+    {
+        // 确保 near=0.0f, far=1.0f 
+        // 并且 Y 轴是从 0 到 height (向下)
+        return glm::ortho(0.0f, _viewport_size.x, _viewport_size.y, 0.0f, 0.0f, 1.0f);
+    }
     glm::vec2 Camera::worldToScreen(const glm::vec2 &world_pos) const
     {
         return world_pos - _position;

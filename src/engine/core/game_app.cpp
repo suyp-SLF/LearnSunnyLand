@@ -295,11 +295,30 @@ namespace engine::core
         {
             if (_config->_render_type == 0)
             {
+                spdlog::trace("使用SDL渲染器");
                 _renderer = std::make_unique<engine::render::SDLRenderer>(_sdl_renderer);
             }
             else if (_config->_render_type == 1)
             {
-                _renderer = std::make_unique<engine::render::SDL3GPURenderer>(_window);
+                auto gpu_renderer = std::make_unique<engine::render::SDL3GPURenderer>(_window);
+
+                // ⚡️ 核心修正：获取刚创建好的 GPU 设备
+                SDL_GPUDevice *device = gpu_renderer->getDevice();
+
+                // ⚡️ 核心修正：通知资源管理器“硬件已就绪”
+                if (_resource_manager)
+                {
+                    _resource_manager->init(nullptr, device);
+                }
+
+                // ⚡️ 核心修正：手动给渲染器设置资源管理器引用
+                gpu_renderer->setResourceManager(_resource_manager.get());
+
+                _renderer = std::move(gpu_renderer);
+            }else{
+                // SDL 渲染器逻辑...
+            _renderer = std::make_unique<engine::render::SDLRenderer>(_sdl_renderer);
+            _renderer->setResourceManager(_resource_manager.get());
             }
         }
         catch (const std::exception &e)

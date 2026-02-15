@@ -11,22 +11,35 @@ namespace engine::render
     private:
         std::string _texture_id;
         std::optional<engine::utils::FRect> _source_rect;
+        glm::vec2 _size = {0.0f, 0.0f};
         bool _is_flipped = false;
 
     public:
         Sprite(const std::string &texture_id, const std::optional<engine::utils::FRect> &source_rect = std::nullopt, bool is_flipped = false)
             : _texture_id(texture_id),
               _source_rect(source_rect),
-              _is_flipped(is_flipped)
-        {}
+              _is_flipped(is_flipped),
+              _size(0, 0)
+        {
+        }
 
         // GETTER
         const std::string &getTextureId() const { return _texture_id; }
         const std::optional<engine::utils::FRect> &getSourceRect() const { return _source_rect; }
+        glm::vec2 getSize() const
+        {
+            if (_source_rect)
+                return _source_rect->size;
+            return _size;
+        };
         bool isFlipped() const { return _is_flipped; }
         // SETTER
         void setTextureId(const std::string &texture_id) { _texture_id = texture_id; }
         void setSourceRect(const std::optional<engine::utils::FRect> &source_rect) { _source_rect = source_rect; }
         void setFlipped(bool is_flipped) { _is_flipped = is_flipped; }
+        void setSize(const glm::vec2 &size)
+        {
+            _size = size;
+        }
     };
 };

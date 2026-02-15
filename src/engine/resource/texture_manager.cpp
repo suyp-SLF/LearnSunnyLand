@@ -1,40 +1,49 @@
 #include "texture_manager.h"
 #include "resource_types.h"
 #include <SDL3_image/SDL_image.h>
+#include <spdlog/spdlog.h>
 
 namespace engine::resource
 {
-    TextureManager::TextureManager(SDL_Renderer *renderer, SDL_GPUDevice *gpu_device) 
+    TextureManager::TextureManager(SDL_Renderer *renderer, SDL_GPUDevice *gpu_device)
         : _renderer(renderer), _gpu_device(gpu_device) {}
 
-    TextureManager::~TextureManager() {
+    TextureManager::~TextureManager()
+    {
         clearTextures();
     }
 
     // --- 实现头文件中声明的所有公开接口 ---
 
-    SDL_Texture* TextureManager::getLegacyTexture(const std::string& path) {
+    SDL_Texture *TextureManager::getLegacyTexture(const std::string &path)
+    {
         return getInternal(path).sdl_tex; // 注意这里是 sdl_tex
     }
 
-    SDL_GPUTexture* TextureManager::getGPUTexture(const std::string& path) {
+    SDL_GPUTexture *TextureManager::getGPUTexture(const std::string &path)
+    {
         return getInternal(path).gpu_tex; // 注意这里是 gpu_tex
     }
 
-    glm::vec2 TextureManager::getTextureSize(const std::string& path) {
-        auto& res = getInternal(path);
-        return res.size; 
+    glm::vec2 TextureManager::getTextureSize(const std::string &path)
+    {
+        auto &res = getInternal(path);
+        return res.size;
     }
 
-    void TextureManager::unloadTexture(const std::string& path) {
-        if (auto it = _cache.find(path); it != _cache.end()) {
+    void TextureManager::unloadTexture(const std::string &path)
+    {
+        if (auto it = _cache.find(path); it != _cache.end())
+        {
             it->second.release(_renderer, _gpu_device);
             _cache.erase(it);
         }
     }
 
-    void TextureManager::clearTextures() {
-        for (auto& [path, res] : _cache) {
+    void TextureManager::clearTextures()
+    {
+        for (auto &[path, res] : _cache)
+        {
             res.release(_renderer, _gpu_device);
         }
         _cache.clear();
@@ -42,30 +51,44 @@ namespace engine::resource
 
     // --- 核心逻辑 ---
 
-    TextureResource& TextureManager::getInternal(const std::string& path) {
-        if (_cache.find(path) == _cache.end()) {
-            forceLoad(path);
+    TextureResource &TextureManager::getInternal(const std::string &path)
+    {
+        auto it = _cache.find(path);
+        if (it == _cache.end())
+        {
+            if (!forceLoad(path))
+            {
+                static TextureResource empty; // 失败时返回一个空对象，防止崩溃
+                return empty;
+            }
+            return _cache[path];
         }
-        return _cache[path];
+        return it->second;
     }
 
-    bool TextureManager::forceLoad(const std::string& path) {
+    bool TextureManager::forceLoad(const std::string &path)
+    {
+        spdlog::info("TextureManager实例地址: {} | 成功加载: {}", (void*)this, path);
         SDL_Surface *surf = IMG_Load(path.c_str());
-        if (!surf) return false;
+        if (!surf)
+            return false;
 
         // 确保 Surface 是 RGBA32 格式，方便上传 GPU
         SDL_Surface *converted = SDL_ConvertSurface(surf, SDL_PIXELFORMAT_RGBA32);
         SDL_DestroySurface(surf);
-        if (!converted) return false;
+        if (!converted)
+            return false;
 
         TextureResource res;
         res.size = glm::vec2(converted->w, converted->h);
-        
-        if (_renderer) {
+
+        if (_renderer)
+        {
             res.sdl_tex = SDL_CreateTextureFromSurface(_renderer, converted);
         }
-        
-        if (_gpu_device) {
+
+        if (_gpu_device)
+        {
             res.gpu_tex = uploadToGPU(converted);
         }
 
@@ -74,8 +97,10 @@ namespace engine::resource
         return true;
     }
 
-    SDL_GPUTexture* TextureManager::uploadToGPU(SDL_Surface* surface) {
-        if (!_gpu_device) return nullptr;
+    SDL_GPUTexture *TextureManager::uploadToGPU(SDL_Surface *surface)
+    {
+        if (!_gpu_device)
+            return nullptr;
 
         // 1. 创建纹理
         SDL_GPUTextureCreateInfo tci = {
@@ -85,16 +110,14 @@ namespace engine::resource
             .width = (uint32_t)surface->w,
             .height = (uint32_t)surface->h,
             .layer_count_or_depth = 1,
-            .num_levels = 1
-        };
+            .num_levels = 1};
         SDL_GPUTexture *gpuTex = SDL_CreateGPUTexture(_gpu_device, &tci);
 
         // 2. 传输缓冲 (Staging)
         uint32_t size = (uint32_t)(surface->w * surface->h * 4);
         SDL_GPUTransferBufferCreateInfo tbci = {
             .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-            .size = size
-        };
+            .size = size};
         SDL_GPUTransferBuffer *staging = SDL_CreateGPUTransferBuffer(_gpu_device, &tbci);
 
         void *map = SDL_MapGPUTransferBuffer(_gpu_device, staging, false);

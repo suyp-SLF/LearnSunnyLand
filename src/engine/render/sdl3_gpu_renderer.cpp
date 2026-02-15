@@ -1,90 +1,275 @@
 #include "sdl3_gpu_renderer.h"
-#include "../render/sprite.h"             // 否则无法调用 sprite.getTextureId()
-#include "../core/context.h"              // 否则无法识别 Context
-#include "../resource/resource_manager.h" //
+#include "render_types.h"
+#include "sprite.h"
+#include "../core/context.h"
+#include "../resource/resource_manager.h"
+#include "camera.h"
+#include <spdlog/spdlog.h>
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/glm.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/transform.hpp>
+
 namespace engine::render
 {
     SDL3GPURenderer::SDL3GPURenderer(SDL_Window *window) : _window(window)
     {
         initGPU();
     }
+
     SDL3GPURenderer::~SDL3GPURenderer()
     {
+        if (_device)
+        {
+            SDL_WaitForGPUIdle(_device);
+            if (_sprite_pipeline)
+                SDL_ReleaseGPUGraphicsPipeline(_device, _sprite_pipeline);
+            SDL_DestroyGPUDevice(_device);
+        }
     }
+
+    void SDL3GPURenderer::setResourceManager(engine::resource::ResourceManager *mgr)
+    {
+        _res_mgr = mgr;
+        // 当资源管理器到位后，立即尝试创建管线
+        if (_device && _window && _res_mgr)
+        {
+            createPipeline();
+        }
+    }
+
     void SDL3GPURenderer::initGPU()
     {
-        // 1. 创建 GPU 设备（在 Mac 上会自动选择 Metal，Win 选择 DX12/Vulkan）
-        _device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_MSL, true, nullptr);
-
-        // 2. 声明窗口声明周期由该 GPU 设备管理
+        _device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_MSL | SDL_GPU_SHADERFORMAT_DXIL, true, nullptr);
+        if (!_device)
+        {
+            spdlog::error("SDL_CreateGPUDevice 失败: {}", SDL_GetError());
+            return;
+        }
+        SDL_GPUShaderFormat formats = SDL_GetGPUShaderFormats(_device);
+        if (formats & SDL_GPU_SHADERFORMAT_SPIRV)
+            spdlog::info("支持 SPIRV");
+        if (formats & SDL_GPU_SHADERFORMAT_MSL)
+            spdlog::info("支持 MSL");
+        if (formats & SDL_GPU_SHADERFORMAT_METALLIB)
+            spdlog::info("支持 MetalLib");
         SDL_ClaimWindowForGPUDevice(_device, _window);
+    }
 
-        createPipeline();
-    }
-    void SDL3GPURenderer::setDrawColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+    void SDL3GPURenderer::createPipeline()
     {
-        // GPU 渲染通常在 BeginGPURenderPass 的 ClearColor 中处理背景色
-        // 这里可以暂存颜色，用于后续的绘图填充
+        if (!_res_mgr || !_device || !_window)
+        {
+            spdlog::warn("SDL3 GPU: 资源管理器未就绪，跳过管线创建。");
+            return;
+        }
+
+        // 1. 加载 Shader
+        // 顶点着色器：通常只处理坐标，不需要采样器
+        SDL_GPUShader *v_shader = _res_mgr->loadShader("sprite_vert", "assets/shaders/sprite.vert", 0, 1);
+        SDL_GPUShader *f_shader = _res_mgr->loadShader("sprite_frag", "assets/shaders/sprite.frag", 1, 0);
+
+        if (!v_shader || !f_shader)
+        {
+            spdlog::error("SDL3 GPU: 无法创建管线，着色器加载失败。");
+            return;
+        }
+
+        // 2. 配置颜色混合描述符
+        SDL_GPUColorTargetDescription color_desc = {};
+        color_desc.format = SDL_GetGPUSwapchainTextureFormat(_device, _window);
+
+        // ⚡️ 修正：使用你的版本中无下划线的成员名 blendfactor 和 blendop
+        color_desc.blend_state.enable_blend = true;
+        color_desc.blend_state.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA;
+        color_desc.blend_state.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
+        color_desc.blend_state.color_blend_op = SDL_GPU_BLENDOP_ADD;
+
+        color_desc.blend_state.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE;
+        color_desc.blend_state.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ZERO;
+        color_desc.blend_state.alpha_blend_op = SDL_GPU_BLENDOP_ADD;
+
+        // 3. 配置管线描述符
+        SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {};
+
+        // 绑定着色器
+        pipeline_info.vertex_shader = v_shader;
+        pipeline_info.fragment_shader = f_shader;
+
+        // 绑定目标信息
+        pipeline_info.target_info.num_color_targets = 1;
+        pipeline_info.target_info.color_target_descriptions = &color_desc;
+
+        pipeline_info.depth_stencil_state.enable_depth_test = false;
+        pipeline_info.depth_stencil_state.enable_depth_write = false;
+
+        // ⚡️ 关键修正：在 SDL 3.2.0 中，不再需要 fragment_sampler_metadata
+        // 资源信息已包含在 frag_shader 对象中。
+
+        pipeline_info.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
+
+        // 4. 创建管线
+        if (_sprite_pipeline)
+        {
+            SDL_ReleaseGPUGraphicsPipeline(_device, _sprite_pipeline);
+        }
+
+        _sprite_pipeline = SDL_CreateGPUGraphicsPipeline(_device, &pipeline_info);
+
+        if (!_sprite_pipeline)
+        {
+            spdlog::error("SDL3 GPU: 创建管线失败: {}", SDL_GetError());
+        }
+        else
+        {
+            spdlog::info("SDL3 GPU: 图形管线创建成功！");
+        }
     }
-    void SDL3GPURenderer::drawParallax(const Camera &camera, const Sprite &sprite, const glm::vec2 &position,
-                                       const glm::vec2 &scroll_factor, const glm::bvec2 &repeat,
-                                       const glm::vec2 &scale, double angle)
-    {
-        // 逻辑类似于 drawSprite，但需要应用滚动因子
-        drawSprite(camera, sprite, position * scroll_factor, scale, angle);
-    }
+
     void SDL3GPURenderer::clearScreen()
     {
-    }
-    void SDL3GPURenderer::present()
-    {
-    }
-    void SDL3GPURenderer::drawSprite(const Camera &camera, const Sprite &sprite, const glm::vec2 &position, const glm::vec2 &scale, double angle)
-    {
+        _current_cmd = SDL_AcquireGPUCommandBuffer(_device);
         if (!_current_cmd)
             return;
 
-        // 1. ⚡️ 获取 Swapchain Texture (修复参数不兼容问题)
-        SDL_GPUTexture *swapchain_tex = nullptr;
-        uint32_t w, h;
-        if (!SDL_AcquireGPUSwapchainTexture(_current_cmd, _window, &swapchain_tex, &w, &h))
+        if (!SDL_AcquireGPUSwapchainTexture(_current_cmd, _window, &_current_swapchain_texture, nullptr, nullptr))
         {
+            SDL_SubmitGPUCommandBuffer(_current_cmd); // 没拿到纹理也要提交掉这个空的 cmd
+            // 如果走到这里，说明窗口系统没准备好绘制
+            spdlog::error("无法获取交换链纹理: {}", SDL_GetError());
+            _current_cmd = nullptr;
             return;
         }
 
-        // 2. 配置渲染通道
         SDL_GPUColorTargetInfo color_target = {};
-        color_target.texture = swapchain_tex;
-        color_target.clear_color = {0.0f, 0.0f, 0.0f, 1.0f};
-        color_target.load_op = SDL_GPU_LOADOP_LOAD;
+        color_target.texture = _current_swapchain_texture;
+        color_target.clear_color = {0.1f, 0.1f, 0.2f, 1.0f};
+        color_target.load_op = SDL_GPU_LOADOP_CLEAR;
         color_target.store_op = SDL_GPU_STOREOP_STORE;
 
-        // ⚡️ 注意：在实际引擎中，BeginRenderPass 应该在整个渲染流程的最开始调用一次
-        SDL_GPURenderPass *render_pass = SDL_BeginGPURenderPass(_current_cmd, &color_target, 1, nullptr);
-
-        if (_sprite_pipeline)
-        {
-            SDL_BindGPUGraphicsPipeline(render_pass, _sprite_pipeline);
-
-            // 3. 绑定纹理 (从 ResourceManager 获取 GPU 纹理)
-            if (engine::core::Context::Current)
-            {
-                auto &rm = engine::core::Context::Current->getResourceManager();
-                SDL_GPUTexture *gpu_tex = rm.getGPUTexture(sprite.getTextureId()); // 获取 GPU 纹理
-                SDL_GPUTextureSamplerBinding texture_binding = {};
-                texture_binding.texture = gpu_tex;
-                // 注意：通常还需要绑定一个 Sampler
-                // texture_binding.sampler = _default_sampler;
-                SDL_BindGPUFragmentSamplers(render_pass, 0, &texture_binding, 1);
-            }
-
-            // 4. 提交绘制
-            SDL_DrawGPUPrimitives(render_pass, 6, 1, 0, 0);
-        }
-
-        SDL_EndGPURenderPass(render_pass);
+        // 仅仅开启 Pass，不在这里做具体的 Pipeline 绑定
+        _active_pass = SDL_BeginGPURenderPass(_current_cmd, &color_target, 1, nullptr);
     }
-    void SDL3GPURenderer::createPipeline()
+    // void SDL3GPURenderer::drawSprite(const Camera &camera, const Sprite &sprite, const glm::vec2 &position, const glm::vec2 &scale, double angle)
+    // {
+    //     // 1. 基础安全检查
+    //     if (!_active_pass || !_current_cmd || !_sprite_pipeline || !_res_mgr)
+    //         return;
+
+    //     SDL_GPUTexture *gpu_tex = _res_mgr->getGPUTexture(sprite.getTextureId());
+    //     SDL_GPUSampler *sampler = _res_mgr->getDefaultSampler();
+
+    //     if (!gpu_tex || !sampler)
+    //         return;
+
+    //     // 2. 绑定管线
+    //     SDL_BindGPUGraphicsPipeline(_active_pass, _sprite_pipeline);
+
+    //     // --- ⚡️ 临时测试逻辑开始 ---
+
+    //     // 获取当前窗口的像素大小（确保投影矩阵单位正确）
+    //     int w, h;
+    //     SDL_GetWindowSize(_window, &w, &h);
+
+    //     // 强制创建一个简单的正交投影：左上(0,0)，右下(w,h)
+    //     // 注意：glm::ortho 的参数顺序是 (left, right, bottom, top, near, far)
+    //     // 这里 top=0, bottom=h 实现了 2D 常见的 Y 轴向下坐标系
+    //     glm::mat4 test_p = glm::ortho(0.0f, (float)w, (float)h, 0.0f, 0.0f, 1.0f);
+
+    //     // 强制把物体画在屏幕坐标 (50, 50) 的位置，大小为 200x200 像素
+    //     glm::mat4 test_m = glm::translate(glm::mat4(1.0f), glm::vec3(50.0f, 50.0f, 0.0f));
+    //     test_m = glm::scale(test_m, glm::vec3(200.0f, 200.0f, 1.0f));
+
+    //     SpritePushConstants constants;
+    //     constants.mvp = test_p * test_m;
+    //     constants.color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f); // 强制红色
+
+    //     // --- ⚡️ 临时测试逻辑结束 ---
+
+    //     // 3. 绑定贴图
+    //     SDL_GPUTextureSamplerBinding binding = {gpu_tex, sampler};
+    //     SDL_BindGPUFragmentSamplers(_active_pass, 0, &binding, 1);
+
+    //     // 4. 推送常量（注意：确保你的着色器现在接收的是 pc.mvp）
+    //     SDL_PushGPUVertexUniformData(_current_cmd, 0, &constants, sizeof(constants));
+
+    //     // 5. 执行绘制
+    //     SDL_DrawGPUPrimitives(_active_pass, 6, 1, 0, 0);
+
+    //     // 打印一下，确保这个函数确实被每帧调用了
+    //     static bool logged = false;
+    //     if (!logged)
+    //     {
+    //         spdlog::info("Debug Draw: Window Size {}x{}, Matrix pushed.", w, h);
+    //         logged = true;
+    //     }
+    // }
+    void SDL3GPURenderer::drawSprite(const Camera &camera, const Sprite &sprite, const glm::vec2 &position, const glm::vec2 &scale, double angle)
+    {
+        // 1. 安全检查
+        if (!_active_pass || !_current_cmd || !_sprite_pipeline || !_res_mgr)
+            return;
+
+        SDL_GPUTexture *gpu_tex = _res_mgr->getGPUTexture(sprite.getTextureId());
+        SDL_GPUSampler *sampler = _res_mgr->getDefaultSampler();
+
+        if (!gpu_tex || !sampler)
+            return;
+
+        // 2. 绑定管线
+        SDL_BindGPUGraphicsPipeline(_active_pass, _sprite_pipeline);
+
+        // 3. 变换矩阵计算
+        glm::vec2 size = sprite.getSize() * scale;
+
+        // ⚡️ 修正：只平移一次
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(position, 0.0f));
+
+        // 如果有旋转，先平移到中心旋转再平移回来，或者简单处理：
+        if (angle != 0.0)
+        {
+            model = glm::rotate(model, glm::radians((float)angle), glm::vec3(0.0f, 0.0f, 1.0f));
+        }
+        model = glm::scale(model, glm::vec3(size, 1.0f));
+
+        // ⚡️ 矩阵顺序：Projection * View * Model 是正确的
+        glm::mat4 mvp = camera.getProjectionMatrix() * camera.getViewMatrix() * model;
+
+        // 4. 绑定贴图
+        SDL_GPUTextureSamplerBinding binding = {gpu_tex, sampler};
+        SDL_BindGPUFragmentSamplers(_active_pass, 0, &binding, 1);
+
+        // 5. 推送常量
+        SpritePushConstants constants;
+        constants.mvp = mvp;
+        constants.color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); // 确保颜色是 1.0
+
+        SDL_PushGPUVertexUniformData(_current_cmd, 0, &constants, sizeof(constants));
+
+        // 6. 绘制
+        SDL_DrawGPUPrimitives(_active_pass, 6, 1, 0, 0);
+    }
+
+    void SDL3GPURenderer::setDrawColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
     {
     }
-}
+
+    void SDL3GPURenderer::drawParallax(const Camera &camera, const Sprite &sprite, const glm::vec2 &position, const glm::vec2 &scroll_factor, const glm::bvec2 &repeat, const glm::vec2 &scale, double angle)
+    {
+    }
+
+    void SDL3GPURenderer::present()
+    {
+        if (_active_pass)
+        {
+            SDL_EndGPURenderPass(_active_pass);
+            _active_pass = nullptr;
+        }
+        if (_current_cmd)
+        {
+            SDL_SubmitGPUCommandBuffer(_current_cmd);
+            _current_cmd = nullptr;
+            _current_swapchain_texture = nullptr;
+        }
+    }
+} // namespace engine

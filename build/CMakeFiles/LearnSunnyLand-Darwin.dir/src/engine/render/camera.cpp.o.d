@@ -230,6 +230,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/camera.cpp.o: \
   /opt/homebrew/include/glm/detail/setup.hpp \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cassert \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/assert.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_assert.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_static_assert.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cstddef \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/__stddef_rsize_t.h \
@@ -1186,4 +1187,28 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/camera.cpp.o: \
   /opt/homebrew/include/spdlog/details/circular_q.h \
   /opt/homebrew/include/spdlog/details/log_msg_buffer.h \
   /opt/homebrew/include/spdlog/details/log_msg.h \
-  /opt/homebrew/include/spdlog/version.h
+  /opt/homebrew/include/spdlog/version.h \
+  /opt/homebrew/include/glm/gtc/matrix_transform.hpp \
+  /opt/homebrew/include/glm/gtc/../mat4x4.hpp \
+  /opt/homebrew/include/glm/gtc/../vec2.hpp \
+  /opt/homebrew/include/glm/gtc/../vec3.hpp \
+  /opt/homebrew/include/glm/gtc/../vec4.hpp \
+  /opt/homebrew/include/glm/gtc/../ext/matrix_projection.hpp \
+  /opt/homebrew/include/glm/gtc/../ext/../gtc/constants.hpp \
+  /opt/homebrew/include/glm/gtc/../ext/../gtc/../ext/scalar_constants.hpp \
+  /opt/homebrew/include/glm/gtc/../ext/../gtc/../ext/../detail/setup.hpp \
+  /opt/homebrew/include/glm/gtc/../ext/../gtc/../ext/scalar_constants.inl \
+  /opt/homebrew/include/glm/gtc/../ext/../gtc/constants.inl \
+  /opt/homebrew/include/glm/gtc/../ext/../geometric.hpp \
+  /opt/homebrew/include/glm/gtc/../ext/../trigonometric.hpp \
+  /opt/homebrew/include/glm/gtc/../ext/../matrix.hpp \
+  /opt/homebrew/include/glm/gtc/../ext/matrix_projection.inl \
+  /opt/homebrew/include/glm/gtc/../ext/matrix_clip_space.hpp \
+  /opt/homebrew/include/glm/gtc/../ext/../ext/scalar_constants.hpp \
+  /opt/homebrew/include/glm/gtc/../ext/matrix_clip_space.inl \
+  /opt/homebrew/include/glm/gtc/../ext/matrix_transform.hpp \
+  /opt/homebrew/include/glm/gtc/../ext/matrix_transform.inl \
+  /opt/homebrew/include/glm/gtc/matrix_transform.inl \
+  /opt/homebrew/include/glm/gtc/../geometric.hpp \
+  /opt/homebrew/include/glm/gtc/../trigonometric.hpp \
+  /opt/homebrew/include/glm/gtc/../matrix.hpp

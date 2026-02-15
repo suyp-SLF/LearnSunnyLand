@@ -12,6 +12,7 @@ namespace engine::resource {
     public:
         ShaderManager(SDL_GPUDevice* dev) : _device(dev) {}
         ~ShaderManager() { clear(); }
+        void setDevice(SDL_GPUDevice* dev) { _device = dev; }
 
         // 加载预编译好的 Shader (SPIR-V 或 MSL)
         SDL_GPUShader* loadShader(const std::string& name, const std::string& path, 

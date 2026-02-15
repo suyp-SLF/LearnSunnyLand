@@ -27,6 +27,7 @@ namespace engine::core
         {
             nlohmann::json j;
             file >> j;
+            fromJson(j);
             spdlog::info("配置文件 {} 加载成功", json_path);
             return true;
         }
@@ -119,7 +120,7 @@ namespace engine::core
     nlohmann::ordered_json Config::toJson() const
     {
         return nlohmann::ordered_json{
-            {"window", {{"title", _window_title}, {"width", _window_width}, {"height", _window_height}, {"logical_width", _logical_width}, {"logical_height", _logical_height}, {"camer_width", _camera_width}, {"camera_height", _camera_height}, {"resizable", _window_resizable}}},
+            {"window", {{"title", _window_title}, {"width", _window_width}, {"height", _window_height}, {"logical_width", _logical_width}, {"logical_height", _logical_height}, {"camera_width", _camera_width}, {"camera_height", _camera_height}, {"resizable", _window_resizable}}},
             {"graphics", {{"vsync", _vsync_enabled}, {"render_type", _render_type}}},
             {"performance", {{"target_fps", _target_fps}}},
             {"audio", {{"music_volume", _music_volume}, {"sfx_volume", _sfx_volume}}},

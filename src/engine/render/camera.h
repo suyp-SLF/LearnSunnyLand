@@ -6,6 +6,7 @@ namespace engine::render
     class Camera final
     {
     private:
+        float _zoom = 1; // 缩放比例
         glm::vec2 _viewport_size;
         glm::vec2 _position;                               // 左上角坐标
         std::optional<engine::utils::FRect> _limit_bounds; // 限制范围
@@ -17,6 +18,25 @@ namespace engine::render
 
         void update(float delta_timer);
         void move(const glm::vec2 &offset);
+
+        /**
+         * @brief 检查一个矩形包围盒是否在相机视口内
+         * @param position 物体的世界坐标
+         * @param size 物体的尺寸 (宽, 高)
+         */
+        bool isBoxInView(const glm::vec2& position, const glm::vec2& size) const;
+
+        /**
+         * @brief 获取视图矩阵 (View Matrix)
+         * 处理相机的移动、旋转和缩放
+         */
+        glm::mat4 getViewMatrix() const; // TODO: 添加旋转和缩放
+
+        /**
+         * @brief 获取投影矩阵 (Projection Matrix)
+         * 将像素坐标系映射到 GPU 的裁剪空间 (-1 到 1)
+         */
+        glm::mat4 getProjectionMatrix() const; // TODO: 添加透视投影
 
         glm::vec2 worldToScreen(const glm::vec2 &world_pos) const;
         glm::vec2 worldToScreenWithParallax(const glm::vec2 &world_pos, const glm::vec2 &parallax_factor) const; // 视差滚动背景

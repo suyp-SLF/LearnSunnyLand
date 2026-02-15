@@ -4,6 +4,7 @@
         "sfx_volume": 0.5
     },
     "graphics": {
+        "render_type": 1,
         "vsync": true
     },
     "input_mapping": {

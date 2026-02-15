@@ -1,17 +1,29 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <cstdint>
-
-namespace engine::render {
+namespace engine::resource
+{
+    class ResourceManager;
+}
+namespace engine::render
+{
     class Camera;
     class Sprite;
 
-    class Renderer {
+    class Renderer
+    {
+    protected:
+        engine::resource::ResourceManager *_res_mgr = nullptr;
+
     public:
         virtual ~Renderer() = default;
+        virtual void setResourceManager(engine::resource::ResourceManager *mgr)
+        {
+            _res_mgr = mgr;
+        }
 
         // --- 核心绘图接口 (System 必须调用的) ---
-        virtual void drawSprite(const Camera &camera, const Sprite &sprite, 
+        virtual void drawSprite(const Camera &camera, const Sprite &sprite,
                                 const glm::vec2 &position, const glm::vec2 &scale, double angle) = 0;
 
         // --- 帧生命周期管理 ---
@@ -20,10 +32,10 @@ namespace engine::render {
 
         // --- 状态设置 ---
         virtual void setDrawColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a) = 0;
-        
+
         // 如果你希望在其他 System 里画视差背景，也可以考虑抽象
         virtual void drawParallax(const Camera &camera, const Sprite &sprite, const glm::vec2 &position,
-                                  const glm::vec2 &scroll_factor, const glm::bvec2 &repeat, 
+                                  const glm::vec2 &scroll_factor, const glm::bvec2 &repeat,
                                   const glm::vec2 &scale, double angle) = 0;
     };
 }

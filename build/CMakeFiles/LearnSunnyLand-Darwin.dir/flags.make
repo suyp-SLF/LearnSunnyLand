@@ -6,7 +6,7 @@ CXX_DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_
 
 CXX_INCLUDES = -isystem /Users/suyp/C++/Library/build/include -isystem /opt/homebrew/include
 
-CXX_FLAGSarm64 = -O3 -DNDEBUG -std=gnu++20 -arch arm64 -fsanitize=address -fno-omit-frame-pointer -g -Wall -Wextra -Wpedantic
+CXX_FLAGSarm64 = -g -std=gnu++20 -arch arm64 -fsanitize=address -fno-omit-frame-pointer -g -Wall -Wextra -Wpedantic
 
-CXX_FLAGS = -O3 -DNDEBUG -std=gnu++20 -arch arm64 -fsanitize=address -fno-omit-frame-pointer -g -Wall -Wextra -Wpedantic
+CXX_FLAGS = -g -std=gnu++20 -arch arm64 -fsanitize=address -fno-omit-frame-pointer -g -Wall -Wextra -Wpedantic
 

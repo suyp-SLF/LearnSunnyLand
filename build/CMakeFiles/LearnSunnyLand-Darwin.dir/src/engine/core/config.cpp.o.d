@@ -970,6 +970,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/config.cpp.o: \
   /opt/homebrew/include/nlohmann/thirdparty/hedley/hedley.hpp \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cassert \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/assert.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_assert.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_static_assert.h \
   /opt/homebrew/include/nlohmann/detail/string_escape.hpp \
   /opt/homebrew/include/nlohmann/detail/input/position_t.hpp \

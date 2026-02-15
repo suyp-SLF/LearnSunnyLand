@@ -56,10 +56,18 @@ namespace engine::component
 
     void SpriteComponent::update(float delta_time)
     {
-        if (_transform_comp && _transform_comp->getVersion() != _last_transform_version) {
-        updateOffset();
-        _last_transform_version = _transform_comp->getVersion();
-    }
+        // 修正：如果尺寸依然是0，尝试重新获取（处理延迟加载）
+        if (_sprite_size.x <= 0 || _sprite_size.y <= 0)
+        {
+            updateSpriteSize();
+            if (_sprite_size.x > 0)
+                updateOffset(); // 获取成功后刷新一次偏移
+        }
+        if (_transform_comp && _transform_comp->getVersion() != _last_transform_version)
+        {
+            updateOffset();
+            _last_transform_version = _transform_comp->getVersion();
+        }
     }
 
     void SpriteComponent::setAlignment(engine::utils::Alignment archor)
@@ -77,8 +85,8 @@ namespace engine::component
             return;
         }
 
-        const glm::vec2& scale = _transform_comp->getScale();
-        
+        const glm::vec2 &scale = _transform_comp->getScale();
+
         // 基于锚点(Alignment)计算偏移量
         // 原理：将渲染位置根据对齐方式偏移到正确的位置
         switch (_alignment)
@@ -135,17 +143,20 @@ namespace engine::component
 
     void SpriteComponent::updateSpriteSize()
     {
+        spdlog::info("ResourceManager实例地址: {} | 正在查询: {}", (void*)&_context->getResourceManager(), _sprite.getTextureId());
+
         auto source_rect_opt = _sprite.getSourceRect();
         if (source_rect_opt.has_value())
         {
             _sprite_size = source_rect_opt->size;
         }
-        else
+        else if (_context)
         {
-            // ✅ 使用成员变量 _context 访问资源管理器
-            if (_context) {
-                _sprite_size = _context->getResourceManager().getTextureSize(_sprite.getTextureId());
-            }
+            _sprite_size = _context->getResourceManager().getTextureSize(_sprite.getTextureId());
         }
+        // 查询的大小
+        spdlog::info("查询结果大小: {}", _sprite_size.x);
+        // 确保传给渲染器的那个对象也能感知到尺寸
+        _sprite.setSize(_sprite_size);
     }
 }
