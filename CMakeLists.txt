@@ -55,13 +55,21 @@ add_executable(
     src/engine/resource/texture_manager.cpp
     src/engine/resource/audio_manager.cpp
     src/engine/resource/font_manager.cpp
+    src/engine/resource/resource_types.h
+    src/engine/resource/shader_manager.cpp
 
     src/engine/render/sprite.h
     src/engine/render/camera.cpp
-    src/engine/render/renderer.cpp
+    src/engine/render/renderer.h
+    src/engine/render/sdl_renderer.cpp
+    src/engine/render/sprite_render_system.cpp
+    src/engine/render/vulkan_renderer.cpp
+    src/engine/render/sdl3_gpu_renderer.cpp
+
 
     src/engine/component/sprite_component.cpp
     src/engine/component/transform_component.cpp
+    src/engine/component/parallax_component.cpp
 
     src/engine/scene/scene.cpp
     src/engine/scene/scene_manager.cpp

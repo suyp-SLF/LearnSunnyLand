@@ -6,6 +6,8 @@
 #include "../resource/resource_manager.h"
 #include "../scene/scene_manager.h"
 #include "../render/renderer.h"
+#include "../render/sdl_renderer.h"
+#include "../render/sdl3_gpu_renderer.h"
 #include "../render/camera.h"
 #include "../input/input_manager.h"
 #include "../component/transform_component.h"
@@ -269,7 +271,7 @@ namespace engine::core
     {
         try
         {
-            _resource_manager = std::make_unique<engine::resource::ResourceManager>(_sdl_renderer);
+            _resource_manager = std::make_unique<engine::resource::ResourceManager>(_sdl_renderer, nullptr);
         }
         catch (const std::exception &e)
         {
@@ -291,7 +293,14 @@ namespace engine::core
     {
         try
         {
-            _renderer = std::make_unique<engine::render::Renderer>(_sdl_renderer, _resource_manager.get());
+            if (_config->_render_type == 0)
+            {
+                _renderer = std::make_unique<engine::render::SDLRenderer>(_sdl_renderer);
+            }
+            else if (_config->_render_type == 1)
+            {
+                _renderer = std::make_unique<engine::render::SDL3GPURenderer>(_window);
+            }
         }
         catch (const std::exception &e)
         {
@@ -333,11 +342,16 @@ namespace engine::core
     {
         try
         {
-            _context = std::make_unique<engine::core::Context>(*_input_manager, *_renderer, *_camera, *_resource_manager);
+            // 将 _renderer 移动给 Context，从此 GameApp 不再持有它，Context 全权负责
+            _context = std::make_unique<engine::core::Context>(
+                *_input_manager,
+                *_renderer,
+                *_camera,
+                *_resource_manager);
         }
         catch (const std::exception &e)
         {
-            spdlog::error("初始化上下文失败，错误信息：{}", e.what());
+            spdlog::error("初始化上下文失败: {}", e.what());
             return false;
         }
         return true;

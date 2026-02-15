@@ -29,7 +29,7 @@ namespace engine::scene
         {
             if (*it && !(*it)->isNeedRemove())
             {
-                (*it)->update(delta_time, _context);
+                (*it)->update(delta_time);
                 ++it;
             }
             else
@@ -54,7 +54,7 @@ namespace engine::scene
         {
             if (game_object)
             {
-                game_object->render(_context);
+                game_object->render();
             }
         }
     }
@@ -67,7 +67,7 @@ namespace engine::scene
         {
             if (*it && !(*it)->isNeedRemove())
             {
-                (*it)->handleInput(_context);
+                (*it)->handleInput();
                 ++it;
             }
             else

@@ -1,4 +1,5 @@
-#include "renderer.h"
+#include "sdl_renderer.h"
+#include "../core/context.h"
 #include "camera.h"
 #include "../resource/resource_manager.h"
 #include <SDL3_image/SDL_image.h>
@@ -16,20 +17,14 @@ namespace engine::render
      * @note 构造函数会设置默认绘制颜色为黑色(0,0,0,255)
      * @note 构造过程会记录trace和error级别的日志
      */
-    Renderer::Renderer(SDL_Renderer *renderer, engine::resource::ResourceManager *resource_manager)
-        : _renderer(renderer),
-          _resource_manager(resource_manager)
+    SDLRenderer::SDLRenderer(SDL_Renderer *renderer)
+        : _renderer(renderer)
     {
         spdlog::trace("构造 Renderer");
         if (!_renderer)
         {
             spdlog::error("无法创建渲染器");
             throw std::runtime_error("无法创建渲染器");
-        }
-        if (!_resource_manager)
-        {
-            spdlog::error("无法创建渲染器，资源管理器为空");
-            throw std::runtime_error("无法创建渲染器，资源管理器为空");
         }
         setDrawColor(0, 0, 0, 255);
         spdlog::trace("构造 Renderer 完成");
@@ -58,9 +53,12 @@ namespace engine::render
      *          - \r: 回车符
      *          - \n: 换行符
      */
-    void Renderer::drawSprite(const Camera &camera, const Sprite &sprite, const glm::vec2 &position, const glm::vec2 &scale, double angle)
+    void SDLRenderer::drawSprite(const Camera &camera, const Sprite &sprite, const glm::vec2 &position, const glm::vec2 &scale, double angle)
     {
-        auto texture = _resource_manager->getTexture(sprite.getTextureId());
+        if (!engine::core::Context::Current) return;
+        auto& res_mgr = engine::core::Context::Current->getResourceManager();
+
+        auto texture = res_mgr.getTexture(sprite.getTextureId());
         if (!texture)
         {
             spdlog::error("无法为ID：{}的纹理获取纹理", sprite.getTextureId());
@@ -94,9 +92,11 @@ namespace engine::render
         }
         spdlog::debug("渲染精灵，ID：{}", sprite.getTextureId());
     }
-    void Renderer::drawParallax(const Camera &camera, const Sprite &sprite, const glm::vec2 &position, const glm::vec2 &scroll_factor, const glm::bvec2 &repeat, const glm::vec2 &scale, double angle)
+    void SDLRenderer::drawParallax(const Camera &camera, const Sprite &sprite, const glm::vec2 &position, const glm::vec2 &scroll_factor, const glm::bvec2 &repeat, const glm::vec2 &scale, double angle)
     {
-        auto texture = _resource_manager->getTexture(sprite.getTextureId());
+        if (!engine::core::Context::Current) return;
+        auto& res_mgr = engine::core::Context::Current->getResourceManager();
+        auto texture = res_mgr.getTexture(sprite.getTextureId());
         if (!texture)
         {
             spdlog::error("无法为ID：{}的纹理获取纹理", sprite.getTextureId());
@@ -165,9 +165,11 @@ namespace engine::render
      * 
      * @warning 函数内部使用SDL_RenderTextureRotated进行绘制，如果绘制失败会记录SDL错误信息
      */
-    void Renderer::drawUISprite(const Sprite &sprite, const glm::vec2 &position, const std::optional<glm::vec2> &size)
+    void SDLRenderer::drawUISprite(const Sprite &sprite, const glm::vec2 &position, const std::optional<glm::vec2> &size)
     {
-        auto texture = _resource_manager->getTexture(sprite.getTextureId());
+        if (!engine::core::Context::Current) return;
+        auto& res_mgr = engine::core::Context::Current->getResourceManager();
+        auto texture = res_mgr.getTexture(sprite.getTextureId());
         if (!texture)
         {
             spdlog::error("无法为ID：{}的纹理获取纹理", sprite.getTextureId());
@@ -206,7 +208,7 @@ namespace engine::render
      * 
      * @note 该函数不处理\t、\r或\n等特殊字符，仅处理渲染缓冲区内容
      */
-    void Renderer::present()
+    void SDLRenderer::present()
     {
         if (!SDL_RenderPresent(_renderer))
         {
@@ -222,7 +224,7 @@ namespace engine::render
      * @note 该函数会处理SDL_RenderClear可能返回的错误情况
      * @note 特殊字符处理：\t(制表符), \r(回车符), \n(换行符)
      */
-    void Renderer::clearScreen()
+    void SDLRenderer::clearScreen()
     {
         if (!SDL_RenderClear(_renderer))
         {
@@ -238,7 +240,7 @@ namespace engine::render
      * @param a 透明度分量值（0-255）
      * @note 如果设置失败，会记录错误日志
      */
-    void Renderer::setDrawColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a)
+    void SDLRenderer::setDrawColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a)
     {
         if (!SDL_SetRenderDrawColor(_renderer, r, g, b, a))
         {
@@ -261,7 +263,7 @@ namespace engine::render
      * 
      * @see SDL_SetRenderDrawColorFloat
      */
-    void Renderer::setDrawColorFloat(float r, float g, float b, float a)
+    void SDLRenderer::setDrawColorFloat(float r, float g, float b, float a)
     {
         if (!SDL_SetRenderDrawColorFloat(_renderer, r, g, b, a))
         {
@@ -280,9 +282,11 @@ namespace engine::render
      *       - 源矩形尺寸无效
      *       - 无法获取纹理尺寸
      */
-    std::optional<SDL_FRect> Renderer::getSpriteRect(const Sprite &sprite)
+    std::optional<SDL_FRect> SDLRenderer::getSpriteRect(const Sprite &sprite)
     {
-        SDL_Texture *texture = _resource_manager->getTexture(sprite.getTextureId());
+        if (!engine::core::Context::Current) return std::nullopt;
+        auto& res_mgr = engine::core::Context::Current->getResourceManager();
+        SDL_Texture *texture = res_mgr.getTexture(sprite.getTextureId());
         if (!texture)
         {
             spdlog::error("无法为ID：{}的纹理获取纹理", sprite.getTextureId());
@@ -333,7 +337,7 @@ namespace engine::render
      * 
      * @note 该方法通过比较矩形的四个边界与视口边界的关系来判断
      */
-    bool Renderer::isRectInViewport(const Camera &camera, const SDL_FRect &rect)
+    bool SDLRenderer::isRectInViewport(const Camera &camera, const SDL_FRect &rect)
     {
         glm::vec2 viewport_size = camera.getViewportSize();
         return rect.x >= -rect.w && rect.x <= viewport_size.x &&

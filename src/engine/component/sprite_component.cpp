@@ -5,86 +5,82 @@
 #include "../object/game_object.h"
 #include "../core/context.h"
 #include "../render/renderer.h"
+#include "../render/sprite_render_system.h" // 必须包含，用于注册逻辑
 #include <spdlog/spdlog.h>
 
 namespace engine::component
 {
-    // SpriteComponent.cpp
     SpriteComponent::SpriteComponent(const std::string &texture_id,
-                                     engine::resource::ResourceManager &resource_manager,
-                                     engine::utils::Alignment alignment, // 删掉下划线前缀，避免混淆
+                                     engine::utils::Alignment alignment,
                                      std::optional<engine::utils::FRect> source_rect_opt,
                                      bool is_flipped)
-        : _resource_manager(&resource_manager), // 必须取地址，因为成员是指针
-          _sprite(texture_id, source_rect_opt, is_flipped),
+        : _sprite(texture_id, source_rect_opt, is_flipped),
           _alignment(alignment)
     {
-        if (!_resource_manager)
-        {
-            spdlog::critical("创建SpriteComponent时，_resource_manager为空指针");
-        }
         spdlog::trace("创建SpriteComponent，纹理ID: {}", texture_id);
+    }
+
+    // ⚡️ 必须实现析构，否则 System 会尝试访问已销毁的组件指针导致崩溃
+    SpriteComponent::~SpriteComponent()
+    {
+        if (_context)
+        {
+            _context->getSpriteRenderSystem().unregisterComponent(this);
+            spdlog::trace("SpriteComponent 已从渲染系统中注销");
+        }
     }
 
     void SpriteComponent::init()
     {
-        if (!_owner)
+        // _owner 和 _context 通常在 GameObject::addComponent 时通过 attach 注入
+        if (!_owner || !_context)
         {
-            spdlog::error("SpriteComponent的_owner为空指针");
-            return;
-        }
-        _transform_comp = _owner->addComponent<TransformComponent>();
-        if (!_transform_comp)
-        {
-            spdlog::warn("GameObject{}上的SpriteComponent需要一个TransformComponent，但未找到", _owner->getName());
+            spdlog::error("SpriteComponent 初始化失败：_owner 或 _context 未绑定");
             return;
         }
 
-        // 更新大小以及偏移量
+        // 1. 获取（或自动添加）Transform 组件并缓存指针
+        _transform_comp = _owner->getComponent<TransformComponent>();
+        if (!_transform_comp)
+        {
+            _transform_comp = _owner->addComponent<TransformComponent>();
+        }
+
+        // 2. ⚡️ 向 Context 里的渲染系统注册自己
+        _context->getSpriteRenderSystem().registerComponent(this);
+
+        // 3. 初始化数据
         updateSpriteSize();
         updateOffset();
     }
 
-    void SpriteComponent::render(engine::core::Context &context)
+    void SpriteComponent::update(float delta_time)
     {
-        if (_is_hidden || !_transform_comp || !_resource_manager)
-        {
-            return;
-        }
-
-        // 检查 Transform 是否变动过
-        if (_transform_comp->getVersion() != _last_transform_version)
-        {
-            updateOffset();
-            _last_transform_version = _transform_comp->getVersion();
-            spdlog::trace("Transform 版本变更，Sprite 更新偏移量");
-        }
-        
-        // 获得变换信息（考虑偏移量）
-        const glm::vec2 &pos = _transform_comp->getPosition() + _offset;
-        const glm::vec2 &scale = _transform_comp->getScale();
-        float roatation_degrees = _transform_comp->getRotation();
-
-        // 渲染精灵
-        context.getRenderer().drawSprite(context.getCamera(), _sprite, pos, scale, roatation_degrees);
+        if (_transform_comp && _transform_comp->getVersion() != _last_transform_version) {
+        updateOffset();
+        _last_transform_version = _transform_comp->getVersion();
+    }
     }
 
     void SpriteComponent::setAlignment(engine::utils::Alignment archor)
     {
         _alignment = archor;
-        // 更新锚点的时候更新偏移量
         updateOffset();
     }
+
     void SpriteComponent::updateOffset()
     {
-        // 如果尺寸大小为0，则不更新偏移量
+        // 如果 Transform 不存在或尺寸非法，不进行计算
         if (!_transform_comp || _sprite_size.x <= 0 || _sprite_size.y <= 0)
         {
             _offset = {0.0f, 0.0f};
             return;
         }
-        auto scale = _transform_comp->getScale();
-        // 计算偏移量
+
+        const glm::vec2& scale = _transform_comp->getScale();
+        
+        // 基于锚点(Alignment)计算偏移量
+        // 原理：将渲染位置根据对齐方式偏移到正确的位置
         switch (_alignment)
         {
         case engine::utils::Alignment::CENTER:
@@ -116,13 +112,15 @@ namespace engine::component
             break;
         case engine::utils::Alignment::NONE:
         default:
+            _offset = {0.0f, 0.0f};
             break;
         }
     }
-    void SpriteComponent::setSpriteById(const std::string &texture_id, std::optional<engine::utils::FRect> _source_rect_opt)
+
+    void SpriteComponent::setSpriteById(const std::string &texture_id, std::optional<engine::utils::FRect> source_rect_opt)
     {
         _sprite.setTextureId(texture_id);
-        _sprite.setSourceRect(_source_rect_opt);
+        _sprite.setSourceRect(source_rect_opt);
 
         updateSpriteSize();
         updateOffset();
@@ -132,14 +130,11 @@ namespace engine::component
     {
         _sprite.setSourceRect(source_rect_opt);
         updateSpriteSize();
+        updateOffset(); // 区域变了，偏移量必须重新计算
     }
+
     void SpriteComponent::updateSpriteSize()
     {
-        if (!_resource_manager)
-        {
-            spdlog::error("SpriteComponent的_resource_manager为空指针");
-            return;
-        }
         auto source_rect_opt = _sprite.getSourceRect();
         if (source_rect_opt.has_value())
         {
@@ -147,7 +142,10 @@ namespace engine::component
         }
         else
         {
-            _sprite_size = _resource_manager->getTextureSize(_sprite.getTextureId());
+            // ✅ 使用成员变量 _context 访问资源管理器
+            if (_context) {
+                _sprite_size = _context->getResourceManager().getTextureSize(_sprite.getTextureId());
+            }
         }
     }
 }

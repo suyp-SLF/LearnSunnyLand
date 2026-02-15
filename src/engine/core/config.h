@@ -55,6 +55,7 @@ namespace engine::core
         bool _window_resizable = true;
 
         // 图形设置
+        int _render_type = 0; // 渲染类型
         bool _vsync_enabled = true;
         // 性能设置
         int _target_fps = 60;

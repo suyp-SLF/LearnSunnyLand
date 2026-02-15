@@ -1,0 +1,1 @@
+#include "parallax_component.h"

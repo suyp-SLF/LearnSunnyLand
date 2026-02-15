@@ -3,52 +3,103 @@
 #include <memory>
 #include <string>
 #include <glm/glm.hpp>
+#include <SDL3/SDL_gpu.h>
+#include <SDL3_ttf/SDL_ttf.h>
 
-struct Mix_Music;
-struct TTF_Font;
-struct SDL_Texture;
-struct MIX_Audio;
+// --- 前向声明 ---
+// SDL 相关
 struct SDL_Renderer;
+struct SDL_GPUDevice;
+struct SDL_Texture;
+struct SDL_GPUTexture;
+
+// SDL_mixer 相关
+struct _Mix_Music;
+typedef struct _Mix_Music Mix_Music;
+struct MIX_Audio;
+
 
 namespace engine::resource
 {
-    // 纹理管理器类的前向声明
-    // 这个类用于管理和处理各种纹理资源
+    // 子管理器前向声明
     class TextureManager;
     class AudioManager;
     class FontManager;
+    class ShaderManager;
+
+    /**
+     * @brief 资源管理器（门面类）
+     * 负责统一管理纹理、音频、字体等资源的生命周期
+     */
     class ResourceManager
     {
     private:
+        // 渲染后端指针（允许其中一个为 nullptr）
+        SDL_Renderer* _renderer = nullptr;
+        SDL_GPUDevice* _gpu_device = nullptr;
+
+        // 组合各个子管理器
         std::unique_ptr<TextureManager> _texture_manager;
         std::unique_ptr<AudioManager> _audio_manager;
         std::unique_ptr<FontManager> _font_manager;
+        std::unique_ptr<ShaderManager> _shader_manager;
 
     public:
-        explicit ResourceManager(SDL_Renderer *renderer);
+        /**
+         * @brief 构造函数
+         * @param renderer 旧版渲染器指针（若不使用则传 nullptr）
+         * @param device   SDL3 GPU设备指针（若不使用则传 nullptr）
+         */
+        explicit ResourceManager(SDL_Renderer* renderer, SDL_GPUDevice* device);
         ~ResourceManager();
-        void clear();
 
-        // 删除拷贝移动
-        ResourceManager(const ResourceManager &) = delete;
-        ResourceManager &operator=(const ResourceManager &) = delete;
-        ResourceManager(ResourceManager &&) = delete;
-        ResourceManager &operator=(ResourceManager &&) = delete;
+        // 禁用拷贝与移动
+        ResourceManager(const ResourceManager&) = delete;
+        ResourceManager& operator=(const ResourceManager&) = delete;
+        ResourceManager(ResourceManager&&) = delete;
+        ResourceManager& operator=(ResourceManager&&) = delete;
 
-        SDL_Texture  *loadTexture(const std::string &path);
-        glm::vec2 getTextureSize(const std::string &path);
-        SDL_Texture *getTexture(const std::string &path);
-        void unloadTexture(const std::string &path);
+        // --- 纹理资源接口 ---
+
+        /** @brief 获取适用于 SDL_Renderer 的旧版纹理 */
+        SDL_Texture* getTexture(const std::string& path);
+
+
+        /** @brief 获取适用于 SDL3 GPU 的现代纹理 */
+        SDL_GPUTexture* getGPUTexture(const std::string& path);
+
+        /** @brief 获取纹理的原始尺寸 (px) */
+        glm::vec2 getTextureSize(const std::string& path);
         void clearTextures();
+        /** @brief 从内存中手动卸载特定纹理 */
+        void unloadTexture(const std::string& path);
+
+  
+
+        // --- 音频资源接口 ---
+
+        /** @brief 获取音效数据 (WAV/Chunk) */
+        MIX_Audio* getAudio(const std::string& path);
+        
+        /** @brief 获取音乐数据 (MP3/OGG/Music) */
+        Mix_Music* getMusic(const std::string& path);
 
         MIX_Audio *loadAudio(const std::string &path);
-        MIX_Audio *getAudio(const std::string &path);
-        void unloadAudio(const std::string &path);
-        void clearAudios();
+        void unloadAudio(const std::string& path);
 
-        TTF_Font *loadFont(const std::string &path, const int point_size);
-        TTF_Font *getFont(const std::string &path, const int point_size);
-        void unloadFont(const std::string &path, const int point_size);
-        void clearFonts();
+        // --- 字体资源接口 ---
+
+        /** @brief 获取指定大小的字体 */
+        TTF_Font* getFont(const std::string& path, int point_size);
+
+        void unloadFont(const std::string& path, int point_size);
+
+        SDL_GPUShader* loadShader(const std::string& name, const std::string& path);    
+        // --- 通用管理 ---
+
+        /** @brief 清空所有已加载的资源 */
+        void clear();
+
+
     };
-};
+}

@@ -1,34 +1,25 @@
 #pragma once
+#include <memory>
 
-namespace engine::input
-{
-    class InputManager;
-}
-namespace engine::render
-{
-    class Renderer;
-    class Camera;
-}
-namespace engine::resource
-{
-    class ResourceManager;
-}
+// 前置声明
+namespace engine::input { class InputManager; }
+namespace engine::render { class Renderer; class Camera; class SpriteRenderSystem; }
+namespace engine::resource { class ResourceManager; }
 
 namespace engine::core
 {
     class Context final
     {
-    private:
-        engine::input::InputManager &_input_manager;
-        engine::render::Renderer &_renderer;
-        engine::render::Camera &_camera;
-        engine::resource::ResourceManager &_resource_manager;
 
     public:
-        Context(engine::input::InputManager &input_manager, 
-            engine::render::Renderer &renderer, 
-            engine::render::Camera &camera, 
-            engine::resource::ResourceManager &resource_manager);
+        // 全局静态指针，方便组件在非性能敏感处访问
+        static Context *Current;
+
+        Context(engine::input::InputManager &input_manager,
+                engine::render::Renderer &renderer,
+                engine::render::Camera &camera,
+                engine::resource::ResourceManager &resource_manager);
+        ~Context();
         // 禁止拷贝和移动
         Context(const Context &) = delete;
         Context &operator=(const Context &) = delete;
@@ -36,9 +27,20 @@ namespace engine::core
         Context &operator=(Context &&) = delete;
 
         // GETTER
-        engine::resource::ResourceManager &getResourceManager() const {return _resource_manager;};
-        engine::render::Renderer &getRenderer() const {return _renderer;};
-        engine::render::Camera &getCamera() const {return _camera;};
-        engine::input::InputManager &getInputManager() const {return _input_manager;};
+        engine::resource::ResourceManager &getResourceManager() const { return _resource_manager; };
+        engine::render::Renderer &getRenderer() const { return _renderer; };
+        engine::render::Camera &getCamera() const { return _camera; };
+        engine::input::InputManager &getInputManager() const { return _input_manager; };
+
+        // 获取渲染系统
+        engine::render::SpriteRenderSystem &getSpriteRenderSystem() { return *_sprite_render_system; }
+
+    private:
+        engine::input::InputManager &_input_manager;
+        engine::render::Renderer &_renderer;
+        engine::render::Camera &_camera;
+        engine::resource::ResourceManager &_resource_manager;
+
+        std::unique_ptr<engine::render::SpriteRenderSystem> _sprite_render_system;
     };
 } // namespace engine::core

@@ -36,7 +36,7 @@ namespace engine::component
         void translate(glm::vec2 &translation);
 
         private:
-        void update(float, engine::core::Context &) override {}
-        virtual void render(engine::core::Context& ctx) override {}
+        void update(float delta_time) override {}
+        virtual void render() override {}
     };
 }

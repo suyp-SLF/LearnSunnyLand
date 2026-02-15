@@ -5,7 +5,8 @@
 #include <typeindex>
 #include <spdlog/spdlog.h>
 
-namespace engine::core {
+namespace engine::core
+{
     class Context;
 }
 namespace engine::object
@@ -15,11 +16,15 @@ namespace engine::object
     private:
         std::string _name;
         std::string _tag;
-        std::unordered_map<std::type_index, std::unique_ptr<engine::component::Component>> _components;
+        engine::core::Context* _context = nullptr;
         bool _need_remove = false;
+        std::unordered_map<std::type_index, std::unique_ptr<engine::component::Component>> _components;
+
 
     public:
-        GameObject(const std::string &name = "未定义的名字", const std::string &tag = "未定义的标签");
+        GameObject(engine::core::Context& context, 
+            const std::string &name = "未定义的名字", 
+            const std::string &tag = "未定义的标签");
 
         // 禁止拷贝和移动
         GameObject(const GameObject &) = delete;
@@ -52,7 +57,9 @@ namespace engine::object
             // 如果不存在则创建组件
             auto new_component = std::make_unique<T>(std::forward<Args>(args)...);
             T *ptr = new_component.get();
-            new_component->setOwner(this);
+            // 这会自动设置 _owner, _context 并触发 ptr->init()
+            // 这里的 _context 是 GameObject 构造时存入的成员变量
+            ptr->attach(this, this->_context);
             _components[type_index] = std::move(new_component);
             ptr->init();
             spdlog::debug(" GameObject {} 添加组件: {}", _name, typeid(T).name());
@@ -91,9 +98,9 @@ namespace engine::object
             }
         }
 
-        void update(float delta_time, engine::core::Context& context);
-        void render(engine::core::Context& context);
+        void update(float delta_time);
+        void render();
         void clean();
-        void handleInput(engine::core::Context& context);
+        void handleInput();
     };
 }; // namespace GameObject

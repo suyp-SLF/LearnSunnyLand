@@ -76,6 +76,7 @@ namespace engine::core
         if (json.contains("graphics"))
         {
             const auto &graphics_config = json["graphics"];
+            _render_type = graphics_config.value("render_type", _render_type);
             _vsync_enabled = graphics_config.value("vsync", _vsync_enabled);
         }
         if (json.contains("performance"))
@@ -119,7 +120,7 @@ namespace engine::core
     {
         return nlohmann::ordered_json{
             {"window", {{"title", _window_title}, {"width", _window_width}, {"height", _window_height}, {"logical_width", _logical_width}, {"logical_height", _logical_height}, {"camer_width", _camera_width}, {"camera_height", _camera_height}, {"resizable", _window_resizable}}},
-            {"graphics", {{"vsync", _vsync_enabled}}},
+            {"graphics", {{"vsync", _vsync_enabled}, {"render_type", _render_type}}},
             {"performance", {{"target_fps", _target_fps}}},
             {"audio", {{"music_volume", _music_volume}, {"sfx_volume", _sfx_volume}}},
             {"input_mapping", _input_mappings}};

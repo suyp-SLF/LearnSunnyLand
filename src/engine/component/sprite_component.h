@@ -33,7 +33,6 @@ namespace engine::component
         // 用于监测变换组件的版本号，如果版本号发生变化，则更新sprite
         uint32_t _last_transform_version = 0xFFFFFFFF; // 初始设为最大值，确保第一次会更新
 
-        engine::resource::ResourceManager *_resource_manager = nullptr;
         TransformComponent *_transform_comp = nullptr;
 
         engine::render::Sprite _sprite;
@@ -44,11 +43,10 @@ namespace engine::component
 
     public:
         SpriteComponent(const std::string &texture_id,
-                engine::resource::ResourceManager &resource_manager,
                 engine::utils::Alignment alignment = engine::utils::Alignment::NONE,
                 std::optional<engine::utils::FRect> source_rect_opt = std::nullopt,
                 bool is_flipped = false); // 这里的默认值必须存在
-        ~SpriteComponent() override = default;
+        ~SpriteComponent() override;
 
         // 禁止拷贝和移动
         SpriteComponent(const SpriteComponent &) = delete;
@@ -66,6 +64,8 @@ namespace engine::component
         engine::utils::Alignment getAlignment() const { return _alignment; }
         bool isFlipped() const { return _sprite.isFlipped(); }
         bool isHidden() const { return _is_hidden; }
+        // 提供给 System 使用的 Transform 指针
+        TransformComponent* getTransformComp() const { return _transform_comp; }
 
         // SETTER
         void setSpriteById(const std::string &texture_id, std::optional<engine::utils::FRect> _source_rect_opt = std::nullopt);
@@ -79,7 +79,8 @@ namespace engine::component
 
         // Component
         virtual void init() override;
-        virtual void update(float, engine::core::Context &) override {};
-        virtual void render(engine::core::Context &) override;
+        virtual void update(float delta_time) override;
+        // ⚡️ render 逻辑现在由 SpriteRenderSystem 统一管理，组件内不再执行
+        virtual void render() override {}
     };
 }

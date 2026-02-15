@@ -1,83 +1,118 @@
 #include "texture_manager.h"
-#include <spdlog/spdlog.h>
-#include <memory>
+#include "resource_types.h"
 #include <SDL3_image/SDL_image.h>
 
 namespace engine::resource
 {
-    TextureManager::TextureManager(SDL_Renderer *renderer) : _renderer(renderer)
-    {
-        if (!_renderer)
-        {
-            throw std::runtime_error("TextureManager 构造函数错误，SDL_Renderer 为空");
-        }
-        spdlog::trace("TextureManager 构造函数调用");
-    }
-    TextureManager::~TextureManager() = default;
-    SDL_Texture *TextureManager::loadTexture(const std::string &path)
-    {
-        auto it = _textures.find(path);
-        if (it != _textures.end())
-        {
-            return it->second.get();
-        }
-        SDL_Texture *raw_texture = IMG_LoadTexture(_renderer, path.c_str());
-        if (!raw_texture)
-        {
-            spdlog::error("加载纹理失败:'{}' {}", path, SDL_GetError());
-            return nullptr;
-        }
-        _textures.emplace(path, std::unique_ptr<SDL_Texture, SDLTextureDeleter>(raw_texture));
-        spdlog::info("加载纹理成功:'{}'", path);
-        return raw_texture;
+    TextureManager::TextureManager(SDL_Renderer *renderer, SDL_GPUDevice *gpu_device) 
+        : _renderer(renderer), _gpu_device(gpu_device) {}
+
+    TextureManager::~TextureManager() {
+        clearTextures();
     }
 
-    SDL_Texture *TextureManager::getTexture(const std::string &path)
-    {
-        auto it = _textures.find(path);
-        if (it != _textures.end())
-        {
-            spdlog::trace("纹理已存在:'{}'", path);
-            return it->second.get();
-        }
-        spdlog::warn("纹理不存在，尝试加载:'{}',", path);
-        return loadTexture(path);
+    // --- 实现头文件中声明的所有公开接口 ---
+
+    SDL_Texture* TextureManager::getLegacyTexture(const std::string& path) {
+        return getInternal(path).sdl_tex; // 注意这里是 sdl_tex
     }
-    glm::vec2 TextureManager::getTextureSize(const std::string &path)
-    {
-        SDL_Texture *texture = getTexture(path);
-        if (!texture)
-        {
-            spdlog::error("获取纹理大小失败:'{}'", path);
-            return glm::vec2(0, 0);
-        }
-        glm::vec2 size;
-        if (!SDL_GetTextureSize(texture, &size.x, &size.y))
-        {
-            spdlog::error("获取纹理大小失败:'{}'", path);
-            return glm::vec2(0, 0);
-        }
-        return size;
+
+    SDL_GPUTexture* TextureManager::getGPUTexture(const std::string& path) {
+        return getInternal(path).gpu_tex; // 注意这里是 gpu_tex
     }
-    void TextureManager::unloadTexture(const std::string &path)
-    {
-        auto it = _textures.find(path);
-        if (it != _textures.end())
-        {
-            spdlog::debug("卸载纹理:'{}'", path);
-            _textures.erase(it);
-        }
-        else
-        {
-            spdlog::warn("尝试卸载不存在的纹理:'{}'", path);
+
+    glm::vec2 TextureManager::getTextureSize(const std::string& path) {
+        auto& res = getInternal(path);
+        return res.size; 
+    }
+
+    void TextureManager::unloadTexture(const std::string& path) {
+        if (auto it = _cache.find(path); it != _cache.end()) {
+            it->second.release(_renderer, _gpu_device);
+            _cache.erase(it);
         }
     }
-    void TextureManager::clearTextures()
-    {
-        if (!_textures.empty())
-        {
-            spdlog::debug("正在清除所有 {} 个缓存的纹理。", _textures.size());
-            _textures.clear();
+
+    void TextureManager::clearTextures() {
+        for (auto& [path, res] : _cache) {
+            res.release(_renderer, _gpu_device);
         }
+        _cache.clear();
     }
-};
+
+    // --- 核心逻辑 ---
+
+    TextureResource& TextureManager::getInternal(const std::string& path) {
+        if (_cache.find(path) == _cache.end()) {
+            forceLoad(path);
+        }
+        return _cache[path];
+    }
+
+    bool TextureManager::forceLoad(const std::string& path) {
+        SDL_Surface *surf = IMG_Load(path.c_str());
+        if (!surf) return false;
+
+        // 确保 Surface 是 RGBA32 格式，方便上传 GPU
+        SDL_Surface *converted = SDL_ConvertSurface(surf, SDL_PIXELFORMAT_RGBA32);
+        SDL_DestroySurface(surf);
+        if (!converted) return false;
+
+        TextureResource res;
+        res.size = glm::vec2(converted->w, converted->h);
+        
+        if (_renderer) {
+            res.sdl_tex = SDL_CreateTextureFromSurface(_renderer, converted);
+        }
+        
+        if (_gpu_device) {
+            res.gpu_tex = uploadToGPU(converted);
+        }
+
+        SDL_DestroySurface(converted);
+        _cache[path] = res;
+        return true;
+    }
+
+    SDL_GPUTexture* TextureManager::uploadToGPU(SDL_Surface* surface) {
+        if (!_gpu_device) return nullptr;
+
+        // 1. 创建纹理
+        SDL_GPUTextureCreateInfo tci = {
+            .type = SDL_GPU_TEXTURETYPE_2D,
+            .format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
+            .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER,
+            .width = (uint32_t)surface->w,
+            .height = (uint32_t)surface->h,
+            .layer_count_or_depth = 1,
+            .num_levels = 1
+        };
+        SDL_GPUTexture *gpuTex = SDL_CreateGPUTexture(_gpu_device, &tci);
+
+        // 2. 传输缓冲 (Staging)
+        uint32_t size = (uint32_t)(surface->w * surface->h * 4);
+        SDL_GPUTransferBufferCreateInfo tbci = {
+            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+            .size = size
+        };
+        SDL_GPUTransferBuffer *staging = SDL_CreateGPUTransferBuffer(_gpu_device, &tbci);
+
+        void *map = SDL_MapGPUTransferBuffer(_gpu_device, staging, false);
+        std::memcpy(map, surface->pixels, size);
+        SDL_UnmapGPUTransferBuffer(_gpu_device, staging);
+
+        // 3. 提交复制指令
+        SDL_GPUCommandBuffer *cmd = SDL_AcquireGPUCommandBuffer(_gpu_device);
+        SDL_GPUCopyPass *copyPass = SDL_BeginGPUCopyPass(cmd);
+
+        SDL_GPUTextureTransferInfo src = {.transfer_buffer = staging, .offset = 0};
+        SDL_GPUTextureRegion dst = {.texture = gpuTex, .w = tci.width, .h = tci.height, .d = 1};
+
+        SDL_UploadToGPUTexture(copyPass, &src, &dst, false);
+        SDL_EndGPUCopyPass(copyPass);
+        SDL_SubmitGPUCommandBuffer(cmd);
+
+        SDL_ReleaseGPUTransferBuffer(_gpu_device, staging);
+        return gpuTex;
+    }
+}

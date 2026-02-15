@@ -17,8 +17,15 @@ namespace engine::component
 
     protected:
         engine::object::GameObject *_owner = nullptr;
+        engine::core::Context *_context = nullptr; // ⚡️ 新增：缓存上下文
 
     public:
+    // ⚡️ 由 GameObject 调用，完成依赖注入
+        void attach(engine::object::GameObject* owner, engine::core::Context* ctx) {
+            _owner = owner;
+            _context = ctx;
+            init(); // 确保在拿到 context 后才初始化
+        }
         Component() = default;
         virtual ~Component() = default;
 
@@ -33,9 +40,9 @@ namespace engine::component
 
     protected:
         virtual void init() {};
-        virtual void handleInput(engine::core::Context&) {};
-        virtual void update(float, engine::core::Context&) = 0;
-        virtual void render(engine::core::Context&) = 0;
+        virtual void handleInput() {};
+        virtual void update(float delta_time) = 0;
+        virtual void render() = 0;
         virtual void clean() {};
     };
 }; // namespace engine::component
