@@ -17,6 +17,9 @@ namespace engine::render
 
     public:
         virtual ~Renderer() = default;
+
+        // 将窗口坐标（像素）转换为游戏内的逻辑坐标
+        virtual glm::vec2 windowToLogical(float window_x, float window_y) const = 0;
         virtual void setResourceManager(engine::resource::ResourceManager *mgr)
         {
             _res_mgr = mgr;
@@ -37,5 +40,6 @@ namespace engine::render
         virtual void drawParallax(const Camera &camera, const Sprite &sprite, const glm::vec2 &position,
                                   const glm::vec2 &scroll_factor, const glm::bvec2 &repeat,
                                   const glm::vec2 &scale, double angle) = 0;
+        virtual void clean() = 0;
     };
 }

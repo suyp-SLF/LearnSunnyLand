@@ -10,6 +10,10 @@ namespace engine::core
 {
     class Config;
 }
+namespace engine::render
+{
+    class Renderer;
+}
 
 namespace engine::input
 {
@@ -24,7 +28,7 @@ namespace engine::input
     class InputManager
     {
     private:
-        SDL_Renderer *_sdl_renderer;
+        engine::render::Renderer *_renderer = nullptr;
         std::unordered_map<std::string, std::vector<std::string>> _actions_to_keyname_map;
         std::unordered_map<std::variant<SDL_Scancode, Uint32>, std::vector<std::string>> _input_to_action_map;
 
@@ -34,7 +38,7 @@ namespace engine::input
         glm::vec2 _mouse_position;
 
     public:
-        InputManager(SDL_Renderer *sdl_renderer, const engine::core::Config *config);
+        InputManager(engine::render::Renderer *_renderer, const engine::core::Config *config);
 
         void update();
 

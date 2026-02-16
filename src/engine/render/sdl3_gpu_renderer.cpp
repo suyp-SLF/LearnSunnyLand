@@ -40,6 +40,7 @@ namespace engine::render
 
     void SDL3GPURenderer::initGPU()
     {
+
         _device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_MSL | SDL_GPU_SHADERFORMAT_DXIL, true, nullptr);
         if (!_device)
         {
@@ -256,6 +257,23 @@ namespace engine::render
 
     void SDL3GPURenderer::drawParallax(const Camera &camera, const Sprite &sprite, const glm::vec2 &position, const glm::vec2 &scroll_factor, const glm::bvec2 &repeat, const glm::vec2 &scale, double angle)
     {
+    }
+
+    glm::vec2 SDL3GPURenderer::windowToLogical(float window_x, float window_y) const
+    {
+        int win_w, win_h;
+        SDL_GetWindowSize(_window, &win_w, &win_h);
+
+        float scale = std::min((float)win_w / _logical_w, (float)win_h / _logical_h);
+        float offset_x = (win_w - _logical_w * scale) * 0.5f;
+        float offset_y = (win_h - _logical_h * scale) * 0.5f;
+
+        return { (window_x - offset_x) / scale, (window_y - offset_y) / scale };
+    }
+
+    void SDL3GPURenderer::clean()
+    {
+        
     }
 
     void SDL3GPURenderer::present()

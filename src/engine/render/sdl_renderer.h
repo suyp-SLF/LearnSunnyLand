@@ -19,7 +19,7 @@ namespace engine::render
     class SDLRenderer final : public Renderer
     {
     private:
-        SDL_Renderer *_renderer = nullptr;
+        SDL_Renderer* _sdl_renderer = nullptr;
 
     public:
         SDLRenderer(SDL_Renderer *renderer);
@@ -35,15 +35,20 @@ namespace engine::render
 
         void setDrawColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a = 255);
         void setDrawColorFloat(float r, float g, float b, float a = 1.0f);
-
-        SDL_Renderer *getSDLRenderer() const;
+        void setResourceManager(engine::resource::ResourceManager *mgr) override;
+        // 将窗口坐标（像素）转换为游戏内的逻辑坐标
+        virtual glm::vec2 windowToLogical(float window_x, float window_y) const override;
+        SDL_Renderer *getSDLRenderer() const { return _sdl_renderer; };
+        virtual void clean() override;
 
         // 禁止拷贝和移动
         SDLRenderer(const SDLRenderer &) = delete;
         SDLRenderer &operator=(const SDLRenderer &) = delete;
         SDLRenderer(SDLRenderer &&) = delete;
         SDLRenderer &operator=(SDLRenderer &&) = delete;
-        private:
+
+    private:
+        void init();
         std::optional<SDL_FRect> getSpriteRect(const Sprite &sprite);
         bool isRectInViewport(const Camera &camera, const SDL_FRect &rect);
     };

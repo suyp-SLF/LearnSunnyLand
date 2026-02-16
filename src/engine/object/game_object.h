@@ -20,7 +20,6 @@ namespace engine::object
         bool _need_remove = false;
         std::unordered_map<std::type_index, std::unique_ptr<engine::component::Component>> _components;
 
-
     public:
         GameObject(engine::core::Context& context, 
             const std::string &name = "未定义的名字", 

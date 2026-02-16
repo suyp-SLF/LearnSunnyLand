@@ -11,10 +11,13 @@ namespace engine::render
     class SDL3GPURenderer final : public Renderer
     {
     public:
+        float _logical_w = 640.0f;
+        float _logical_h = 360.0f;
+
         SDL3GPURenderer(SDL_Window *window);
         ~SDL3GPURenderer() override;
 
-        void setResourceManager(engine::resource::ResourceManager* mgr);
+        void setResourceManager(engine::resource::ResourceManager* mgr) override;
         SDL_GPUDevice* getDevice() const { return _device; }
 
         // 实现基类接口
@@ -28,10 +31,12 @@ namespace engine::render
         void drawParallax(const Camera &camera, const Sprite &sprite, const glm::vec2 &position,
                           const glm::vec2 &scroll_factor, const glm::bvec2 &repeat,
                           const glm::vec2 &scale, double angle) override;
+         // 将窗口坐标（像素）转换为游戏内的逻辑坐标
+        virtual glm::vec2 windowToLogical(float window_x, float window_y) const override;   
+        virtual void clean() override;
 
     private:
         // 本地缓存
-        engine::resource::ResourceManager* _res_mgr = nullptr;
         SDL_GPUDevice *_device = nullptr;
         SDL_Window *_window = nullptr;
 

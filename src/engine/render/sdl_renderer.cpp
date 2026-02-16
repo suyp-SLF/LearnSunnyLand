@@ -6,7 +6,6 @@
 #include <SDL3/SDL.h>
 #include <spdlog/spdlog.h>
 
-
 namespace engine::render
 {
     /**
@@ -18,36 +17,30 @@ namespace engine::render
      * @note 构造过程会记录trace和error级别的日志
      */
     SDLRenderer::SDLRenderer(SDL_Renderer *renderer)
-        : _renderer(renderer)
+        : _sdl_renderer(renderer)
     {
-        spdlog::trace("构造 Renderer");
-        if (!_renderer)
-        {
-            spdlog::error("无法创建渲染器");
-            throw std::runtime_error("无法创建渲染器");
-        }
-        setDrawColor(0, 0, 0, 255);
+
         spdlog::trace("构造 Renderer 完成");
     }
 
     /**
      * @brief 绘制精灵到屏幕
-     * 
+     *
      * @param camera 相机对象，用于世界坐标到屏幕坐标的转换
      * @param sprite 要绘制的精灵对象
      * @param position 精灵在世界坐标系中的位置
      * @param scale 精灵的缩放比例，x和y方向可以不同
      * @param angle 精灵的旋转角度（度）
-     * 
+     *
      * @note 该函数会执行以下操作：
      *       1. 获取精灵对应的纹理资源
      *       2. 计算精灵的源矩形和目标矩形
      *       3. 应用相机变换将世界坐标转换为屏幕坐标
      *       4. 检查精灵是否在可视区域内
      *       5. 使用SDL渲染旋转后的精灵
-     * 
+     *
      * @warning 如果纹理获取失败或源矩形无效，函数会记录错误并返回
-     * 
+     *
      * @details 特殊字符处理：
      *          - \t: 制表符
      *          - \r: 回车符
@@ -55,10 +48,10 @@ namespace engine::render
      */
     void SDLRenderer::drawSprite(const Camera &camera, const Sprite &sprite, const glm::vec2 &position, const glm::vec2 &scale, double angle)
     {
-        if (!engine::core::Context::Current) return;
-        auto& res_mgr = engine::core::Context::Current->getResourceManager();
+        if (!_res_mgr)
+            return;
 
-        auto texture = res_mgr.getTexture(sprite.getTextureId());
+        auto texture = _res_mgr->getTexture(sprite.getTextureId());
         if (!texture)
         {
             spdlog::error("无法为ID：{}的纹理获取纹理", sprite.getTextureId());
@@ -73,8 +66,8 @@ namespace engine::render
         // 应用相机变换
         glm::vec2 position_screen = camera.worldToScreen(position);
         // 计算目标矩形
-        float scaled_width = src_rect.value().w;// * scale.x;
-        float scaled_height = src_rect.value().h;// * scale.y;
+        float scaled_width = src_rect.value().w;  // * scale.x;
+        float scaled_height = src_rect.value().h; // * scale.y;
         SDL_FRect dst_rect = {position_screen.x,
                               position_screen.y,
                               scaled_width,
@@ -86,7 +79,7 @@ namespace engine::render
             return;
         }
         // 执行绘制
-        if (!SDL_RenderTextureRotated(_renderer, texture, &src_rect.value(), &dst_rect, angle, nullptr, sprite.isFlipped() ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE))
+        if (!SDL_RenderTextureRotated(_sdl_renderer, texture, &src_rect.value(), &dst_rect, angle, nullptr, sprite.isFlipped() ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE))
         {
             spdlog::error("渲染旋转纹理失败，ID：{}：{}", sprite.getTextureId(), SDL_GetError());
         }
@@ -94,9 +87,10 @@ namespace engine::render
     }
     void SDLRenderer::drawParallax(const Camera &camera, const Sprite &sprite, const glm::vec2 &position, const glm::vec2 &scroll_factor, const glm::bvec2 &repeat, const glm::vec2 &scale, double angle)
     {
-        if (!engine::core::Context::Current) return;
-        auto& res_mgr = engine::core::Context::Current->getResourceManager();
-        auto texture = res_mgr.getTexture(sprite.getTextureId());
+        if (!engine::core::Context::Current)
+            return;
+
+        auto texture = _res_mgr->getTexture(sprite.getTextureId());
         if (!texture)
         {
             spdlog::error("无法为ID：{}的纹理获取纹理", sprite.getTextureId());
@@ -142,7 +136,7 @@ namespace engine::render
             for (float y = start.y; y < stop.y; y += scaled_height)
             {
                 SDL_FRect dst_rect = {x, y, scaled_width, scaled_height};
-                if (!SDL_RenderTexture(_renderer, texture, nullptr, &dst_rect))
+                if (!SDL_RenderTexture(_sdl_renderer, texture, nullptr, &dst_rect))
                 {
                     spdlog::error("渲染纹理失败，ID {}：{}", sprite.getTextureId(), SDL_GetError());
                     return;
@@ -152,24 +146,25 @@ namespace engine::render
     }
     /**
      * @brief 在UI上绘制一个精灵
-     * 
+     *
      * @param sprite 要绘制的精灵对象，包含纹理ID、翻转状态等信息
      * @param position 绘制位置的坐标(x, y)
      * @param size 可选参数，指定绘制的尺寸(width, height)。如果不提供，则使用精灵的原始尺寸
-     * 
+     *
      * @note 该函数会处理以下特殊情况：
      *       - 纹理获取失败时记录错误并返回
      *       - 精灵源矩形获取失败时记录错误并返回
      *       - 支持水平翻转绘制
      *       - 支持自定义绘制尺寸
-     * 
+     *
      * @warning 函数内部使用SDL_RenderTextureRotated进行绘制，如果绘制失败会记录SDL错误信息
      */
     void SDLRenderer::drawUISprite(const Sprite &sprite, const glm::vec2 &position, const std::optional<glm::vec2> &size)
     {
-        if (!engine::core::Context::Current) return;
-        auto& res_mgr = engine::core::Context::Current->getResourceManager();
-        auto texture = res_mgr.getTexture(sprite.getTextureId());
+        if (!engine::core::Context::Current)
+            return;
+
+        auto texture = _res_mgr->getTexture(sprite.getTextureId());
         if (!texture)
         {
             spdlog::error("无法为ID：{}的纹理获取纹理", sprite.getTextureId());
@@ -194,7 +189,7 @@ namespace engine::render
             dst_rect.h = src_rect.value().h;
         }
         // 执行绘制
-        if (!SDL_RenderTextureRotated(_renderer, texture, &src_rect.value(), &dst_rect, 0.0f, nullptr, sprite.isFlipped() ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE))
+        if (!SDL_RenderTextureRotated(_sdl_renderer, texture, &src_rect.value(), &dst_rect, 0.0f, nullptr, sprite.isFlipped() ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE))
         {
             spdlog::error("渲染旋转纹理失败，ID：{}：{}", sprite.getTextureId(), SDL_GetError());
         }
@@ -202,31 +197,31 @@ namespace engine::render
 
     /**
      * @brief 将渲染缓冲区的内容呈现到屏幕上
-     * 
+     *
      * 该函数调用SDL的渲染呈现功能，将所有渲染操作的结果显示在屏幕上。
      * 如果渲染失败，会记录错误日志。
-     * 
+     *
      * @note 该函数不处理\t、\r或\n等特殊字符，仅处理渲染缓冲区内容
      */
     void SDLRenderer::present()
     {
-        if (!SDL_RenderPresent(_renderer))
+        if (!SDL_RenderPresent(_sdl_renderer))
         {
             spdlog::error("渲染失败：{}", SDL_GetError());
         }
     }
     /**
      * @brief 清除屏幕渲染缓冲区
-     * 
+     *
      * 该函数使用SDL的渲染清除功能来清除当前渲染目标的内容。
      * 清除操作可能失败，如果失败会记录错误日志。
-     * 
+     *
      * @note 该函数会处理SDL_RenderClear可能返回的错误情况
      * @note 特殊字符处理：\t(制表符), \r(回车符), \n(换行符)
      */
     void SDLRenderer::clearScreen()
     {
-        if (!SDL_RenderClear(_renderer))
+        if (!SDL_RenderClear(_sdl_renderer))
         {
             spdlog::error("清屏失败：{}", SDL_GetError());
         }
@@ -242,33 +237,55 @@ namespace engine::render
      */
     void SDLRenderer::setDrawColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a)
     {
-        if (!SDL_SetRenderDrawColor(_renderer, r, g, b, a))
+        if (!SDL_SetRenderDrawColor(_sdl_renderer, r, g, b, a))
         {
             spdlog::error("设置绘制颜色失败：{}", SDL_GetError());
         }
     }
     /**
      * @brief 设置渲染器的绘制颜色（浮点数格式）
-     * 
+     *
      * @param r 红色分量，范围 [0.0, 1.0]
      * @param g 绿色分量，范围 [0.0, 1.0]
      * @param b 蓝色分量，范围 [0.0, 1.0]
      * @param a 透明度分量，范围 [0.0, 1.0]
-     * 
+     *
      * @note 该方法会调用 SDL_SetRenderDrawColorFloat 设置颜色
      * @note 如果设置失败，会记录错误日志
      * @note 错误信息包含 SDL 返回的错误字符串
-     * 
+     *
      * @warning 颜色值超出范围可能导致未定义行为
-     * 
+     *
      * @see SDL_SetRenderDrawColorFloat
      */
     void SDLRenderer::setDrawColorFloat(float r, float g, float b, float a)
     {
-        if (!SDL_SetRenderDrawColorFloat(_renderer, r, g, b, a))
+        if (!SDL_SetRenderDrawColorFloat(_sdl_renderer, r, g, b, a))
         {
             spdlog::error("设置绘制颜色失败：{}", SDL_GetError());
         }
+    }
+    void SDLRenderer::setResourceManager(engine::resource::ResourceManager *mgr)
+    {
+        _res_mgr = mgr;
+    }
+    glm::vec2 SDLRenderer::windowToLogical(float window_x, float window_y) const
+    {
+        glm::vec2 logical_pos; // 获取窗口的缩放比例
+        // 依然使用 SDL 的内置转换
+        SDL_RenderCoordinatesFromWindow(_sdl_renderer, window_x, window_y, &logical_pos.x, &logical_pos.y);
+        return logical_pos;
+    }
+    void SDLRenderer::clean()
+    {
+        if (_sdl_renderer)
+        {
+            SDL_DestroyRenderer(_sdl_renderer);
+            _sdl_renderer = nullptr;
+        }
+    }
+    void SDLRenderer::init()
+    {
     }
     /**
      * @brief 获取精灵的矩形区域
@@ -284,9 +301,10 @@ namespace engine::render
      */
     std::optional<SDL_FRect> SDLRenderer::getSpriteRect(const Sprite &sprite)
     {
-        if (!engine::core::Context::Current) return std::nullopt;
-        auto& res_mgr = engine::core::Context::Current->getResourceManager();
-        SDL_Texture *texture = res_mgr.getTexture(sprite.getTextureId());
+        if (!_res_mgr)
+            return std::nullopt;
+
+        SDL_Texture *texture = _res_mgr->getTexture(sprite.getTextureId());
         if (!texture)
         {
             spdlog::error("无法为ID：{}的纹理获取纹理", sprite.getTextureId());
@@ -295,18 +313,17 @@ namespace engine::render
         auto src_rect = sprite.getSourceRect();
         if (src_rect.has_value())
         {
-            auto& r = src_rect.value();
+            auto &r = src_rect.value();
             // 映射关系：
             // SDL_FRect.x = position.x
             // SDL_FRect.y = position.y
             // SDL_FRect.w = size.x (宽度)
             // SDL_FRect.h = size.y (高度)
-            SDL_FRect t_src_rect = { 
-                r.position.x, 
-                r.position.y, 
-                r.size.x, 
-                r.size.y 
-            };
+            SDL_FRect t_src_rect = {
+                r.position.x,
+                r.position.y,
+                r.size.x,
+                r.size.y};
             if (t_src_rect.w <= 0 || t_src_rect.h <= 0)
             {
                 spdlog::error("源矩形尺寸无效，ID：{}", sprite.getTextureId());
@@ -329,12 +346,12 @@ namespace engine::render
     }
     /**
      * @brief 检查矩形是否完全位于相机视口内
-     * 
+     *
      * @param camera 相机对象，用于获取视口尺寸
      * @param rect 要检查的矩形，包含位置和尺寸信息
      * @return true 如果矩形完全位于视口内
      * @return false 如果矩形部分或完全位于视口外
-     * 
+     *
      * @note 该方法通过比较矩形的四个边界与视口边界的关系来判断
      */
     bool SDLRenderer::isRectInViewport(const Camera &camera, const SDL_FRect &rect)

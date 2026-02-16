@@ -158,10 +158,9 @@ namespace engine::core
     void GameApp::close()
     {
         spdlog::trace("关闭游戏");
-        if (_sdl_renderer)
+        if (_renderer)
         {
-            SDL_DestroyRenderer(_sdl_renderer);
-            _sdl_renderer = nullptr;
+            _renderer->clean();
         }
         if (_window)
         {
@@ -215,19 +214,6 @@ namespace engine::core
             spdlog::error("SDL窗口创建失败，SDL错误信息：{}", SDL_GetError());
             return false;
         }
-        _sdl_renderer = SDL_CreateRenderer(_window, nullptr);
-        if (!_sdl_renderer)
-        {
-            spdlog::error("SDL渲染器创建失败，SDL错误信息：{}", SDL_GetError());
-            return false;
-        }
-
-        // 设置VSync
-        int vsync_mode = _config->_vsync_enabled ? SDL_RENDERER_VSYNC_ADAPTIVE : SDL_RENDERER_VSYNC_DISABLED;
-        SDL_SetRenderVSync(_sdl_renderer, vsync_mode);
-        spdlog::trace("SDL 渲染器VSync模式：{}", vsync_mode == SDL_RENDERER_VSYNC_ADAPTIVE ? "自适应" : "禁用");
-        // 设置逻辑分辨率
-        SDL_SetRenderLogicalPresentation(_sdl_renderer, _config->_logical_width, _config->_logical_height, SDL_LOGICAL_PRESENTATION_LETTERBOX);
         spdlog::trace("SDL 初始化成功");
         return true;
     }
@@ -271,7 +257,7 @@ namespace engine::core
     {
         try
         {
-            _resource_manager = std::make_unique<engine::resource::ResourceManager>(_sdl_renderer, nullptr);
+            _resource_manager = std::make_unique<engine::resource::ResourceManager>(nullptr, nullptr);
         }
         catch (const std::exception &e)
         {
@@ -293,12 +279,7 @@ namespace engine::core
     {
         try
         {
-            if (_config->_render_type == 0)
-            {
-                spdlog::trace("使用SDL渲染器");
-                _renderer = std::make_unique<engine::render::SDLRenderer>(_sdl_renderer);
-            }
-            else if (_config->_render_type == 1)
+            if (_config->_render_type == 1)
             {
                 auto gpu_renderer = std::make_unique<engine::render::SDL3GPURenderer>(_window);
 
@@ -315,10 +296,31 @@ namespace engine::core
                 gpu_renderer->setResourceManager(_resource_manager.get());
 
                 _renderer = std::move(gpu_renderer);
-            }else{
+            }
+            else
+            {
+                SDL_Renderer* sdl_renderer = SDL_CreateRenderer(_window, nullptr);
+                if (!sdl_renderer)
+                {
+                    spdlog::error("SDL渲染器创建失败，SDL错误信息：{}", SDL_GetError());
+                    return false;
+                }
+
+                // 设置VSync
+                int vsync_mode = _config->_vsync_enabled ? SDL_RENDERER_VSYNC_ADAPTIVE : SDL_RENDERER_VSYNC_DISABLED;
+                SDL_SetRenderVSync(sdl_renderer, vsync_mode);
+                spdlog::trace("SDL 渲染器VSync模式：{}", vsync_mode == SDL_RENDERER_VSYNC_ADAPTIVE ? "自适应" : "禁用");
+                // 设置逻辑分辨率
+                SDL_SetRenderLogicalPresentation(sdl_renderer, _config->_logical_width, _config->_logical_height, SDL_LOGICAL_PRESENTATION_LETTERBOX);
+
                 // SDL 渲染器逻辑...
-            _renderer = std::make_unique<engine::render::SDLRenderer>(_sdl_renderer);
-            _renderer->setResourceManager(_resource_manager.get());
+                _renderer = std::make_unique<engine::render::SDLRenderer>(sdl_renderer);
+
+                if (_resource_manager)
+                {
+                    _resource_manager->init(sdl_renderer, nullptr);
+                }
+                _renderer->setResourceManager(_resource_manager.get());
             }
         }
         catch (const std::exception &e)
@@ -347,7 +349,7 @@ namespace engine::core
     {
         try
         {
-            _input_manager = std::make_unique<engine::input::InputManager>(_sdl_renderer, _config.get());
+            _input_manager = std::make_unique<engine::input::InputManager>(_renderer.get(), _config.get());
         }
         catch (const std::exception &e)
         {

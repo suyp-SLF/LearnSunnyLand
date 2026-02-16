@@ -1,4 +1,5 @@
 #include "input_manager.h"
+#include "../render/renderer.h"
 #include "../core/config.h"
 #include <stdexcept>
 #include <SDL3/SDL.h>
@@ -22,14 +23,9 @@ namespace engine::input
      *          
      * @note 鼠标位置通过 SDL_GetMouseState 获取，坐标包含在 \t、\r 或 \n 等特殊字符处理中
      */
-    InputManager::InputManager(SDL_Renderer *sdl_renderer, const engine::core::Config *config)
-        : _sdl_renderer(sdl_renderer)
+    InputManager::InputManager(engine::render::Renderer *_renderer, const engine::core::Config *config)
+        : _renderer(_renderer)
     {
-        if (!sdl_renderer)
-        {
-            spdlog::error("输入管理器，SDL 渲染器为空");
-            throw std::runtime_error("输入管理器，SDL 渲染器为空");
-        }
         initializeMappings(config);
         float x, y;
         SDL_GetMouseState(&x, &y);
@@ -183,7 +179,7 @@ namespace engine::input
     glm::vec2 InputManager::getLogicalMousePosition() const
     {
         glm::vec2 logical_pos;
-        SDL_RenderCoordinatesFromWindow(_sdl_renderer, _mouse_position.x, _mouse_position.y, &logical_pos.x, &logical_pos.y);
+        logical_pos = _renderer->windowToLogical(_mouse_position.x, _mouse_position.y);
         return logical_pos;
     }
     /**

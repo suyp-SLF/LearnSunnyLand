@@ -10,7 +10,7 @@ namespace game::scene
     class GameScene : public engine::scene::Scene
     {
     public:
-        GameScene(std::string name, engine::core::Context &context, engine::scene::SceneManager &sceneManager);
+        GameScene(const std::string &name, engine::core::Context &context, engine::scene::SceneManager &sceneManager);
 
         //覆盖场景基类的核心方法
         void init() override;

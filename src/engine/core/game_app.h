@@ -39,7 +39,6 @@ namespace engine::core
     {
     private:
         SDL_Window *_window = nullptr;         // SDL窗口指针，用于创建和管理游戏窗口
-        SDL_Renderer *_sdl_renderer = nullptr; // SDL渲染器指针，用于在窗口上绘制图形
         bool _is_running = false;              // 游戏运行状态标志，true表示游戏正在运行
 
         // 引擎组件

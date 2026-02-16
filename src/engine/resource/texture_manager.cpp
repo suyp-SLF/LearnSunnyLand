@@ -56,7 +56,7 @@ namespace engine::resource
         auto it = _cache.find(path);
         if (it == _cache.end())
         {
-            if (!forceLoad(path))
+            if ((!_renderer &&!_gpu_device) || !forceLoad(path))
             {
                 static TextureResource empty; // 失败时返回一个空对象，防止崩溃
                 return empty;
