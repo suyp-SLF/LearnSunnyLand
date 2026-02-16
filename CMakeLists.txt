@@ -66,9 +66,10 @@ add_executable(
 
     src/engine/render/camera.cpp
     src/engine/render/sdl_renderer.cpp
-    src/engine/render/sprite_render_system.cpp
     src/engine/render/vulkan_renderer.cpp
     src/engine/render/sdl3_gpu_renderer.cpp
+    src/engine/render/sprite_render_system.cpp
+    src/engine/render/parallax_render_system.cpp
 
 
     src/engine/component/sprite_component.cpp

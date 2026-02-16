@@ -73,12 +73,6 @@
 },
 {
   "directory": "/Users/suyp/C++/Projects/LearnSunnyLand/build",
-  "command": "/usr/bin/clang++ -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -isystem /Users/suyp/C++/Library/build/include -isystem /opt/homebrew/include -g -std=gnu++20 -arch arm64 -fsanitize=address -fno-omit-frame-pointer -g -Wall -Wextra -Wpedantic -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/sprite_render_system.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/sprite_render_system.cpp",
-  "file": "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/sprite_render_system.cpp",
-  "output": "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/sprite_render_system.cpp.o"
-},
-{
-  "directory": "/Users/suyp/C++/Projects/LearnSunnyLand/build",
   "command": "/usr/bin/clang++ -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -isystem /Users/suyp/C++/Library/build/include -isystem /opt/homebrew/include -g -std=gnu++20 -arch arm64 -fsanitize=address -fno-omit-frame-pointer -g -Wall -Wextra -Wpedantic -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/vulkan_renderer.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/vulkan_renderer.cpp",
   "file": "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/vulkan_renderer.cpp",
   "output": "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/vulkan_renderer.cpp.o"
@@ -88,6 +82,18 @@
   "command": "/usr/bin/clang++ -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -isystem /Users/suyp/C++/Library/build/include -isystem /opt/homebrew/include -g -std=gnu++20 -arch arm64 -fsanitize=address -fno-omit-frame-pointer -g -Wall -Wextra -Wpedantic -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/sdl3_gpu_renderer.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/sdl3_gpu_renderer.cpp",
   "file": "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/sdl3_gpu_renderer.cpp",
   "output": "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/sdl3_gpu_renderer.cpp.o"
+},
+{
+  "directory": "/Users/suyp/C++/Projects/LearnSunnyLand/build",
+  "command": "/usr/bin/clang++ -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -isystem /Users/suyp/C++/Library/build/include -isystem /opt/homebrew/include -g -std=gnu++20 -arch arm64 -fsanitize=address -fno-omit-frame-pointer -g -Wall -Wextra -Wpedantic -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/sprite_render_system.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/sprite_render_system.cpp",
+  "file": "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/sprite_render_system.cpp",
+  "output": "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/sprite_render_system.cpp.o"
+},
+{
+  "directory": "/Users/suyp/C++/Projects/LearnSunnyLand/build",
+  "command": "/usr/bin/clang++ -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -isystem /Users/suyp/C++/Library/build/include -isystem /opt/homebrew/include -g -std=gnu++20 -arch arm64 -fsanitize=address -fno-omit-frame-pointer -g -Wall -Wextra -Wpedantic -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/parallax_render_system.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/parallax_render_system.cpp",
+  "file": "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/parallax_render_system.cpp",
+  "output": "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/parallax_render_system.cpp.o"
 },
 {
   "directory": "/Users/suyp/C++/Projects/LearnSunnyLand/build",

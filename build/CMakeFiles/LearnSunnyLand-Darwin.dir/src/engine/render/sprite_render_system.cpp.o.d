@@ -873,28 +873,16 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/sprite_render_system.cpp.
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__locale_dir/locale_base_api/bsd_locale_defaults.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cstdarg \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/../component/sprite_component.h \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/../component/./component.h \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/../component/../utils/alignment.h \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/../component/../render/sprite.h \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/../component/../render/../utils/math.h \
-  /opt/homebrew/include/glm/glm.hpp \
-  /opt/homebrew/include/glm/detail/_fixes.hpp \
-  /opt/homebrew/include/glm/detail/setup.hpp \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cassert \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/assert.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_assert.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_static_assert.h \
-  /opt/homebrew/include/glm/detail/../simd/platform.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cfloat \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/float.h \
-  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/float.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/float.h \
-  /opt/homebrew/include/glm/fwd.hpp \
-  /opt/homebrew/include/glm/detail/qualifier.hpp \
   /opt/homebrew/include/glm/vec2.hpp \
   /opt/homebrew/include/glm/./ext/vector_bool2.hpp \
   /opt/homebrew/include/glm/./ext/../detail/type_vec2.hpp \
   /opt/homebrew/include/glm/./ext/../detail/qualifier.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/setup.hpp \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cassert \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/assert.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_assert.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_static_assert.h \
+  /opt/homebrew/include/glm/./ext/../detail/../simd/platform.h \
   /opt/homebrew/include/glm/./ext/../detail/type_vec2.inl \
   /opt/homebrew/include/glm/./ext/../detail/./compute_vector_relational.hpp \
   /opt/homebrew/include/glm/./ext/../detail/./setup.hpp \
@@ -912,6 +900,19 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/sprite_render_system.cpp.
   /opt/homebrew/include/glm/./ext/vector_uint2_sized.hpp \
   /opt/homebrew/include/glm/./ext/../ext/vector_uint2.hpp \
   /opt/homebrew/include/glm/./ext/../ext/scalar_uint_sized.hpp \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/../component/./component.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/../component/../utils/alignment.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/../component/../render/sprite.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/../component/../render/../utils/math.h \
+  /opt/homebrew/include/glm/glm.hpp \
+  /opt/homebrew/include/glm/detail/_fixes.hpp \
+  /opt/homebrew/include/glm/detail/setup.hpp \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cfloat \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/float.h \
+  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/float.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/float.h \
+  /opt/homebrew/include/glm/fwd.hpp \
+  /opt/homebrew/include/glm/detail/qualifier.hpp \
   /opt/homebrew/include/glm/vec3.hpp \
   /opt/homebrew/include/glm/./ext/vector_bool3.hpp \
   /opt/homebrew/include/glm/./ext/../detail/type_vec3.hpp \
@@ -966,7 +967,6 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/sprite_render_system.cpp.
   /opt/homebrew/include/glm/./ext/vector_float4_precision.hpp \
   /opt/homebrew/include/glm/./ext/vector_double4.hpp \
   /opt/homebrew/include/glm/./ext/vector_double4_precision.hpp \
-  /opt/homebrew/include/glm/./ext/../detail/setup.hpp \
   /opt/homebrew/include/glm/./ext/vector_int4.hpp \
   /opt/homebrew/include/glm/./ext/vector_int4_sized.hpp \
   /opt/homebrew/include/glm/./ext/../ext/vector_int4.hpp \

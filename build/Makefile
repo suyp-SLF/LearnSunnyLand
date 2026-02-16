@@ -369,6 +369,30 @@ src/engine/render/camera.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/camera.cpp.s
 .PHONY : src/engine/render/camera.cpp.s
 
+src/engine/render/parallax_render_system.o: src/engine/render/parallax_render_system.cpp.o
+.PHONY : src/engine/render/parallax_render_system.o
+
+# target to build an object file
+src/engine/render/parallax_render_system.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/parallax_render_system.cpp.o
+.PHONY : src/engine/render/parallax_render_system.cpp.o
+
+src/engine/render/parallax_render_system.i: src/engine/render/parallax_render_system.cpp.i
+.PHONY : src/engine/render/parallax_render_system.i
+
+# target to preprocess a source file
+src/engine/render/parallax_render_system.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/parallax_render_system.cpp.i
+.PHONY : src/engine/render/parallax_render_system.cpp.i
+
+src/engine/render/parallax_render_system.s: src/engine/render/parallax_render_system.cpp.s
+.PHONY : src/engine/render/parallax_render_system.s
+
+# target to generate assembly for a file
+src/engine/render/parallax_render_system.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/parallax_render_system.cpp.s
+.PHONY : src/engine/render/parallax_render_system.cpp.s
+
 src/engine/render/sdl3_gpu_renderer.o: src/engine/render/sdl3_gpu_renderer.cpp.o
 .PHONY : src/engine/render/sdl3_gpu_renderer.o
 
@@ -720,6 +744,9 @@ help:
 	@echo "... src/engine/render/camera.o"
 	@echo "... src/engine/render/camera.i"
 	@echo "... src/engine/render/camera.s"
+	@echo "... src/engine/render/parallax_render_system.o"
+	@echo "... src/engine/render/parallax_render_system.i"
+	@echo "... src/engine/render/parallax_render_system.s"
 	@echo "... src/engine/render/sdl3_gpu_renderer.o"
 	@echo "... src/engine/render/sdl3_gpu_renderer.i"
 	@echo "... src/engine/render/sdl3_gpu_renderer.s"

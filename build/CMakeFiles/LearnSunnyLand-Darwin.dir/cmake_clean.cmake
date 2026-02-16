@@ -21,6 +21,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/object/game_object.cpp.o.d"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/camera.cpp.o"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/camera.cpp.o.d"
+  "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/parallax_render_system.cpp.o"
+  "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/parallax_render_system.cpp.o.d"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/sdl3_gpu_renderer.cpp.o"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/sdl3_gpu_renderer.cpp.o.d"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/sdl_renderer.cpp.o"

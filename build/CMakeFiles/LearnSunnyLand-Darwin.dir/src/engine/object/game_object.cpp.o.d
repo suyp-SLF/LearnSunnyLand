@@ -997,7 +997,6 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/object/game_object.cpp.o: \
   /opt/homebrew/include/spdlog/details/log_msg.h \
   /opt/homebrew/include/spdlog/version.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/object/../component/transform_component.h \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/object/../component/./component.h \
   /opt/homebrew/include/glm/vec2.hpp \
   /opt/homebrew/include/glm/./ext/vector_bool2.hpp \
   /opt/homebrew/include/glm/./ext/../detail/type_vec2.hpp \
@@ -1021,6 +1020,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/object/game_object.cpp.o: \
   /opt/homebrew/include/glm/./ext/vector_uint2_sized.hpp \
   /opt/homebrew/include/glm/./ext/../ext/vector_uint2.hpp \
   /opt/homebrew/include/glm/./ext/../ext/scalar_uint_sized.hpp \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/object/../component/./component.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/object/../component/sprite_component.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/object/../component/../utils/alignment.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/object/../component/../render/sprite.h \

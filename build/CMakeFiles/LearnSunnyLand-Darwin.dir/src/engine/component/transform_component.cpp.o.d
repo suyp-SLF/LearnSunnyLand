@@ -2,7 +2,6 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/transform_component.cp
   /Library/Developer/CommandLineTools/usr/lib/clang/17/share/asan_ignorelist.txt \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/transform_component.cpp \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/transform_component.h \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/./component.h \
   /opt/homebrew/include/glm/vec2.hpp \
   /opt/homebrew/include/glm/./ext/vector_bool2.hpp \
   /opt/homebrew/include/glm/./ext/../detail/type_vec2.hpp \
@@ -234,6 +233,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/transform_component.cp
   /opt/homebrew/include/glm/./ext/vector_uint2_sized.hpp \
   /opt/homebrew/include/glm/./ext/../ext/vector_uint2.hpp \
   /opt/homebrew/include/glm/./ext/../ext/scalar_uint_sized.hpp \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/./component.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/../object/game_object.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/../object/../component/component.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/string \
