@@ -8,8 +8,8 @@
 // 假设你有一个渲染接口（如 VertexBuffer, IndexBuffer），这里用伪代码
 namespace engine::render
 {
-    class VertexBuffer;
-    class IndexBuffer;
+    class Camera;
+    class Renderer;
 }
 namespace engine::world
 {
@@ -33,7 +33,7 @@ namespace engine::world
         bool buildMesh(const std::string &atlasTextureId, const glm::ivec2 &tileSize);
 
         // 渲染该块（绑定缓冲并绘制）
-        void render() const;
+        void render(const engine::render::Camera& camera, engine::render::Renderer& renderer) const;
 
         // 获取块的世界位置（左下角坐标，单位：瓦片）
         glm::ivec2 getPosition() const { return glm::ivec2(m_chunkX * SIZE, m_chunkY * SIZE); }

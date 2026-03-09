@@ -37,7 +37,7 @@ namespace engine::component
          * @param tiles 瓦片信息 （会被移动）
          * @note tiles 会被移动，因此调用者不应再使用该参数
          */
-        TilelayerComponent(glm::ivec2 tile_size, glm::ivec2 map_size, std::vector<TileData> &&tiles);
+        TilelayerComponent(glm::ivec2 tile_size, glm::ivec2 map_size, std::vector<engine::world::TileData> &&tiles);
         /**
          * @brief 析构函数
          */
@@ -49,26 +49,26 @@ namespace engine::component
          *  @note 如果位置超出地图范围，返回 nullptr
          * @note 返回的指针指向的是 TilelayerComponent 内部的数据，不应被修改
          */
-        const TileData *getTileDataAt(glm::ivec2 position) const;
+        const engine::world::TileData *getTileDataAt(glm::ivec2 position) const;
         /**
          * @brief 获取指定位置的瓦片类型
          * @param position 瓦片位置
          * @return 瓦片类型
          *  @note 如果位置超出地图范围，返回 TileType::Empty
          */
-        TileType getTileTypeAt(glm::ivec2 position) const;
+        engine::world::TileType getTileTypeAt(glm::ivec2 position) const;
         /**
          * @brief 获取指定世界坐标的瓦片类型
          * @param position 世界坐标
          * @return 瓦片类型
          *  @note 如果位置超出地图范围，返回 TileType::Empty
          */
-        TileType getTileTypeAtWorldPos(glm::vec2 world_position) const;
+        engine::world::TileType getTileTypeAtWorldPos(glm::vec2 world_position) const;
         // GETTER
         const glm::ivec2 &getTileSize() const { return _tile_size; }
         const glm::ivec2 &getMapSize() const { return _map_size; }
         const glm::vec2 &getOffset() const { return _offset; }
-        const std::vector<TileData> &getTiles() const { return _tiles; }
+        const std::vector<engine::world::TileData> &getTiles() const { return _tiles; }
         bool isHidden() const { return _is_hidden; }
         const glm::ivec2 getWorldSize() const
         {
@@ -93,7 +93,7 @@ namespace engine::component
     private:
         glm::ivec2 _tile_size;            // 瓦片大小
         glm::ivec2 _map_size;             // 地图大小
-        std::vector<TileData> _tiles;     // 瓦片信息
+        std::vector<engine::world::TileData> _tiles;     // 瓦片信息
         glm::vec2 _offset = {0.0f, 0.0f}; // 地图偏移量
 
         // --- 状态追踪 ---

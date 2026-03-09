@@ -6,7 +6,7 @@
 #include <spdlog/spdlog.h>
 namespace engine::component
 {
-    TilelayerComponent::TilelayerComponent(glm::ivec2 tile_size, glm::ivec2 map_size, std::vector<TileData> &&tiles)
+    TilelayerComponent::TilelayerComponent(glm::ivec2 tile_size, glm::ivec2 map_size, std::vector<engine::world::TileData> &&tiles)
         : _tile_size(tile_size),
           _map_size(map_size),
           _tiles(std::move(tiles))
@@ -59,7 +59,7 @@ namespace engine::component
             return;
     }
 
-    const TileData *TilelayerComponent::getTileDataAt(glm::ivec2 position) const
+    const engine::world::TileData *TilelayerComponent::getTileDataAt(glm::ivec2 position) const
     {
         if (position.x < 0 || position.y < 0 || position.x >= _map_size.x || position.y >= _map_size.y)
         {
@@ -75,13 +75,13 @@ namespace engine::component
         spdlog::warn("TilelayerComponent: 获取瓦片信息 {} 时，瓦片索引越界", index);
         return nullptr;
     }
-    TileType TilelayerComponent::getTileTypeAt(glm::ivec2 position) const
+    engine::world::TileType TilelayerComponent::getTileTypeAt(glm::ivec2 position) const
     {
-        const TileData *tile_info = getTileDataAt(position);
-        return tile_info ? tile_info->type : TileType::Empty;
+        const engine::world::TileData *tile_info = getTileDataAt(position);
+        return tile_info ? tile_info->type : engine::world::TileType::Air;
     }
 
-    TileType TilelayerComponent::getTileTypeAtWorldPos(glm::vec2 world_position) const
+    engine::world::TileType TilelayerComponent::getTileTypeAtWorldPos(glm::vec2 world_position) const
     {
         // 建议：如果 GameObject 有 Transform，应该用 Transform 的坐标
         // glm::vec2 origin = _owner->getComponent<TransformComponent>()->getPosition();

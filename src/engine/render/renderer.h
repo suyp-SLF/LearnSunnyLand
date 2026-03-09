@@ -5,7 +5,7 @@ namespace engine::resource
 {
     class ResourceManager;
 }
-namespace engine::component
+namespace engine::world
 {
     class TileData;
 }
@@ -51,7 +51,7 @@ namespace engine::render
         virtual void drawTileMap(const Camera &camera,
                                       const glm::ivec2 &map_size,
                                       const glm::vec2 &tile_size,
-                                      const std::vector<engine::component::TileData> &tiles,
+                                      const std::vector<engine::world::TileData> &tiles,
                                       const glm::vec2 &layer_offset) = 0;
         virtual void clean() = 0;
     };

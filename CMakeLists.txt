@@ -48,6 +48,8 @@ add_executable(
     ${TARGET} 
     src/main.cpp
 
+    #src/engine/world/FastNoiseLite.h
+
     src/engine/core/game_app.cpp
     src/engine/core/time.cpp
     src/engine/core/config.cpp
@@ -79,7 +81,7 @@ add_executable(
     src/engine/component/tilelayer_component.cpp
 
     src/engine/world/tile_info.h
-    src/engine/world/chunk.h
+    src/engine/world/chunk.cpp
     src/engine/world/perlin_noise_generator.cpp
     src/engine/world/chunk_manager.cpp
     src/engine/world/world_config.cpp
@@ -87,7 +89,6 @@ add_executable(
 
     src/engine/scene/scene.cpp
     src/engine/scene/scene_manager.cpp
-    src/engine/scene/level_loader.cpp
 
     src/engine/object/game_object.cpp
 

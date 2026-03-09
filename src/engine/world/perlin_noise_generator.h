@@ -5,10 +5,7 @@
 #include "tile_info.h"
 #include <memory>
 
-namespace FastNoiseLite
-{
-    class FastNoiseLite;
-} // 前向声明
+class FastNoiseLite;
 
 namespace engine::world
 {
@@ -22,7 +19,7 @@ namespace engine::world
         float getHeightAt(int worldX, int worldY) const override;
 
     private:
-        std::unique_ptr<FastNoiseLite::FastNoiseLite> m_noise;
+        std::unique_ptr<FastNoiseLite> m_noise;
     };
 
 } // namespace engine::world

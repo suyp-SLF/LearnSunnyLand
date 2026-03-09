@@ -15,6 +15,9 @@ struct WorldConfig {
     int grassDepth = 2;                 // 草方块覆盖厚度
     int dirtDepth = 5;                  // 泥土层厚度
     int stoneStart = 50;                 // 石头开始出现的深度（低于此值石头为主）
+
+    // 编译期常量
+    static constexpr int CHUNK_SIZE = 16;   // 或者 32、64，根据你的需求
     // 可加载配置文件
     bool loadFromFile(const std::string& path);
 };

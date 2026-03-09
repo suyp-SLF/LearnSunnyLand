@@ -1,6 +1,7 @@
 // 柏林噪声地形生成器
 #include "perlin_noise_generator.h"
-#include "FastNoiseLite.h" // 假设噪声库头文件
+#include "FastNoiseLite.h"
+#include <memory>
 #include <cmath>
 
 namespace engine::world
@@ -8,7 +9,7 @@ namespace engine::world
     PerlinNoiseGenerator::PerlinNoiseGenerator(const WorldConfig &config)
         : TerrainGenerator(config)
     {
-        m_noise = std::make_unique<FastNoiseLite::FastNoiseLite>();
+        m_noise = std::make_unique<FastNoiseLite>();
         m_noise->SetSeed(static_cast<int>(config.seed));
         m_noise->SetNoiseType(FastNoiseLite::NoiseType_Perlin);
         m_noise->SetFrequency(config.noiseScale);
@@ -26,15 +27,15 @@ namespace engine::world
     void PerlinNoiseGenerator::generateChunk(int chunkX, int chunkY, std::vector<TileData> &outTiles) const
     {
         // 确保输出缓冲区大小正确
-        outTiles.resize(CHUNK_SIZE * CHUNK_SIZE);
+        outTiles.resize(WorldConfig::WorldConfig::CHUNK_SIZE * WorldConfig::CHUNK_SIZE);
 
         // 计算该区块的世界坐标原点（左下角，取决于你的坐标系）
-        int baseX = chunkX * CHUNK_SIZE;
-        int baseY = chunkY * CHUNK_SIZE;
+        int baseX = chunkX * WorldConfig::CHUNK_SIZE;
+        int baseY = chunkY * WorldConfig::CHUNK_SIZE;
 
-        for (int ly = 0; ly < CHUNK_SIZE; ++ly)
+        for (int ly = 0; ly < WorldConfig::CHUNK_SIZE; ++ly)
         {
-            for (int lx = 0; lx < CHUNK_SIZE; ++lx)
+            for (int lx = 0; lx < WorldConfig::CHUNK_SIZE; ++lx)
             {
                 int worldX = baseX + lx;
                 int worldY = baseY + ly;
@@ -52,7 +53,7 @@ namespace engine::world
                     int depth = static_cast<int>(height) - worldY;
                     if (depth == 0)
                     {
-                        type = TileType::Grass;
+                        type = TileType::Air;
                     }
                     else if (depth < m_config.grassDepth)
                     {
@@ -74,7 +75,7 @@ namespace engine::world
                 }
 
                 // 设置 TileData
-                outTiles[ly * CHUNK_SIZE + lx] = TileData(type);
+                outTiles[ly * WorldConfig::CHUNK_SIZE + lx] = TileData(type);
                 // 如果你还需要设置光照、液体等，可在此处理
             }
         }
