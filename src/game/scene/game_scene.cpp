@@ -53,7 +53,7 @@ namespace game::scene
     void GameScene::init()
     {
         // 创建 ChunkManager（纹理图集ID需提前加载）
-        chunk_manager = std::make_unique<engine::world::ChunkManager>("tileset_atlas", glm::ivec2(16, 16));
+        chunk_manager = std::make_unique<engine::world::ChunkManager>("assets/dimensions/tileset_atlas.svg", glm::ivec2(16, 16));
         // 加载世界配置
         engine::world::WorldConfig config;
         config.loadFromFile("assets/world_config.json");

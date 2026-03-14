@@ -297,6 +297,7 @@ namespace engine::render
     void SDL3GPURenderer::drawTileMap(const Camera &camera,
                                       const glm::ivec2 &map_size,
                                       const glm::vec2 &tile_size,
+                                      const std::string &textureId,
                                       const std::vector<engine::world::TileData> &tiles,
                                       const glm::vec2 &layer_offset)
     {
@@ -327,7 +328,7 @@ namespace engine::render
                     continue; // 跳过空瓦片
 
                 // 获取纹理指针（从缓存获取）
-                SDL_GPUTexture *gpu_tex = _res_mgr->getGPUTexture(tile.texture_id);
+                SDL_GPUTexture *gpu_tex = _res_mgr->getGPUTexture(textureId);
                 if (!gpu_tex)
                     continue;
 

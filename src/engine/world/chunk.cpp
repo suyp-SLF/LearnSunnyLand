@@ -50,6 +50,7 @@ namespace engine::world
         ctx.getRenderer().drawTileMap(ctx.getCamera(),
                                       glm::ivec2(SIZE, SIZE),            // 区块尺寸（瓦片个数）
                                       glm::vec2(WorldConfig::TILE_SIZE), // 每个瓦片的大小
+                                      m_textureId,                       // 瓦片图集 ID
                                       tileVec,                           // 瓦片数据
                                       worldOffset);                      // 区块世界偏移
     }

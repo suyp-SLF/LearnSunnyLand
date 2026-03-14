@@ -148,6 +148,7 @@ namespace engine::render
     void SDLRenderer::drawTileMap(const Camera &camera,
                                   const glm::ivec2 &map_size,
                                   const glm::vec2 &tile_size,
+                                  const std::string &textureId,
                                   const std::vector<engine::world::TileData> &tiles,
                                   const glm::vec2 &layer_offset)
     {

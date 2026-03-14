@@ -46,12 +46,12 @@ namespace engine::component
     {
         // ⚡️ 修复报错：不再循环调用 drawSprite
         // 而是将整个瓦片数组、地图尺寸、纹理 ID 一次性交给渲染器
-        ctx.getRenderer().drawTileMap(
-            ctx.getCamera(),
-            _map_size,
-            glm::vec2(_tile_size),
-            _tiles,
-            _offset);
+        // ctx.getRenderer().drawTileMap(
+        //     ctx.getCamera(),
+        //     _map_size,
+        //     glm::vec2(_tile_size),
+        //     _tiles,
+        //     _offset);
     }
     void TilelayerComponent::ensureResourcesReady()
     {

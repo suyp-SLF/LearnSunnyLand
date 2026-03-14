@@ -139,7 +139,7 @@ namespace engine::world
     {
         for (const auto &[_, chunk] : m_chunks)
         {
-            chunk->render(ctx);
+            chunk->draw(ctx);
         }
     }
 } // namespace engine::world

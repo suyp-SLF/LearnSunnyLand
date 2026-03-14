@@ -31,10 +31,12 @@ namespace engine::world
 
         // 新增：接受 TileType 的构造函数
         explicit TileData(TileType t)
-            : uv_rect(0.0f, 0.0f, 1.0f, 1.0f), // 默认使用整张纹理
+            : uv_rect(0.0f, 0.0f, 16.0f, 16.0f), // 默认使用整张纹理
               type(t),
               texture_id("default")            // 默认纹理 ID
-        {}
+        {
+            
+        }
 
         // 原有的三参数构造函数
         TileData(glm::vec4 uv_rect, TileType type, std::string texture_id)
