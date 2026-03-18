@@ -304,6 +304,12 @@ namespace engine::render
         SDL_RenderCoordinatesFromWindow(_sdl_renderer, window_x, window_y, &logical_pos.x, &logical_pos.y);
         return logical_pos;
     }
+
+    void SDLRenderer::drawTexture(SDL_GPUTexture* texture, float x, float y, float w, float h)
+    {
+        // SDLRenderer doesn't support GPU textures
+    }
+
     void SDLRenderer::clean()
     {
         if (_sdl_renderer)
@@ -390,5 +396,13 @@ namespace engine::render
         bool vertical_overlap = (rect.y + rect.h >= 0) && (rect.y <= view.y);
 
         return horizontal_overlap && vertical_overlap;
+    }
+
+    void SDLRenderer::drawRect(const Camera &camera, float x, float y, float w, float h, const glm::vec4 &color)
+    {
+        glm::vec2 screenPos = camera.worldToScreen({x, y});
+        SDL_FRect rect = {screenPos.x, screenPos.y, w, h};
+        SDL_SetRenderDrawColor(_sdl_renderer, color.r * 255, color.g * 255, color.b * 255, color.a * 255);
+        SDL_RenderFillRect(_sdl_renderer, &rect);
     }
 }

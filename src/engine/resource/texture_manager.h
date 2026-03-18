@@ -27,6 +27,7 @@ namespace engine::resource
         // 公开接口
         SDL_Texture *getLegacyTexture(const std::string &path);
         SDL_GPUTexture *getGPUTexture(const std::string &path);
+        TextureResource *getTextureResource(const std::string &path);
         glm::vec2 getTextureSize(const std::string &path);
         void unloadTexture(const std::string &path);
         void clearTextures();

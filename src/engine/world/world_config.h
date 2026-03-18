@@ -1,6 +1,7 @@
 // 世界配置（种子、参数）
 // world_config.h
 #pragma once
+#include <glm/vec2.hpp>
 #include <cstdint>
 #include <string>
 
@@ -18,7 +19,8 @@ struct WorldConfig {
 
     // 编译期常量
     static constexpr int CHUNK_SIZE = 16;   // 或者 32、64，根据你的需求
-    static constexpr int TILE_SIZE = 16;
+    static constexpr glm::vec2 TILE_SIZE = {16, 16};
+    static constexpr float PIXELS_PER_METER = 32.0f; // 32像素 = 1米
     // 可加载配置文件
     bool loadFromFile(const std::string& path);
 };

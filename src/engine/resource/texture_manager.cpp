@@ -25,6 +25,11 @@ namespace engine::resource
         return getInternal(path).gpu_tex; // 注意这里是 gpu_tex
     }
 
+    TextureResource *TextureManager::getTextureResource(const std::string &path)
+    {
+        return &getInternal(path); // 注意这里是整个 TextureResource 对象
+    }
+
     glm::vec2 TextureManager::getTextureSize(const std::string &path)
     {
         auto &res = getInternal(path);

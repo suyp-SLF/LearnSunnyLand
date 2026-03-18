@@ -11,12 +11,16 @@ namespace engine::render
         glm::vec2 _position;                               // 左上角坐标
         std::optional<engine::utils::FRect> _limit_bounds; // 限制范围
 
+        glm::vec2* _follow_target = nullptr; // 跟随目标
+        float _follow_smoothness = 5.0f; // 跟随平滑度
+
     public:
         Camera(const glm::vec2 &viewport_size,
                const glm::vec2 &position = glm::vec2(0.0f, 0.0f),
                const std::optional<engine::utils::FRect> limit_bounds = std::nullopt);
 
         void update(float delta_timer);
+        void setFollowTarget(const glm::vec2* target, float smoothness = 5.0f);
         void move(const glm::vec2 &offset);
 
         /**

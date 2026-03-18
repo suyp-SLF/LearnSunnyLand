@@ -2,7 +2,8 @@
 
 // ⚡️ 必须声明这部分，对应 attributes[0] 和 attributes[1]
 layout(location = 0) in vec2 a_pos; 
-layout(location = 1) in vec2 a_uv;
+layout(location = 1) in vec4 a_color;
+layout(location = 2) in vec2 a_uv;
 
 layout(location = 0) out vec2 v_uv;
 

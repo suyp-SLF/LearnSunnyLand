@@ -1,39 +1,19 @@
 #pragma once
 
 #include <memory>
-#include <utility>
+#include <string>
 #include <unordered_map>
-#include <functional>
-#include <SDL3_ttf/SDL_ttf.h>
+#include "../render/text_renderer.h"
 
 namespace engine::resource
 {
-    using FontKey = std::pair<std::string, int>;
-    struct FontKeyHash
-    {
-        std::size_t operator()(const FontKey &key) const
-        {
-            std::hash<std::string> string_hasher;
-            std::hash<int> int_hasher;
-            return string_hasher(key.first) ^ int_hasher(key.second);
-        }
-    };
     class FontManager
     {
         friend class ResourceManager;
 
     private:
-        struct SDLFontDeleter
-        {
-            void operator()(TTF_Font *font) const
-            {
-                if (font)
-                {
-                    TTF_CloseFont(font);
-                }
-            }
-        };
-        std::unordered_map<FontKey, std::unique_ptr<TTF_Font, SDLFontDeleter>, FontKeyHash> _fonts;
+        std::unordered_map<std::string, std::unique_ptr<render::TextRenderer>> _renderers;
+        SDL_GPUDevice* _device = nullptr;
 
     public:
         FontManager();
@@ -44,10 +24,9 @@ namespace engine::resource
         FontManager(FontManager &&) = delete;
         FontManager &operator=(FontManager &&) = delete;
 
-    private:
-        TTF_Font *loadFont(const std::string &file, int point_size);
-        TTF_Font *getFont(const std::string &file, int point_size);
-        void unloadFont(const std::string &file, int point_size);
+        void setDevice(SDL_GPUDevice* device);
+        render::TextRenderer* loadFont(const std::string &file, unsigned int fontSize);
+        render::TextRenderer* getFont(const std::string &file);
         void clearFonts();
     };
-};
+}

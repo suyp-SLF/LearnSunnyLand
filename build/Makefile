@@ -129,6 +129,54 @@ LearnSunnyLand-Darwin/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/build
 .PHONY : LearnSunnyLand-Darwin/fast
 
+src/engine/actor/actor_manager.o: src/engine/actor/actor_manager.cpp.o
+.PHONY : src/engine/actor/actor_manager.o
+
+# target to build an object file
+src/engine/actor/actor_manager.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/actor/actor_manager.cpp.o
+.PHONY : src/engine/actor/actor_manager.cpp.o
+
+src/engine/actor/actor_manager.i: src/engine/actor/actor_manager.cpp.i
+.PHONY : src/engine/actor/actor_manager.i
+
+# target to preprocess a source file
+src/engine/actor/actor_manager.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/actor/actor_manager.cpp.i
+.PHONY : src/engine/actor/actor_manager.cpp.i
+
+src/engine/actor/actor_manager.s: src/engine/actor/actor_manager.cpp.s
+.PHONY : src/engine/actor/actor_manager.s
+
+# target to generate assembly for a file
+src/engine/actor/actor_manager.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/actor/actor_manager.cpp.s
+.PHONY : src/engine/actor/actor_manager.cpp.s
+
+src/engine/component/controller_component.o: src/engine/component/controller_component.cpp.o
+.PHONY : src/engine/component/controller_component.o
+
+# target to build an object file
+src/engine/component/controller_component.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/controller_component.cpp.o
+.PHONY : src/engine/component/controller_component.cpp.o
+
+src/engine/component/controller_component.i: src/engine/component/controller_component.cpp.i
+.PHONY : src/engine/component/controller_component.i
+
+# target to preprocess a source file
+src/engine/component/controller_component.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/controller_component.cpp.i
+.PHONY : src/engine/component/controller_component.cpp.i
+
+src/engine/component/controller_component.s: src/engine/component/controller_component.cpp.s
+.PHONY : src/engine/component/controller_component.s
+
+# target to generate assembly for a file
+src/engine/component/controller_component.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/controller_component.cpp.s
+.PHONY : src/engine/component/controller_component.cpp.s
+
 src/engine/component/parallax_component.o: src/engine/component/parallax_component.cpp.o
 .PHONY : src/engine/component/parallax_component.o
 
@@ -152,6 +200,30 @@ src/engine/component/parallax_component.s: src/engine/component/parallax_compone
 src/engine/component/parallax_component.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/parallax_component.cpp.s
 .PHONY : src/engine/component/parallax_component.cpp.s
+
+src/engine/component/physics_component.o: src/engine/component/physics_component.cpp.o
+.PHONY : src/engine/component/physics_component.o
+
+# target to build an object file
+src/engine/component/physics_component.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/physics_component.cpp.o
+.PHONY : src/engine/component/physics_component.cpp.o
+
+src/engine/component/physics_component.i: src/engine/component/physics_component.cpp.i
+.PHONY : src/engine/component/physics_component.i
+
+# target to preprocess a source file
+src/engine/component/physics_component.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/physics_component.cpp.i
+.PHONY : src/engine/component/physics_component.cpp.i
+
+src/engine/component/physics_component.s: src/engine/component/physics_component.cpp.s
+.PHONY : src/engine/component/physics_component.s
+
+# target to generate assembly for a file
+src/engine/component/physics_component.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/physics_component.cpp.s
+.PHONY : src/engine/component/physics_component.cpp.s
 
 src/engine/component/sprite_component.o: src/engine/component/sprite_component.cpp.o
 .PHONY : src/engine/component/sprite_component.o
@@ -369,6 +441,30 @@ src/engine/object/game_object.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/object/game_object.cpp.s
 .PHONY : src/engine/object/game_object.cpp.s
 
+src/engine/physics/physics_manager.o: src/engine/physics/physics_manager.cpp.o
+.PHONY : src/engine/physics/physics_manager.o
+
+# target to build an object file
+src/engine/physics/physics_manager.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/physics/physics_manager.cpp.o
+.PHONY : src/engine/physics/physics_manager.cpp.o
+
+src/engine/physics/physics_manager.i: src/engine/physics/physics_manager.cpp.i
+.PHONY : src/engine/physics/physics_manager.i
+
+# target to preprocess a source file
+src/engine/physics/physics_manager.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/physics/physics_manager.cpp.i
+.PHONY : src/engine/physics/physics_manager.cpp.i
+
+src/engine/physics/physics_manager.s: src/engine/physics/physics_manager.cpp.s
+.PHONY : src/engine/physics/physics_manager.s
+
+# target to generate assembly for a file
+src/engine/physics/physics_manager.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/physics/physics_manager.cpp.s
+.PHONY : src/engine/physics/physics_manager.cpp.s
+
 src/engine/render/camera.o: src/engine/render/camera.cpp.o
 .PHONY : src/engine/render/camera.o
 
@@ -392,6 +488,30 @@ src/engine/render/camera.s: src/engine/render/camera.cpp.s
 src/engine/render/camera.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/camera.cpp.s
 .PHONY : src/engine/render/camera.cpp.s
+
+src/engine/render/opengl_renderer.o: src/engine/render/opengl_renderer.cpp.o
+.PHONY : src/engine/render/opengl_renderer.o
+
+# target to build an object file
+src/engine/render/opengl_renderer.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/opengl_renderer.cpp.o
+.PHONY : src/engine/render/opengl_renderer.cpp.o
+
+src/engine/render/opengl_renderer.i: src/engine/render/opengl_renderer.cpp.i
+.PHONY : src/engine/render/opengl_renderer.i
+
+# target to preprocess a source file
+src/engine/render/opengl_renderer.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/opengl_renderer.cpp.i
+.PHONY : src/engine/render/opengl_renderer.cpp.i
+
+src/engine/render/opengl_renderer.s: src/engine/render/opengl_renderer.cpp.s
+.PHONY : src/engine/render/opengl_renderer.s
+
+# target to generate assembly for a file
+src/engine/render/opengl_renderer.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/opengl_renderer.cpp.s
+.PHONY : src/engine/render/opengl_renderer.cpp.s
 
 src/engine/render/parallax_render_system.o: src/engine/render/parallax_render_system.cpp.o
 .PHONY : src/engine/render/parallax_render_system.o
@@ -488,6 +608,30 @@ src/engine/render/sprite_render_system.s: src/engine/render/sprite_render_system
 src/engine/render/sprite_render_system.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/sprite_render_system.cpp.s
 .PHONY : src/engine/render/sprite_render_system.cpp.s
+
+src/engine/render/text_renderer.o: src/engine/render/text_renderer.cpp.o
+.PHONY : src/engine/render/text_renderer.o
+
+# target to build an object file
+src/engine/render/text_renderer.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/text_renderer.cpp.o
+.PHONY : src/engine/render/text_renderer.cpp.o
+
+src/engine/render/text_renderer.i: src/engine/render/text_renderer.cpp.i
+.PHONY : src/engine/render/text_renderer.i
+
+# target to preprocess a source file
+src/engine/render/text_renderer.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/text_renderer.cpp.i
+.PHONY : src/engine/render/text_renderer.cpp.i
+
+src/engine/render/text_renderer.s: src/engine/render/text_renderer.cpp.s
+.PHONY : src/engine/render/text_renderer.s
+
+# target to generate assembly for a file
+src/engine/render/text_renderer.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/text_renderer.cpp.s
+.PHONY : src/engine/render/text_renderer.cpp.s
 
 src/engine/render/tilelayer_render_system.o: src/engine/render/tilelayer_render_system.cpp.o
 .PHONY : src/engine/render/tilelayer_render_system.o
@@ -849,6 +993,30 @@ src/game/scene/game_scene.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.s
 .PHONY : src/game/scene/game_scene.cpp.s
 
+src/game/scene/menu_scene.o: src/game/scene/menu_scene.cpp.o
+.PHONY : src/game/scene/menu_scene.o
+
+# target to build an object file
+src/game/scene/menu_scene.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/menu_scene.cpp.o
+.PHONY : src/game/scene/menu_scene.cpp.o
+
+src/game/scene/menu_scene.i: src/game/scene/menu_scene.cpp.i
+.PHONY : src/game/scene/menu_scene.i
+
+# target to preprocess a source file
+src/game/scene/menu_scene.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/menu_scene.cpp.i
+.PHONY : src/game/scene/menu_scene.cpp.i
+
+src/game/scene/menu_scene.s: src/game/scene/menu_scene.cpp.s
+.PHONY : src/game/scene/menu_scene.s
+
+# target to generate assembly for a file
+src/game/scene/menu_scene.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/menu_scene.cpp.s
+.PHONY : src/game/scene/menu_scene.cpp.s
+
 src/main.o: src/main.cpp.o
 .PHONY : src/main.o
 
@@ -882,9 +1050,18 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... LearnSunnyLand-Darwin"
+	@echo "... src/engine/actor/actor_manager.o"
+	@echo "... src/engine/actor/actor_manager.i"
+	@echo "... src/engine/actor/actor_manager.s"
+	@echo "... src/engine/component/controller_component.o"
+	@echo "... src/engine/component/controller_component.i"
+	@echo "... src/engine/component/controller_component.s"
 	@echo "... src/engine/component/parallax_component.o"
 	@echo "... src/engine/component/parallax_component.i"
 	@echo "... src/engine/component/parallax_component.s"
+	@echo "... src/engine/component/physics_component.o"
+	@echo "... src/engine/component/physics_component.i"
+	@echo "... src/engine/component/physics_component.s"
 	@echo "... src/engine/component/sprite_component.o"
 	@echo "... src/engine/component/sprite_component.i"
 	@echo "... src/engine/component/sprite_component.s"
@@ -912,9 +1089,15 @@ help:
 	@echo "... src/engine/object/game_object.o"
 	@echo "... src/engine/object/game_object.i"
 	@echo "... src/engine/object/game_object.s"
+	@echo "... src/engine/physics/physics_manager.o"
+	@echo "... src/engine/physics/physics_manager.i"
+	@echo "... src/engine/physics/physics_manager.s"
 	@echo "... src/engine/render/camera.o"
 	@echo "... src/engine/render/camera.i"
 	@echo "... src/engine/render/camera.s"
+	@echo "... src/engine/render/opengl_renderer.o"
+	@echo "... src/engine/render/opengl_renderer.i"
+	@echo "... src/engine/render/opengl_renderer.s"
 	@echo "... src/engine/render/parallax_render_system.o"
 	@echo "... src/engine/render/parallax_render_system.i"
 	@echo "... src/engine/render/parallax_render_system.s"
@@ -927,6 +1110,9 @@ help:
 	@echo "... src/engine/render/sprite_render_system.o"
 	@echo "... src/engine/render/sprite_render_system.i"
 	@echo "... src/engine/render/sprite_render_system.s"
+	@echo "... src/engine/render/text_renderer.o"
+	@echo "... src/engine/render/text_renderer.i"
+	@echo "... src/engine/render/text_renderer.s"
 	@echo "... src/engine/render/tilelayer_render_system.o"
 	@echo "... src/engine/render/tilelayer_render_system.i"
 	@echo "... src/engine/render/tilelayer_render_system.s"
@@ -972,6 +1158,9 @@ help:
 	@echo "... src/game/scene/game_scene.o"
 	@echo "... src/game/scene/game_scene.i"
 	@echo "... src/game/scene/game_scene.s"
+	@echo "... src/game/scene/menu_scene.o"
+	@echo "... src/game/scene/menu_scene.i"
+	@echo "... src/game/scene/menu_scene.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"

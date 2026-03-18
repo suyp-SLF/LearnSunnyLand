@@ -99,9 +99,10 @@ namespace engine::render
             return;
 
         // 顶点输入配置
-        SDL_GPUVertexAttribute attributes[2];
-        attributes[0] = {0, 0, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2, 0};                 // a_pos
-        attributes[1] = {1, 0, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2, sizeof(glm::vec2)}; // a_uv
+        SDL_GPUVertexAttribute attributes[3];
+        attributes[0] = {0, 0, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2, offsetof(GPUVertex, pos)};
+        attributes[1] = {1, 0, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4, offsetof(GPUVertex, color)};
+        attributes[2] = {2, 0, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2, offsetof(GPUVertex, uv)};
 
         SDL_GPUVertexBufferDescription buffer_desc = {};
         buffer_desc.slot = 0;
@@ -123,7 +124,7 @@ namespace engine::render
         SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {};
         pipeline_info.vertex_shader = v_shader;
         pipeline_info.fragment_shader = f_shader;
-        pipeline_info.vertex_input_state.num_vertex_attributes = 2;
+        pipeline_info.vertex_input_state.num_vertex_attributes = 3;
         pipeline_info.vertex_input_state.vertex_attributes = attributes;
         pipeline_info.vertex_input_state.num_vertex_buffers = 1;
         pipeline_info.vertex_input_state.vertex_buffer_descriptions = &buffer_desc;
@@ -352,10 +353,13 @@ namespace engine::render
 
             // 计算 MVP 矩阵
             glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(worldOffset.x, worldOffset.y, 0.0f));
-            glm::mat4 mvp = camera.getProjectionMatrix() * camera.getViewMatrix() * model;
 
-            // 推送 uniform 数据（假设顶点着色器使用绑定点 0 的 uniform buffer）
-            SDL_PushGPUVertexUniformData(_current_cmd, 0, &mvp, sizeof(mvp));
+            SpritePushConstants constants;
+            constants.mvp = camera.getProjectionMatrix() * camera.getViewMatrix() * model;
+            constants.color = glm::vec4(1.0f);
+            constants.uv_rect = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+
+            SDL_PushGPUVertexUniformData(_current_cmd, 0, &constants, sizeof(constants));
 
             // 绑定纹理和采样器
             SDL_GPUTextureSamplerBinding texBinding{texture, _default_sampler};
@@ -389,8 +393,13 @@ namespace engine::render
 
             // 计算 MVP
             glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(worldOffset.x, worldOffset.y, 0.0f));
-            glm::mat4 mvp = camera.getProjectionMatrix() * camera.getViewMatrix() * model;
-            SDL_PushGPUVertexUniformData(_current_cmd, 0, &mvp, sizeof(mvp));
+
+            SpritePushConstants constants;
+            constants.mvp = camera.getProjectionMatrix() * camera.getViewMatrix() * model;
+            constants.color = glm::vec4(1.0f);
+            constants.uv_rect = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+
+            SDL_PushGPUVertexUniformData(_current_cmd, 0, &constants, sizeof(constants));
 
             // 绑定纹理和采样器
             SDL_GPUTextureSamplerBinding texBinding{texture, _default_sampler};
@@ -417,6 +426,37 @@ namespace engine::render
     {
     }
 
+    void SDL3GPURenderer::drawTexture(SDL_GPUTexture* texture, float x, float y, float w, float h)
+    {
+        if (!_active_pass || !_sprite_pipeline || !texture)
+        {
+            spdlog::warn("drawTexture 跳过: active_pass={}, pipeline=, texture={}",
+                         (void*)_active_pass, (void*)_sprite_pipeline, (void*)texture);
+            return;
+        }
+
+        spdlog::debug("drawTexture: x={}, y={}, w={}, h={}", x, y, w, h);
+
+        SDL_BindGPUGraphicsPipeline(_active_pass, _sprite_pipeline);
+        SDL_GPUBufferBinding v_binding = {_unit_quad_buffer, 0};
+        SDL_BindGPUVertexBuffers(_active_pass, 0, &v_binding, 1);
+
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, 0.0f));
+        model = glm::scale(model, glm::vec3(w, h, 1.0f));
+
+        SpritePushConstants constants;
+        constants.mvp = glm::ortho(0.0f, _logical_w, _logical_h, 0.0f) * model;
+        constants.color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+        constants.uv_rect = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+
+        SDL_PushGPUVertexUniformData(_current_cmd, 0, &constants, sizeof(constants));
+
+        SDL_GPUTextureSamplerBinding binding = {texture, _default_sampler};
+        SDL_BindGPUFragmentSamplers(_active_pass, 0, &binding, 1);
+
+        SDL_DrawGPUPrimitives(_active_pass, 6, 1, 0, 0);
+    }
+
     void SDL3GPURenderer::present()
     {
         if (_active_pass)
@@ -430,5 +470,26 @@ namespace engine::render
             _current_cmd = nullptr;
             _current_swapchain_texture = nullptr;
         }
+    }
+
+    void SDL3GPURenderer::drawRect(const Camera &camera, float x, float y, float w, float h, const glm::vec4 &color)
+    {
+        if (!_active_pass || !_sprite_pipeline)
+            return;
+
+        SDL_BindGPUGraphicsPipeline(_active_pass, _sprite_pipeline);
+        SDL_GPUBufferBinding v_binding = {_unit_quad_buffer, 0};
+        SDL_BindGPUVertexBuffers(_active_pass, 0, &v_binding, 1);
+
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, 0.0f));
+        model = glm::scale(model, glm::vec3(w, h, 1.0f));
+
+        SpritePushConstants constants;
+        constants.mvp = camera.getProjectionMatrix() * camera.getViewMatrix() * model;
+        constants.color = color;
+        constants.uv_rect = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+
+        SDL_PushGPUVertexUniformData(_current_cmd, 0, &constants, sizeof(constants));
+        SDL_DrawGPUPrimitives(_active_pass, 6, 1, 0, 0);
     }
 } // namespace engine

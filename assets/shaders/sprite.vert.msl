@@ -19,7 +19,7 @@ struct main0_out
 struct main0_in
 {
     float2 a_pos [[attribute(0)]];
-    float2 a_uv [[attribute(1)]];
+    float2 a_uv [[attribute(2)]];
 };
 
 vertex main0_out main0(main0_in in [[stage_in]], constant Constants& pc [[buffer(0)]])

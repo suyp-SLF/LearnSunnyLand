@@ -1164,4 +1164,10 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk.cpp.o: \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/world/../world/world_config.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/world/../core/context.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/world/../resource/resource_manager.h \
-  /opt/homebrew/include/SDL3_ttf/SDL_ttf.h
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/world/../physics/physics_manager.h \
+  /opt/homebrew/include/box2d/box2d.h /opt/homebrew/include/box2d/base.h \
+  /opt/homebrew/include/box2d/collision.h \
+  /opt/homebrew/include/box2d/math_functions.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/stdbool.h \
+  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdbool.h \
+  /opt/homebrew/include/box2d/id.h /opt/homebrew/include/box2d/types.h

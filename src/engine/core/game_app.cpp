@@ -15,6 +15,7 @@
 #include "../object/game_object.h"
 
 #include "../../game/scene/game_scene.h"
+#include "../../game/scene/menu_scene.h"
 #include <SDL3/SDL.h>
 #include <spdlog/spdlog.h>
 
@@ -123,9 +124,9 @@ namespace engine::core
             return false;
         if (!initSceneManager())
             return false;
-        // 创建第一个场景并加载
-        auto scene = std::make_unique<game::scene::GameScene>("GameScene123", *_context, *_scene_manager);
-        _scene_manager->requestPushScene(std::move(scene));
+        // 创建菜单场景
+        auto menuScene = std::make_unique<game::scene::MenuScene>("MenuScene", *_context, *_scene_manager);
+        _scene_manager->requestPushScene(std::move(menuScene));
 
         _is_running = true;
         spdlog::trace("初始化游戏成功 GameApp");

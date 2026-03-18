@@ -1167,7 +1167,6 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/context.cpp.o: \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../render/parallax_render_system.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../render/tilelayer_render_system.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../resource/resource_manager.h \
-  /opt/homebrew/include/SDL3_ttf/SDL_ttf.h \
   /opt/homebrew/include/spdlog/spdlog.h \
   /opt/homebrew/include/spdlog/common.h \
   /opt/homebrew/include/spdlog/details/null_mutex.h \

@@ -8,7 +8,7 @@ namespace engine::component
      * @brief 设置位置
      * @note 仅在坐标发生变化时更新版本号，避免下游渲染系统无效重算偏移。
      */
-    void TransformComponent::setPosition(glm::vec2 &position)
+    void TransformComponent::setPosition(const glm::vec2 &position)
     {
         if (_position == position)
             return;
@@ -21,7 +21,7 @@ namespace engine::component
      * @brief 设置缩放比例
      * @note 缩放的改变会直接影响 Sprite 的对齐偏移量（Offset）。
      */
-    void TransformComponent::setScale(glm::vec2 &scale)
+    void TransformComponent::setScale(const glm::vec2 &scale)
     {
         if (_scale == scale)
             return;
@@ -47,7 +47,7 @@ namespace engine::component
      * @brief 位移增量操作
      * @param translation 移动的向量
      */
-    void TransformComponent::translate(glm::vec2 &translation)
+    void TransformComponent::translate(const glm::vec2 &translation)
     {
         // 位移操作通常意味着位置一定改变，直接递增版本
         _position += translation;

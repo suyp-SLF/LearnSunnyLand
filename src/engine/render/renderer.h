@@ -31,6 +31,8 @@ namespace engine::render
             _res_mgr = mgr;
         }
 
+        virtual SDL_GPUDevice* getDevice() const { return nullptr; }
+
         // --- 核心绘图接口 (System 必须调用的) ---
         virtual void drawSprite(const Camera &camera,
                                 const Sprite &sprite,
@@ -56,6 +58,9 @@ namespace engine::render
         virtual void drawChunkBatches(const Camera &camera,
                                       const std::unordered_map<SDL_GPUTexture *, engine::world::TextureBatch> &batches,
                                       const glm::vec2 &worldOffset) = 0;
+
+        virtual void drawTexture(SDL_GPUTexture* texture, float x, float y, float w, float h) = 0;
+        virtual void drawRect(const Camera &camera, float x, float y, float w, float h, const glm::vec4 &color) = 0;
         virtual void clean() = 0;
     };
 }

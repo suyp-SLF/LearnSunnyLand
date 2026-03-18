@@ -4,12 +4,13 @@
 #include "../core/context.h"
 #include "../render/render_types.h" // 根据实际路径调整，确保包含 GPUVertex 的完整定义
 #include "../resource/resource_manager.h"
+#include "../physics/physics_manager.h"
 #include <SDL3/SDL_gpu.h>
 #include <glm/glm.hpp>
+#include <box2d/box2d.h>
 
 namespace engine::world
 {
-
     Chunk::Chunk(int chunkX, int chunkY)
         : m_chunkX(chunkX), m_chunkY(chunkY)
     {
@@ -53,6 +54,7 @@ namespace engine::world
                     continue;
 
                 SDL_GPUTexture *texture = resMgr->getGPUTexture(m_textureId);
+                glm::vec2 texture_size = resMgr->getTextureSize(m_textureId);
                 if (!texture)
                     continue;
 
@@ -61,10 +63,12 @@ namespace engine::world
                 float x1 = x0 + tileSize.x;
                 float y1 = y0 + tileSize.y;
 
-                float u0 = tile.uv_rect.x;
-                float v0 = tile.uv_rect.y;
-                float u1 = u0 + tile.uv_rect.z;
-                float v1 = v0 + tile.uv_rect.w;
+                float inv_w = 1.0f / texture_size.x;
+                float inv_h = 1.0f / texture_size.y;
+                float u0 = tile.uv_rect.x * inv_w;
+                float v0 = tile.uv_rect.y * inv_h;
+                float u1 = u0 + tile.uv_rect.z * inv_w;
+                float v1 = v0 + tile.uv_rect.w * inv_h;
 
                 glm::vec4 white = {1.0f, 1.0f, 1.0f, 1.0f};
                 auto &vertices = tempVertices[texture];
@@ -135,11 +139,65 @@ namespace engine::world
             buildMesh(m_textureId, glm::vec2(WorldConfig::TILE_SIZE), &ctx.getResourceManager());
         }
 
-        glm::vec2 worldOffset = glm::vec2(m_chunkX * SIZE * WorldConfig::TILE_SIZE,
-                                          m_chunkY * SIZE * WorldConfig::TILE_SIZE);
+        glm::vec2 worldOffset = glm::vec2(m_chunkX * SIZE * WorldConfig::TILE_SIZE.x,
+                                          m_chunkY * SIZE * WorldConfig::TILE_SIZE.y);
 
         // 调用渲染器的绘制函数，传递批次信息
         ctx.getRenderer().drawChunkBatches(ctx.getCamera(), m_batches, worldOffset);
+    }
+
+    void Chunk::createPhysicsBodies(engine::physics::PhysicsManager *physicsMgr, glm::vec2 tileSize, float pixelsPerMeter)
+    {
+        m_tileSize = tileSize;
+        for (int ly = 0; ly < SIZE; ++ly)
+        {
+            for (int lx = 0; lx < SIZE; ++lx)
+            {
+                const auto &tile = m_tiles[ly * SIZE + lx];
+                if (tile.type == TileType::Air)
+                    continue;
+
+                // 计算世界坐标（像素）并转换为米
+                float worldX = (m_chunkX * SIZE + lx) * tileSize.x + tileSize.x * 0.5f;
+                float worldY = (m_chunkY * SIZE + ly) * tileSize.y + tileSize.y * 0.5f;
+                b2Vec2 physPos = {worldX / pixelsPerMeter, worldY / pixelsPerMeter};
+                b2Vec2 halfSize = {tileSize.x * 0.5f / pixelsPerMeter, tileSize.y * 0.5f / pixelsPerMeter};
+
+                // 用户数据可以存储瓦片索引（或指针），用于后续查找
+                int tileIndex = ly * SIZE + lx;
+                b2BodyId bodyId = physicsMgr->createStaticBody(physPos, halfSize, reinterpret_cast<void *>(tileIndex));
+                m_physicsBodies[tileIndex] = bodyId;
+            }
+        }
+    }
+
+    void Chunk::destroyPhysicsBodies(engine::physics::PhysicsManager *physicsMgr)
+    {
+    }
+
+    void Chunk::updatePhysicsBody(int localX, int localY, engine::physics::PhysicsManager *physicsMgr, float pixelsPerMeter)
+    {
+        int index = localY * SIZE + localX;
+        const auto &tile = m_tiles[index];
+        bool isSolid = (tile.type != TileType::Air);
+
+        auto it = m_physicsBodies.find(index);
+        if (!isSolid && it != m_physicsBodies.end())
+        {
+            // 瓦片变为空气，销毁物理体
+            physicsMgr->destroyBody(it->second);
+            m_physicsBodies.erase(it);
+        }
+        else if (isSolid && it == m_physicsBodies.end())
+        {
+            // 瓦片从空气变为实体，创建物理体
+            float worldX = (m_chunkX * SIZE + localX) * m_tileSize.x + m_tileSize.x * 0.5f;
+            float worldY = (m_chunkY * SIZE + localY) * m_tileSize.y + m_tileSize.y * 0.5f;
+            b2Vec2 physPos = {worldX / pixelsPerMeter, worldY / pixelsPerMeter};
+            b2Vec2 halfSize = {m_tileSize.x * 0.5f / pixelsPerMeter, m_tileSize.y * 0.5f / pixelsPerMeter};
+            b2BodyId bodyId = physicsMgr->createStaticBody(physPos, halfSize, reinterpret_cast<void *>(index));
+            m_physicsBodies[index] = bodyId;
+        }
     }
 
 } // namespace engine::world

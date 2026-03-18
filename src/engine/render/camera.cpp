@@ -16,9 +16,20 @@ namespace engine::render
                       _viewport_size.x, _viewport_size.y);
     }
 
-    void Camera::update(float /*delta_timer*/)
+    void Camera::update(float delta_timer)
     {
-        // to do
+        if (_follow_target)
+        {
+            glm::vec2 target_pos = *_follow_target - _viewport_size * 0.5f;
+            _position = glm::mix(_position, target_pos, _follow_smoothness * delta_timer);
+            clampPosition();
+        }
+    }
+
+    void Camera::setFollowTarget(const glm::vec2* target, float smoothness)
+    {
+        _follow_target = const_cast<glm::vec2*>(target);
+        _follow_smoothness = smoothness;
     }
 
     void Camera::move(const glm::vec2 &offset)

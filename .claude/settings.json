@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(make -j4)",
+      "Bash(cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON)",
+      "Bash(cmake --build build -j4)",
+      "Bash(make -C build -j4)",
+      "Bash(make -C build)",
+      "Bash(./LearnSunnyLand-Darwin)",
+      "Bash(cmake --build build)",
+      "Bash(./build/LearnSunnyLand-Darwin)",
+      "Bash(glslc sprite.frag -o sprite.frag.spv --target-env=vulkan1.0)",
+      "Bash(cmake --build .)",
+      "Read(//private/tmp/**)",
+      "Bash(kill 97705)",
+      "Bash(pkill -f LearnSunnyLand-Darwin)",
+      "Bash(kill 1687)",
+      "Bash(kill 4270)",
+      "Bash(kill 4746)"
+    ]
+  }
+}

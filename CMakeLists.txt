@@ -38,10 +38,13 @@ set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 find_package(SDL3 REQUIRED)
 find_package(SDL3_image REQUIRED)
 find_package(SDL3_mixer REQUIRED)
-find_package(SDL3_ttf REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(spdlog REQUIRED)
+find_package(box2d REQUIRED)
+find_package(OpenGL REQUIRED)
+find_package(Freetype REQUIRED)
+find_package(harfbuzz REQUIRED)
 
 # 添加可执行文件
 add_executable(
@@ -70,15 +73,19 @@ add_executable(
     src/engine/render/sdl_renderer.cpp
     src/engine/render/vulkan_renderer.cpp
     src/engine/render/sdl3_gpu_renderer.cpp
+    src/engine/render/opengl_renderer.cpp
     
     src/engine/render/sprite_render_system.cpp
     src/engine/render/parallax_render_system.cpp
     src/engine/render/tilelayer_render_system.cpp
+    src/engine/render/text_renderer.cpp
 
     src/engine/component/sprite_component.cpp
     src/engine/component/transform_component.cpp
     src/engine/component/parallax_component.cpp
     src/engine/component/tilelayer_component.cpp
+    src/engine/component/controller_component.cpp
+    src/engine/component/physics_component.cpp
 
     src/engine/world/tile_info.h
     src/engine/world/chunk.cpp
@@ -96,7 +103,12 @@ add_executable(
 
     src/engine/utils/math.h
 
+    src/engine/physics/physics_manager.cpp
+
+    src/engine/actor/actor_manager.cpp
+
     src/game/scene/game_scene.cpp
+    src/game/scene/menu_scene.cpp
     )
 
 # 这样编译器才能进入 /Users/suyp/C++/Library/build/include 找到 SDL3_mixer 文件夹
@@ -108,8 +120,11 @@ target_link_libraries(
     SDL3::SDL3
     SDL3_image::SDL3_image
     SDL3_mixer::SDL3_mixer
-    SDL3_ttf::SDL3_ttf
     glm::glm
     nlohmann_json::nlohmann_json
     spdlog::spdlog
+    box2d::box2d
+    OpenGL::GL
+    Freetype::Freetype
+    harfbuzz::harfbuzz
     )

@@ -2,30 +2,25 @@
 #include "../../engine/object/game_object.h"
 #include "../../engine/component/transform_component.h"
 #include "../../engine/component/sprite_component.h"
+#include "../../engine/component/controller_component.h"
+#include "../../engine/component/physics_component.h"
 #include "../../engine/core/context.h"
 #include "../../engine/render/sprite_render_system.h"
 #include "../../engine/render/parallax_render_system.h"
 #include "../../engine/render/tilelayer_render_system.h"
 #include "../../engine/resource/resource_manager.h"
+#include "../../engine/resource/font_manager.h"
 #include "../../engine/input/input_manager.h"
 #include "../../engine/render/camera.h"
 #include "../../engine/world/world_config.h"
 #include "../../engine/world/perlin_noise_generator.h"
 #include "../../engine/world/chunk_manager.h"
+#include "../../engine/render/renderer.h"
+#include "../../engine/ecs/components.h"
 #include <spdlog/spdlog.h>
 
 namespace game::scene
 {
-    /**
-     * @brief 构造函数，初始化游戏场景
-     *
-     * @param name 场景名称
-     * @param context 引擎上下文对象
-     * @param sceneManager 场景管理器对象
-     *
-     * @note 构造完成后会输出调试日志，包含场景名称
-     * @note 日志中可能包含特殊字符如 \t, \r, \n
-     */
     GameScene::GameScene(const std::string &name,
                          engine::core::Context &context,
                          engine::scene::SceneManager &sceneManager)
@@ -34,130 +29,145 @@ namespace game::scene
         spdlog::debug("GameScene '{}' 构造完成", name);
     }
 
-    /**
-     * @brief 初始化游戏场景
-     *
-     * 该方法用于初始化游戏场景的特定内容，包括创建测试对象和调用基类初始化。
-     * 初始化过程中会捕获并记录可能出现的异常，然后重新抛出异常供上层处理。
-     *
-     * @throws std::exception 如果初始化过程中发生错误，会抛出标准异常
-     *
-     * @note 该方法会执行以下操作：
-     *       1. 创建测试对象 (createTestObject)
-     *       2. 调用基类 Scene 的初始化方法
-     *       3. 记录初始化完成的调试信息
-     *       4. 处理并记录初始化过程中可能出现的异常
-     *
-     * @warning 如果初始化失败，异常会被重新抛出，调用者需要处理可能的异常情况
-     */
     void GameScene::init()
     {
-        // 创建 ChunkManager（纹理图集ID需提前加载）
-        chunk_manager = std::make_unique<engine::world::ChunkManager>("assets/dimensions/tileset_atlas.svg",
-                                                                      glm::ivec2(16, 16),
-                                                                      &_context.getResourceManager());
-        // 加载世界配置
+        physics_manager = std::make_unique<engine::physics::PhysicsManager>();
+        physics_manager->init({0.0f, 10.0f});
+
+        b2Vec2 position = {10.0f, -50.0f};
+        b2Vec2 halfSize = {0.5f, 0.5f};
+        m_testBoxId = physics_manager->createDynamicBody(position, halfSize, nullptr);
+
         engine::world::WorldConfig config;
         config.loadFromFile("assets/world_config.json");
-        config.seed = 12345; // 或者从配置读取
+        config.seed = 12345;
 
-        // 创建生成器
+        chunk_manager = std::make_unique<engine::world::ChunkManager>(
+            "assets/dimensions/tileset_atlas.svg",
+            config.TILE_SIZE,
+            &_context.getResourceManager(),
+            physics_manager.get());
+
         auto generator = std::make_unique<engine::world::PerlinNoiseGenerator>(config);
-
-        // 设置给 ChunkManager
         chunk_manager->setTerrainGenerator(std::move(generator));
+
+        actor_manager = std::make_unique<engine::actor::ActorManager>(_context);
+        createPlayer();
+
+        auto& fontMgr = _context.getResourceManager().getFontManager();
+        fontMgr.setDevice(_context.getRenderer().getDevice());
+        text_renderer = fontMgr.loadFont("assets/fonts/VonwaonBitmap-16px.ttf", 16);
+
+        // ECS测试
+        for (int i = 0; i < 5; i++)
+        {
+            auto entity = ecs_registry.create();
+            ecs_registry.add<engine::ecs::Position>(entity, glm::vec2(i * 50.0f, 100.0f));
+            ecs_registry.add<engine::ecs::Velocity>(entity, glm::vec2(10.0f + i * 5.0f, 0.0f));
+        }
+        spdlog::info("ECS: 创建了5个测试实体");
     }
     void GameScene::update(float delta_time)
     {
         Scene::update(delta_time);
 
-        // 根据玩家位置更新可见块
-        glm::vec2 playerPos = {0.0, 0.0};                 // 需要实现
-        chunk_manager->updateVisibleChunks(playerPos, 8); // 视距8个块
+        // 更新相机
+        _context.getCamera().update(delta_time);
 
-        // 可以在这里处理瓦片变化（例如挖掘）
-        // TO DO
+        const float TIME_STEP = 1.0f / 60.0f;
+        if (physics_manager)
+        {
+            physics_manager->update(TIME_STEP, 4);
+        }
+
+        if (actor_manager)
+        {
+            actor_manager->update(delta_time);
+        }
+
+        // 每秒输出一次玩家信息
+        static float timer = 0.0f;
+        timer += delta_time;
+        if (timer >= 1.0f && m_player)
+        {
+            auto* transform = m_player->getComponent<engine::component::TransformComponent>();
+            if (transform)
+            {
+                float height = transform->getPosition().y;
+                spdlog::info("Player: {} | Height: {:.1f}", m_player->getName(), height);
+            }
+            timer = 0.0f;
+        }
+
+        glm::vec2 playerPos = {0.0, 0.0};
+        chunk_manager->updateVisibleChunks(playerPos, 8);
     }
-    /**
-     * @brief 渲染游戏场景
-     *
-     * 该方法负责渲染当前游戏场景的所有内容。它首先调用基类的渲染逻辑，
-     * 然后驱动渲染系统绘制所有已注册的 SpriteComponent。
-     *
-     * @note 此方法会处理所有可见的 SpriteComponent，包括处理制表符(\t)、回车符(\r)和换行符(\n)
-     */
+
     void GameScene::render()
     {
-        // 1. 调用基类逻辑（如果有必要）
         Scene::render();
-
-        // 在渲染其他对象之前或之后渲染瓦片
         chunk_manager->renderAll(_context);
-
-        // 2. 核心：驱动渲染系统绘制所有已注册的 SpriteComponent
-        // 这里才是真正去调 Renderer -> SDL_Render/SDL_GPU 的地方
         _context.getParallaxRenderSystem().renderAll(_context);
         _context.getSpriteRenderSystem().renderAll(_context);
         _context.getTilelayerRenderSystem().renderAll(_context);
+
+        if (actor_manager)
+        {
+            actor_manager->render();
+        }
+
+        if (physics_manager)
+        {
+            physics_manager->debugDraw(_context.getRenderer(), _context.getCamera());
+        }
+
+        if (text_renderer && m_player)
+        {
+            auto* transform = m_player->getComponent<engine::component::TransformComponent>();
+            if (transform)
+            {
+                float height = transform->getPosition().y;
+                std::string text = "Player: " + m_player->getName() + " | Height: " + std::to_string(static_cast<int>(height));
+
+                float screenWidth = _context.getCamera().getViewportSize().x;
+                auto glyphs = text_renderer->prepareText(text, screenWidth - 300.0f, 30.0f);
+                spdlog::debug("准备渲染 {} 个字形", glyphs.size());
+                auto& renderer = _context.getRenderer();
+
+                for (const auto& glyph : glyphs)
+                {
+                    renderer.drawTexture(glyph.texture, glyph.x, glyph.y, glyph.w, glyph.h);
+                }
+            }
+        }
     }
-    /**
-     * @brief 处理游戏场景的输入事件
-     * @details 该函数首先调用基类 Scene 的 handleInput() 方法处理基础输入逻辑，
-     *          然后执行游戏场景特有的输入处理。支持的输入包括但不限于：
-     *          - 键盘按键（\t, \r, \n等特殊字符）
-     *          - 鼠标操作
-     *          - 手柄输入
-     * @note 该函数会覆盖基类的同名方法
-     */
+
     void GameScene::handleInput()
     {
         Scene::handleInput();
-        testCamera();
+
+        if (actor_manager)
+        {
+            actor_manager->handleInput();
+        }
     }
-    /**
-     * @brief 清理游戏场景资源
-     *
-     * 该函数用于清理GameScene类中的所有资源，包括但不限于：
-     * - 释放动态分配的内存
-     * - 重置场景状态
-     * - 清理图形和音频资源
-     *
-     * 注意：此函数会调用基类Scene的clean()方法以确保基类资源也被正确清理。
-     *
-     * @note 该函数不处理制表符(\t)、回车符(\r)或换行符(\n)等特殊字符
-     */
+
     void GameScene::clean()
     {
         Scene::clean();
     }
-    /**
-     * @brief 创建测试对象
-     *
-     * 该方法用于在场景中创建测试对象网格。具体实现如下：
-     * 1. 在1250x1250的区域内，以32像素为间隔创建对象
-     * 2. 每个测试对象包含：
-     *    - TransformComponent：用于设置对象位置
-     *    - SpriteComponent：使用指定纹理渲染
-     * 3. 使用日志记录创建过程
-     *
-     * @note 处理的字符包括\t、\r、\n等特殊字符
-     */
     void GameScene::createTestObject()
     {
-        spdlog::trace("GameScene 创建测试对象");
         for (int i = 0; i < 50; i += 32)
         {
             for (int j = 0; j < 50; j += 32)
             {
                 auto test_object = std::make_unique<engine::object::GameObject>(_context, "test_object");
-                // 添加组件
                 test_object->addComponent<engine::component::TransformComponent>(glm::vec2(i, j));
                 test_object->addComponent<engine::component::SpriteComponent>("assets/textures/Props/bubble1.svg", engine::utils::Alignment::CENTER);
-                // 添加到场景中
                 addGameObject(std::move(test_object));
             }
         }
-        spdlog::trace("GameScene 测试对象创建完成");
     }
 
     void GameScene::testCamera()
@@ -172,5 +182,23 @@ namespace game::scene
             camera.move(glm::vec2(-1, 0));
         if (input_manager.isActionDown("move_right"))
             camera.move(glm::vec2(1, 0));
+    }
+
+    void GameScene::createPlayer()
+    {
+        m_player = actor_manager->createActor("player");
+
+        // 初始位置在空中，避免卡在地下
+        glm::vec2 startPos = {0.0f, -10.0f};
+        auto* transform = m_player->addComponent<engine::component::TransformComponent>(startPos);
+        m_player->addComponent<engine::component::SpriteComponent>("assets/textures/Props/bubble1.svg", engine::utils::Alignment::CENTER);
+        m_player->addComponent<engine::component::ControllerComponent>(25.0f, 30.0f);
+
+        // 创建物理体并添加 PhysicsComponent
+        b2BodyId bodyId = physics_manager->createDynamicBody({startPos.x, startPos.y}, {0.5f, 0.5f}, m_player);
+        m_player->addComponent<engine::component::PhysicsComponent>(bodyId);
+
+        // 相机跟随玩家
+        _context.getCamera().setFollowTarget(&transform->getPosition(), 5.0f);
     }
 }

@@ -1,17 +1,28 @@
 {
     "version": "0.2.0",
     "configurations": [
-        
         {
-            "name": "CodeLLDB: 启动 SunnyLand",
-            "type": "lldb", // 关键修改：从 cppdbg 改为 lldb
+            "name": "C++: 启动游戏 (推荐)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/LearnSunnyLand-Darwin",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "preLaunchTask": "build"
+        },
+        {
+            "name": "CodeLLDB: 启动游戏",
+            "type": "lldb",
             "request": "launch",
             "program": "${workspaceFolder}/LearnSunnyLand-Darwin",
             "args": [],
             "cwd": "${workspaceFolder}",
             "terminal": "integrated",
             "env": {
-                // 确保你的 ASan 日志能正常输出到控制台
                 "ASAN_OPTIONS": "detect_leaks=1:color=always"
             },
             "sourceLanguages": ["cpp"]

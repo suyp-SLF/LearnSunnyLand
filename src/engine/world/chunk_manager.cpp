@@ -1,5 +1,6 @@
 #include "chunk_manager.h"
 #include "../core/context.h"
+#include "world_config.h"
 #include "tile_info.h"
 #include <algorithm>
 
@@ -7,10 +8,14 @@ namespace engine::world
 {
     ChunkManager::ChunkManager(const std::string &atlasTextureId,
                                const glm::ivec2 &tileSize,
-                               engine::resource::ResourceManager *resMgr)
+                               engine::resource::ResourceManager *resMgr,
+                               engine::physics::PhysicsManager *physicsMgr)
         : m_atlasTextureId(atlasTextureId),
           m_tileSize(tileSize),
-          m_resMgr(resMgr) {}
+          m_resMgr(resMgr),
+          m_physicsMgr(physicsMgr)
+    {
+    }
 
     ChunkManager::~ChunkManager() = default;
 
@@ -19,17 +24,15 @@ namespace engine::world
         int chunkX = worldX / Chunk::SIZE;
         int chunkY = worldY / Chunk::SIZE;
         if (worldX < 0)
-            chunkX--; // 处理负数坐标
+            chunkX--;
         if (worldY < 0)
             chunkY--;
 
         auto it = m_chunks.find(encodeChunkKey(chunkX, chunkY));
         if (it == m_chunks.end())
         {
-            // 如果块未加载，可以选择加载或返回空气（但这里为了简单，抛异常或返回默认）
             static TileData air(TileType::Air);
-            return air; // 危险：返回局部静态的引用，但多个调用会共享？最好重新设计
-            // 实际应确保块已加载，或使用 setTile 时自动加载
+            return air;
         }
         int localX = worldX - chunkX * Chunk::SIZE;
         int localY = worldY - chunkY * Chunk::SIZE;
@@ -49,26 +52,24 @@ namespace engine::world
         auto it = m_chunks.find(key);
         if (it == m_chunks.end())
         {
-            // 自动加载块
             loadChunk(chunkX, chunkY);
             it = m_chunks.find(key);
             if (it == m_chunks.end())
-                return; // 加载失败
+                return;
         }
 
         int localX = worldX - chunkX * Chunk::SIZE;
         int localY = worldY - chunkY * Chunk::SIZE;
         it->second->tileAt(localX, localY) = tile;
         it->second->setDirty();
+        it->second->updatePhysicsBody(localX, localY, m_physicsMgr, WorldConfig::PIXELS_PER_METER);
     }
 
     void ChunkManager::updateVisibleChunks(const glm::vec2 &cameraPos, int viewDistanceInChunks)
     {
-        // 计算相机所在的块
         int camChunkX = static_cast<int>(std::floor(cameraPos.x / (Chunk::SIZE * m_tileSize.x)));
         int camChunkY = static_cast<int>(std::floor(cameraPos.y / (Chunk::SIZE * m_tileSize.y)));
 
-        // 加载视距内的块，卸载之外的块
         std::vector<uint64_t> toUnload;
         for (const auto &[key, chunk] : m_chunks)
         {
@@ -86,7 +87,6 @@ namespace engine::world
             m_chunks.erase(key);
         }
 
-        // 加载新块
         for (int dx = -viewDistanceInChunks; dx <= viewDistanceInChunks; ++dx)
         {
             for (int dy = -viewDistanceInChunks; dy <= viewDistanceInChunks; ++dy)
@@ -105,13 +105,11 @@ namespace engine::world
     void ChunkManager::loadChunk(int chunkX, int chunkY)
     {
         auto chunk = std::make_unique<Chunk>(chunkX, chunkY);
-        // TODO: 从磁盘加载或生成地形数据
-        // 这里简单填充一些测试数据
+
         for (int ly = 0; ly < Chunk::SIZE; ++ly)
         {
             for (int lx = 0; lx < Chunk::SIZE; ++lx)
             {
-                // 生成简单地形：地面以下为石头，地面为草
                 int worldY = chunkY * Chunk::SIZE + ly;
                 if (worldY == -8)
                 {
@@ -127,16 +125,23 @@ namespace engine::world
                 }
             }
         }
-        chunk->buildMesh("assets/dimensions/tileset_atlas.svg", m_tileSize, m_resMgr); // 初始生成
+        chunk->createPhysicsBodies(m_physicsMgr, WorldConfig::TILE_SIZE, WorldConfig::PIXELS_PER_METER);
+        chunk->buildMesh("assets/dimensions/tileset_atlas.svg", m_tileSize, m_resMgr);
         m_chunks[encodeChunkKey(chunkX, chunkY)] = std::move(chunk);
     }
+
     void ChunkManager::setTerrainGenerator(std::unique_ptr<TerrainGenerator> generator)
     {
-        // 例如：m_generator = std::move(generator);
     }
+
     void ChunkManager::unloadChunk(int chunkX, int chunkY)
     {
-        m_chunks.erase(encodeChunkKey(chunkX, chunkY));
+        auto it = m_chunks.find(encodeChunkKey(chunkX, chunkY));
+        if (it != m_chunks.end())
+        {
+            it->second->destroyPhysicsBodies(m_physicsMgr);
+            m_chunks.erase(it);
+        }
     }
 
     void ChunkManager::renderAll(engine::core::Context &ctx) const

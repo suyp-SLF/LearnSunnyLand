@@ -1166,7 +1166,6 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/tilelayer_component.cp
   /opt/homebrew/include/SDL3/SDL_version.h \
   /opt/homebrew/include/SDL3/SDL_oldnames.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/../resource/resource_manager.h \
-  /opt/homebrew/include/SDL3_ttf/SDL_ttf.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/../render/tilelayer_render_system.h \
   /opt/homebrew/include/spdlog/spdlog.h \
   /opt/homebrew/include/spdlog/common.h \

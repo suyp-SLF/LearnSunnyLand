@@ -4,7 +4,6 @@
 #include <string>
 #include <glm/glm.hpp>
 #include <SDL3/SDL_gpu.h>
-#include <SDL3_ttf/SDL_ttf.h>
 
 // --- 前向声明 ---
 // SDL 相关
@@ -25,6 +24,7 @@ namespace engine::resource
     class AudioManager;
     class FontManager;
     class ShaderManager;
+    class TextureResource;
 
     /**
      * @brief 资源管理器（门面类）
@@ -70,12 +70,8 @@ namespace engine::resource
 
         /** @brief 获取适用于 SDL3 GPU 的现代纹理 */
         SDL_GPUTexture *getGPUTexture(const std::string &path);
-
-        /** @brief 获取纹理的原始尺寸 (px) */
+        TextureResource *getTextureResource(const std::string &path);
         glm::vec2 getTextureSize(const std::string &path);
-        void clearTextures();
-        /** @brief 从内存中手动卸载特定纹理 */
-        void unloadTexture(const std::string &path);
 
         SDL_GPUDevice* getGPUDevice() const { return _gpu_device; }
 
@@ -91,11 +87,8 @@ namespace engine::resource
         void unloadAudio(const std::string &path);
 
         // --- 字体资源接口 ---
+        FontManager& getFontManager() { return *_font_manager; }
 
-        /** @brief 获取指定大小的字体 */
-        TTF_Font *getFont(const std::string &path, int point_size);
-
-        void unloadFont(const std::string &path, int point_size);
         // --- Shader 转发 ---
         SDL_GPUShader *loadShader(
             const std::string &name,

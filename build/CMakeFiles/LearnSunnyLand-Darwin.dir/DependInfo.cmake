@@ -8,7 +8,10 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/actor/actor_manager.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/actor/actor_manager.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/actor/actor_manager.cpp.o.d"
+  "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/controller_component.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/controller_component.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/controller_component.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/parallax_component.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/parallax_component.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/parallax_component.cpp.o.d"
+  "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/physics_component.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/physics_component.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/physics_component.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/sprite_component.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/sprite_component.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/sprite_component.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/tilelayer_component.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/tilelayer_component.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/tilelayer_component.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/transform_component.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/transform_component.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/transform_component.cpp.o.d"
@@ -18,11 +21,14 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/time.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/time.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/time.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/input/input_manager.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/object/game_object.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/object/game_object.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/object/game_object.cpp.o.d"
+  "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/physics/physics_manager.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/physics/physics_manager.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/physics/physics_manager.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/camera.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/camera.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/camera.cpp.o.d"
+  "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/opengl_renderer.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/opengl_renderer.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/opengl_renderer.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/parallax_render_system.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/parallax_render_system.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/parallax_render_system.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/sdl3_gpu_renderer.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/sdl3_gpu_renderer.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/sdl3_gpu_renderer.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/sdl_renderer.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/sdl_renderer.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/sdl_renderer.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/sprite_render_system.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/sprite_render_system.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/sprite_render_system.cpp.o.d"
+  "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/text_renderer.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/text_renderer.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/text_renderer.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/tilelayer_render_system.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/tilelayer_render_system.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/tilelayer_render_system.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/vulkan_renderer.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/vulkan_renderer.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/vulkan_renderer.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/audio_manager.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/audio_manager.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/audio_manager.cpp.o.d"
@@ -38,6 +44,7 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/world/terrain_generator.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/terrain_generator.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/terrain_generator.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/world/world_config.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/world_config.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/world_config.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/game_scene.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.o.d"
+  "/Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/menu_scene.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/menu_scene.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/menu_scene.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/main.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/main.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/main.cpp.o.d"
   )
 

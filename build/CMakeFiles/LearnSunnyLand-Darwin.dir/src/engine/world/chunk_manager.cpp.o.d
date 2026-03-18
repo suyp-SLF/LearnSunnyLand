@@ -1114,4 +1114,5 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk_manager.cpp.o: \
   /opt/homebrew/include/SDL3/SDL_blendmode.h \
   /opt/homebrew/include/SDL3/SDL_iostream.h \
   /opt/homebrew/include/SDL3/SDL_video.h \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/world/../core/context.h
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/world/../core/context.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/world/world_config.h

@@ -37,10 +37,10 @@ namespace engine::component
         uint32_t         getVersion()  const { return _version; }
 
         // --- Setter (状态修改，将触发版本号更新) ---
-        void setPosition(glm::vec2& position);
-        void setScale(glm::vec2& scale);
+        void setPosition(const glm::vec2& position);
+        void setScale(const glm::vec2& scale);
         void setRotation(float rotation);
-        void translate(glm::vec2& translation);
+        void translate(const glm::vec2& translation);
 
     private:
         // --- 核心变换数据 ---

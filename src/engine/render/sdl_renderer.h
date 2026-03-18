@@ -48,6 +48,8 @@ namespace engine::render
         void drawChunkBatches(const Camera &camera,
                               const std::unordered_map<SDL_GPUTexture *, engine::world::TextureBatch> &batches,
                               const glm::vec2 &worldOffset);
+        void drawTexture(SDL_GPUTexture* texture, float x, float y, float w, float h) override;
+        void drawRect(const Camera &camera, float x, float y, float w, float h, const glm::vec4 &color) override;
         void present();
         void clearScreen();
 

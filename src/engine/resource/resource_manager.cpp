@@ -12,21 +12,17 @@ namespace engine::resource
         _renderer = renderer;
         _gpu_device = device;
 
-        // 分发设备指针给子管理器
         if (_texture_manager)
             _texture_manager->setDevice(_renderer, _gpu_device);
         if (_shader_manager)
             _shader_manager->setDevice(_gpu_device);
 
-        // ⚡️ 预创建默认 GPU 采样器
         if (_gpu_device && !_default_sampler)
         {
             SDL_GPUSamplerCreateInfo sampler_info = {};
             sampler_info.min_filter = SDL_GPU_FILTER_NEAREST;
             sampler_info.mag_filter = SDL_GPU_FILTER_NEAREST;
             sampler_info.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_NEAREST;
-
-            // ⚡️ 核心修正：防止采样器在 1.0 边缘处采样到对面的像素
             sampler_info.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
             sampler_info.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
             sampler_info.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
@@ -51,9 +47,8 @@ namespace engine::resource
         _texture_manager = std::make_unique<TextureManager>(renderer, device);
         _audio_manager = std::make_unique<AudioManager>();
         _font_manager = std::make_unique<FontManager>();
-
         _shader_manager = std::make_unique<ShaderManager>(device);
-        // 如果构造时已经传了 device，直接跑一遍 init 的逻辑
+
         if (_gpu_device || _renderer)
         {
             init(_renderer, _gpu_device);
@@ -75,15 +70,14 @@ namespace engine::resource
         if (_texture_manager)
             _texture_manager->clearTextures();
         if (_audio_manager)
-            _audio_manager->clearAudios(); // 修正为你的子管理器方法名
+            _audio_manager->clearAudios();
         if (_font_manager)
-            _font_manager->clearFonts(); // 修正为你的子管理器方法名
+            _font_manager->clearFonts();
         if (_shader_manager)
             _shader_manager->clear();
         spdlog::trace("所有引擎资源已卸载");
     }
 
-    // --- 纹理转发 ---
     SDL_Texture *ResourceManager::getTexture(const std::string &path)
     {
         return _texture_manager->getLegacyTexture(path);
@@ -91,6 +85,11 @@ namespace engine::resource
     SDL_GPUTexture *ResourceManager::getGPUTexture(const std::string &path)
     {
         return _texture_manager->getGPUTexture(path);
+    }
+
+    TextureResource *ResourceManager::getTextureResource(const std::string &path)
+    {
+        return _texture_manager->getTextureResource(path);
     }
 
     glm::vec2 ResourceManager::getTextureSize(const std::string &path)
@@ -102,31 +101,16 @@ namespace engine::resource
         return {0.0f, 0.0f};
     }
 
-    void ResourceManager::clearTextures()
-    {
-    }
-
-    void ResourceManager::unloadTexture(const std::string &path)
-    {
-    }
-
-    // --- 音频转发 ---
     MIX_Audio *ResourceManager::getAudio(const std::string &path)
     {
         return _audio_manager->getAudio(path);
     }
+
     void ResourceManager::unloadAudio(const std::string &path)
     {
         _audio_manager->unloadAudio(path);
     }
 
-    // --- 字体转发 ---
-    TTF_Font *ResourceManager::getFont(const std::string &path, int size)
-    {
-        return _font_manager->getFont(path, size);
-    }
-
-    // --- Shader 转发 ---
     SDL_GPUShader *ResourceManager::loadShader(
         const std::string &name,
         const std::string &path,
@@ -141,7 +125,6 @@ namespace engine::resource
             return nullptr;
         }
 
-        // ⚡️ 关键：这里不再硬编码 1, 1，而是使用传入的变量
         return _shader_manager->loadShader(
             name,
             path,

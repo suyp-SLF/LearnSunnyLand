@@ -11,14 +11,14 @@ namespace engine::world
     public:
         ChunkManager(const std::string &atlasTextureId,
                      const glm::ivec2 &tileSize,
-                     engine::resource::ResourceManager *resMgr);
+                     engine::resource::ResourceManager *resMgr,
+                     engine::physics::PhysicsManager *physicsMgr);
         ~ChunkManager();
 
         void setTerrainGenerator(std::unique_ptr<engine::world::TerrainGenerator> generator);
 
         // 获取指定世界坐标的瓦片（线程安全？暂不考虑）
         TileData &tileAt(int worldX, int worldY);
-        const TileData &tileAt(int worldX, int worldY) const;
 
         // 设置瓦片并标记对应块为脏
         void setTile(int worldX, int worldY, TileData tile);
@@ -35,6 +35,7 @@ namespace engine::world
 
     private:
         engine::resource::ResourceManager *m_resMgr; // 资源管理器指针（非拥有）
+        engine::physics::PhysicsManager* m_physicsMgr; // 物理管理器指针（非拥有）
 
         std::unordered_map<uint64_t, std::unique_ptr<Chunk>> m_chunks;
         std::string m_atlasTextureId;

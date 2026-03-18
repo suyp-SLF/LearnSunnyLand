@@ -1120,7 +1120,9 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o: \
   /opt/homebrew/include/SDL3/SDL_blendmode.h \
   /opt/homebrew/include/SDL3/SDL_iostream.h \
   /opt/homebrew/include/SDL3/SDL_video.h \
-  /opt/homebrew/include/SDL3_ttf/SDL_ttf.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../scene/scene_manager.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../render/renderer.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../render/render_types.h \
   /opt/homebrew/include/SDL3/SDL.h \
   /opt/homebrew/include/SDL3/SDL_assert.h \
   /opt/homebrew/include/SDL3/SDL_asyncio.h \
@@ -1167,9 +1169,6 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o: \
   /opt/homebrew/include/SDL3/SDL_tray.h \
   /opt/homebrew/include/SDL3/SDL_version.h \
   /opt/homebrew/include/SDL3/SDL_oldnames.h \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../scene/scene_manager.h \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../render/renderer.h \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../render/render_types.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../render/sdl_renderer.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../render/sprite.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../render/../utils/math.h \
@@ -1281,4 +1280,55 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o: \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/game_scene.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/../../engine/scene/scene.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/../../engine/world/chunk_manager.h \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/../../engine/world/chunk.h
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/../../engine/world/chunk.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/../../engine/physics/physics_manager.h \
+  /opt/homebrew/include/box2d/box2d.h /opt/homebrew/include/box2d/base.h \
+  /opt/homebrew/include/box2d/collision.h \
+  /opt/homebrew/include/box2d/math_functions.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/stdbool.h \
+  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdbool.h \
+  /opt/homebrew/include/box2d/id.h /opt/homebrew/include/box2d/types.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/../../engine/actor/actor_manager.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/../../engine/render/text_renderer.h \
+  /opt/homebrew/include/freetype2/ft2build.h \
+  /opt/homebrew/include/freetype2/freetype/config/ftheader.h \
+  /opt/homebrew/include/freetype2/freetype/freetype.h \
+  /opt/homebrew/include/freetype2/freetype/config/ftconfig.h \
+  /opt/homebrew/include/freetype2/freetype/config/ftoption.h \
+  /opt/homebrew/include/freetype2/freetype/config/ftstdlib.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/setjmp.h \
+  /opt/homebrew/include/freetype2/freetype/config/integer-types.h \
+  /opt/homebrew/include/freetype2/freetype/config/public-macros.h \
+  /opt/homebrew/include/freetype2/freetype/config/mac-support.h \
+  /opt/homebrew/include/freetype2/freetype/fttypes.h \
+  /opt/homebrew/include/freetype2/freetype/ftsystem.h \
+  /opt/homebrew/include/freetype2/freetype/ftimage.h \
+  /opt/homebrew/include/freetype2/freetype/fterrors.h \
+  /opt/homebrew/include/freetype2/freetype/ftmoderr.h \
+  /opt/homebrew/include/freetype2/freetype/fterrdef.h \
+  /opt/homebrew/include/harfbuzz/hb.h \
+  /opt/homebrew/include/harfbuzz/hb-blob.h \
+  /opt/homebrew/include/harfbuzz/hb-common.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/inttypes.h \
+  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/inttypes.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/inttypes.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_inttypes.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/xlocale/_inttypes.h \
+  /opt/homebrew/include/harfbuzz/hb-script-list.h \
+  /opt/homebrew/include/harfbuzz/hb-buffer.h \
+  /opt/homebrew/include/harfbuzz/hb-unicode.h \
+  /opt/homebrew/include/harfbuzz/hb-font.h \
+  /opt/homebrew/include/harfbuzz/hb-face.h \
+  /opt/homebrew/include/harfbuzz/hb-map.h \
+  /opt/homebrew/include/harfbuzz/hb-set.h \
+  /opt/homebrew/include/harfbuzz/hb-draw.h \
+  /opt/homebrew/include/harfbuzz/hb-paint.h \
+  /opt/homebrew/include/harfbuzz/hb-deprecated.h \
+  /opt/homebrew/include/harfbuzz/hb-shape.h \
+  /opt/homebrew/include/harfbuzz/hb-shape-plan.h \
+  /opt/homebrew/include/harfbuzz/hb-style.h \
+  /opt/homebrew/include/harfbuzz/hb-version.h \
+  /opt/homebrew/include/harfbuzz/hb-ft.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/../../engine/ecs/registry.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/../../engine/ecs/entity.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/menu_scene.h

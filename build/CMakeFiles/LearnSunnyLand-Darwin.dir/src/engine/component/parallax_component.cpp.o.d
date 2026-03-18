@@ -1213,7 +1213,9 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/parallax_component.cpp
   /opt/homebrew/include/SDL3/SDL_blendmode.h \
   /opt/homebrew/include/SDL3/SDL_iostream.h \
   /opt/homebrew/include/SDL3/SDL_video.h \
-  /opt/homebrew/include/SDL3_ttf/SDL_ttf.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/../core/context.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/../render/renderer.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/../render/render_types.h \
   /opt/homebrew/include/SDL3/SDL.h \
   /opt/homebrew/include/SDL3/SDL_assert.h \
   /opt/homebrew/include/SDL3/SDL_asyncio.h \
@@ -1259,7 +1261,4 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/parallax_component.cpp
   /opt/homebrew/include/SDL3/SDL_timer.h \
   /opt/homebrew/include/SDL3/SDL_tray.h \
   /opt/homebrew/include/SDL3/SDL_version.h \
-  /opt/homebrew/include/SDL3/SDL_oldnames.h \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/../core/context.h \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/../render/renderer.h \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/../render/render_types.h
+  /opt/homebrew/include/SDL3/SDL_oldnames.h

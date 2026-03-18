@@ -8,14 +8,10 @@
 
 // 假设你有一个渲染接口（如 VertexBuffer, IndexBuffer），这里用伪代码
 struct SDL_GPUTexture;
-namespace engine::core
-{
-    class Context;
-}
-namespace engine::resource
-{
-    class ResourceManager;
-}
+struct b2BodyId;
+namespace engine::core{ class Context;}
+namespace engine::resource{class ResourceManager;}
+namespace engine::physics{class PhysicsManager;}
 namespace engine::render
 {
     class Camera;
@@ -68,9 +64,16 @@ namespace engine::world
             return cx == m_chunkX && cy == m_chunkY;
         }
 
+        // 新增：创建/销毁物理体, 与物理管理器交互
+        void createPhysicsBodies(engine::physics::PhysicsManager *physicsMgr, glm::vec2 m_tileSize, float pixelsPerMeter);
+        void destroyPhysicsBodies(engine::physics::PhysicsManager *physicsMgr);
+        void updatePhysicsBody(int localX, int localY, engine::physics::PhysicsManager *physicsMgr, float pixelsPerMeter);
+
     private:
         int m_chunkX, m_chunkY;
+        glm::vec2 m_tileSize;
         std::array<engine::world::TileData, TILE_COUNT> m_tiles;
+        std::unordered_map<int, b2BodyId> m_physicsBodies; // 瓦片索引 -> bodyId
 
         bool m_dirty = true;     // 是否需要重新生成网格
         size_t m_indexCount = 0; // 索引数量
