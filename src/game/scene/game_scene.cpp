@@ -100,10 +100,9 @@ namespace game::scene
         // 更新相机
         _context.getCamera().update(delta_time);
 
-        const float TIME_STEP = 1.0f / 60.0f;
         if (physics_manager)
         {
-            physics_manager->update(TIME_STEP, 4);
+            physics_manager->update(delta_time, 4);
         }
 
         if (actor_manager)
@@ -135,8 +134,13 @@ namespace game::scene
             }
         }
 
-        // 区块加载距离（配置文件中设置为3）
-        chunk_manager->updateVisibleChunks(playerPos, 3);
+        // 只在玩家移动超过半个 chunk 时才更新可见区块
+        constexpr float CHUNK_UPDATE_THRESHOLD = engine::world::Chunk::SIZE * 16.0f * 0.5f;
+        if (glm::distance(playerPos, m_lastChunkUpdatePos) > CHUNK_UPDATE_THRESHOLD)
+        {
+            chunk_manager->updateVisibleChunks(playerPos, 3);
+            m_lastChunkUpdatePos = playerPos;
+        }
     }
 
     void GameScene::render()
@@ -178,19 +182,30 @@ namespace game::scene
             }
         }
 
-        // ImGui滑块
+        // ImGui滑块 + 武器显示
         if (m_glContext)
         {
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplSDL3_NewFrame();
             ImGui::NewFrame();
 
-            ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 250, 20), ImGuiCond_Always);
+            float displayW = ImGui::GetIO().DisplaySize.x;
+
+            // 相机缩放
+            ImGui::SetNextWindowPos(ImVec2(displayW - 250, 20), ImGuiCond_Always);
             ImGui::Begin("Camera", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
             if (ImGui::SliderFloat("Zoom", &m_zoomSliderValue, 0.5f, 3.0f))
-            {
                 _context.getCamera().setZoom(m_zoomSliderValue);
-            }
+            ImGui::End();
+
+            // 武器显示
+            ImGui::SetNextWindowPos(ImVec2(displayW - 130, 70), ImGuiCond_Always);
+            ImGui::SetNextWindowSize(ImVec2(120, 50), ImGuiCond_Always);
+            ImGui::Begin("Weapon", nullptr,
+                ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
+                ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
+            ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "[ 挖掘枪 ]");
+            ImGui::TextDisabled("LMB: 挖掘");
             ImGui::End();
 
             ImGui::Render();
@@ -203,8 +218,19 @@ namespace game::scene
         Scene::handleInput();
 
         if (actor_manager)
-        {
             actor_manager->handleInput();
+
+        // 鼠标左键点击摧毁瓦片
+        auto &input = _context.getInputManager();
+        if (input.isActionPressed("attack"))
+        {
+            glm::vec2 mousePos = input.getLogicalMousePosition();
+            glm::vec2 worldPos = _context.getCamera().screenToWorld(mousePos);
+
+            int tileX = static_cast<int>(std::floor(worldPos.x / engine::world::WorldConfig::TILE_SIZE.x));
+            int tileY = static_cast<int>(std::floor(worldPos.y / engine::world::WorldConfig::TILE_SIZE.y));
+
+            chunk_manager->setTile(tileX, tileY, engine::world::TileData(engine::world::TileType::Air));
         }
     }
 

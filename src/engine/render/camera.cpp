@@ -61,8 +61,11 @@ namespace engine::render
 
     glm::mat4 Camera::getViewMatrix() const
     {
+        glm::vec2 center = _viewport_size * 0.5f;
         glm::mat4 view = glm::mat4(1.0f);
+        view = glm::translate(view, glm::vec3(center, 0.0f));
         view = glm::scale(view, glm::vec3(_zoom, _zoom, 1.0f));
+        view = glm::translate(view, glm::vec3(-center, 0.0f));
         view = glm::translate(view, glm::vec3(-_position.x, -_position.y, 0.0f));
         return view;
     }
@@ -84,7 +87,8 @@ namespace engine::render
 
     glm::vec2 Camera::screenToWorld(const glm::vec2 &screen_pos) const
     {
-        return screen_pos + _position;
+        glm::vec2 center = _viewport_size * 0.5f;
+        return (screen_pos - center) / _zoom + center + _position;
     }
 
     void Camera::setPosition(const glm::vec2 &position)

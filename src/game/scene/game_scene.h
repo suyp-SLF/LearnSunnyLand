@@ -33,6 +33,7 @@ namespace game::scene
 
         // 缩放滑块
         float m_zoomSliderValue = 1.0f;
+        glm::vec2 m_lastChunkUpdatePos = {-99999.0f, -99999.0f};
 
         void createTestObject();
         void testCamera();

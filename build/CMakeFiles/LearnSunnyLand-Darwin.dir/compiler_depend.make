@@ -37726,7 +37726,6 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk.cpp.o: /Users/suyp/C
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdbool.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stddef.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdint.h \
-  _deps/imgui-src/backends/imgui_impl_opengl3_loader.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/context.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/physics/physics_manager.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/render_types.h \
