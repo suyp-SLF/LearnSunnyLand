@@ -1,5 +1,4 @@
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/object/game_object.cpp.o: \
-  /Library/Developer/CommandLineTools/usr/lib/clang/17/share/asan_ignorelist.txt \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/object/game_object.cpp \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/object/game_object.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/object/../component/component.h \

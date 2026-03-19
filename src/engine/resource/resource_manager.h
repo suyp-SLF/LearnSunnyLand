@@ -70,6 +70,8 @@ namespace engine::resource
 
         /** @brief 获取适用于 SDL3 GPU 的现代纹理 */
         SDL_GPUTexture *getGPUTexture(const std::string &path);
+        /** @brief 获取适用于 OpenGL 的纹理 ID */
+        unsigned int getGLTexture(const std::string &path);
         TextureResource *getTextureResource(const std::string &path);
         glm::vec2 getTextureSize(const std::string &path);
 

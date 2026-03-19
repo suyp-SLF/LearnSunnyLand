@@ -1,5 +1,4 @@
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/audio_manager.cpp.o: \
-  /Library/Developer/CommandLineTools/usr/lib/clang/17/share/asan_ignorelist.txt \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/audio_manager.cpp \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/audio_manager.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/memory \

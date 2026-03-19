@@ -1,10 +1,64 @@
 #include "texture_manager.h"
 #include "resource_types.h"
 #include <SDL3_image/SDL_image.h>
+#include <SDL3/SDL.h>
+#define IMGUI_IMPL_OPENGL_LOADER_CUSTOM
+#include <imgui_impl_opengl3_loader.h>
+// GL constants not in ImGui loader
+#ifndef GL_RGBA
+#define GL_RGBA 0x1908
+#endif
+#ifndef GL_UNSIGNED_BYTE
+#define GL_UNSIGNED_BYTE 0x1401
+#endif
+#ifndef GL_TEXTURE_2D
+#define GL_TEXTURE_2D 0x0DE1
+#endif
+#ifndef GL_TEXTURE_MIN_FILTER
+#define GL_TEXTURE_MIN_FILTER 0x2801
+#endif
+#ifndef GL_TEXTURE_MAG_FILTER
+#define GL_TEXTURE_MAG_FILTER 0x2800
+#endif
+#ifndef GL_NEAREST
+#define GL_NEAREST 0x2600
+#endif
+#ifndef GL_CLAMP_TO_EDGE
+#define GL_CLAMP_TO_EDGE 0x812F
+#endif
+#ifndef GL_TEXTURE_WRAP_S
+#define GL_TEXTURE_WRAP_S 0x2802
+#endif
+#ifndef GL_TEXTURE_WRAP_T
+#define GL_TEXTURE_WRAP_T 0x2803
+#endif
 #include <spdlog/spdlog.h>
 
 namespace engine::resource
 {
+    void TextureResource::release(SDL_Renderer *ren, SDL_GPUDevice *dev)
+    {
+        if (sdl_tex)
+        {
+            SDL_DestroyTexture(sdl_tex);
+            sdl_tex = nullptr;
+        }
+        if (gpu_tex && dev)
+        {
+            SDL_ReleaseGPUTexture(dev, gpu_tex);
+            gpu_tex = nullptr;
+        }
+        if (gl_tex)
+        {
+            // 只在 GL context 有效时才释放（ImGui shutdown 后函数指针可能为空）
+            if (SDL_GL_GetCurrentContext() && imgl3wProcs.gl.DeleteTextures)
+            {
+                glDeleteTextures(1, &gl_tex);
+            }
+            gl_tex = 0;
+        }
+    }
+
     TextureManager::TextureManager(SDL_Renderer *renderer, SDL_GPUDevice *gpu_device)
         : _renderer(renderer), _gpu_device(gpu_device) {}
 
@@ -23,6 +77,11 @@ namespace engine::resource
     SDL_GPUTexture *TextureManager::getGPUTexture(const std::string &path)
     {
         return getInternal(path).gpu_tex; // 注意这里是 gpu_tex
+    }
+
+    unsigned int TextureManager::getGLTexture(const std::string &path)
+    {
+        return getInternal(path).gl_tex;
     }
 
     TextureResource *TextureManager::getTextureResource(const std::string &path)
@@ -61,7 +120,7 @@ namespace engine::resource
         auto it = _cache.find(path);
         if (it == _cache.end())
         {
-            if ((!_renderer &&!_gpu_device) || !forceLoad(path))
+            if ((!_renderer && !_gpu_device && !_use_opengl) || !forceLoad(path))
             {
                 static TextureResource empty; // 失败时返回一个空对象，防止崩溃
                 return empty;
@@ -102,6 +161,11 @@ namespace engine::resource
         if (_gpu_device)
         {
             res.gpu_tex = uploadToGPU(converted);
+        }
+
+        if (_use_opengl)
+        {
+            res.gl_tex = uploadToGL(converted);
         }
 
         SDL_DestroySurface(converted);
@@ -149,5 +213,20 @@ namespace engine::resource
 
         SDL_ReleaseGPUTransferBuffer(_gpu_device, staging);
         return gpuTex;
+    }
+
+    unsigned int TextureManager::uploadToGL(SDL_Surface *surface)
+    {
+        unsigned int texId = 0;
+        glGenTextures(1, &texId);
+        glBindTexture(GL_TEXTURE_2D, texId);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, surface->w, surface->h, 0,
+                     GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        return texId;
     }
 }

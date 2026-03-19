@@ -5,6 +5,8 @@
 #include <SDL3/SDL.h>
 #include <spdlog/spdlog.h>
 #include <glm/vec2.hpp>
+#include <imgui.h>
+#include <imgui_impl_sdl3.h>
 
 namespace engine::input
 {
@@ -200,6 +202,12 @@ namespace engine::input
      */
     void InputManager::processEvent(const SDL_Event &event)
     {
+        // 转发给 ImGui 处理（ImGui 上下文存在时才调用）
+        if (ImGui::GetCurrentContext())
+        {
+            ImGui_ImplSDL3_ProcessEvent(&event);
+        }
+
         switch (event.type)
         {
         case SDL_EVENT_KEY_DOWN:

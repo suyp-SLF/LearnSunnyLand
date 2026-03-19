@@ -8,6 +8,12 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "/Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/backends/imgui_impl_opengl3.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_opengl3.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_opengl3.cpp.o.d"
+  "/Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/backends/imgui_impl_sdl3.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_sdl3.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_sdl3.cpp.o.d"
+  "/Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/imgui.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui.cpp.o.d"
+  "/Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/imgui_draw.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_draw.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_draw.cpp.o.d"
+  "/Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/imgui_tables.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_tables.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_tables.cpp.o.d"
+  "/Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/imgui_widgets.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_widgets.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_widgets.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/actor/actor_manager.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/actor/actor_manager.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/actor/actor_manager.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/controller_component.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/controller_component.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/controller_component.cpp.o.d"
   "/Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/parallax_component.cpp" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/parallax_component.cpp.o" "gcc" "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/parallax_component.cpp.o.d"

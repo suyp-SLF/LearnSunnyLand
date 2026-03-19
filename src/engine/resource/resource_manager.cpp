@@ -13,7 +13,12 @@ namespace engine::resource
         _gpu_device = device;
 
         if (_texture_manager)
+        {
             _texture_manager->setDevice(_renderer, _gpu_device);
+            // 如果没有 SDL_Renderer 也没有 GPU device，尝试 OpenGL 模式
+            if (!_renderer && !_gpu_device)
+                _texture_manager->setUseOpenGL(true);
+        }
         if (_shader_manager)
             _shader_manager->setDevice(_gpu_device);
 
@@ -85,6 +90,11 @@ namespace engine::resource
     SDL_GPUTexture *ResourceManager::getGPUTexture(const std::string &path)
     {
         return _texture_manager->getGPUTexture(path);
+    }
+
+    unsigned int ResourceManager::getGLTexture(const std::string &path)
+    {
+        return _texture_manager->getGLTexture(path);
     }
 
     TextureResource *ResourceManager::getTextureResource(const std::string &path)

@@ -11,7 +11,7 @@ namespace engine::actor
     {
     public:
         ActorManager(engine::core::Context &context);
-        ~ActorManager() = default;
+        ~ActorManager();
 
         engine::object::GameObject* createActor(const std::string &name);
         void update(float delta_time);

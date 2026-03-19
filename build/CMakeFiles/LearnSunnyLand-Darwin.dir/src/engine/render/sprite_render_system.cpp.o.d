@@ -1,5 +1,4 @@
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/sprite_render_system.cpp.o: \
-  /Library/Developer/CommandLineTools/usr/lib/clang/17/share/asan_ignorelist.txt \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/sprite_render_system.cpp \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/sprite_render_system.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/vector \

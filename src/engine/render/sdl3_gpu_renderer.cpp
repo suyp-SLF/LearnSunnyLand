@@ -86,6 +86,33 @@ namespace engine::render
         // --- 3. 创建采样器 ---
         SDL_GPUSamplerCreateInfo sampler_info = {.min_filter = SDL_GPU_FILTER_NEAREST, .mag_filter = SDL_GPU_FILTER_NEAREST};
         _default_sampler = SDL_CreateGPUSampler(_device, &sampler_info);
+
+        // --- 4. 创建 1x1 白色纹理 ---
+        SDL_GPUTextureCreateInfo tex_info = {};
+        tex_info.type = SDL_GPU_TEXTURETYPE_2D;
+        tex_info.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
+        tex_info.width = 1;
+        tex_info.height = 1;
+        tex_info.layer_count_or_depth = 1;
+        tex_info.num_levels = 1;
+        tex_info.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER;
+        _white_texture = SDL_CreateGPUTexture(_device, &tex_info);
+
+        uint32_t white_pixel = 0xFFFFFFFF;
+        SDL_GPUTransferBufferCreateInfo tex_tb_info = {.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, .size = 4};
+        SDL_GPUTransferBuffer *tex_tb = SDL_CreateGPUTransferBuffer(_device, &tex_tb_info);
+        void *tex_map = SDL_MapGPUTransferBuffer(_device, tex_tb, false);
+        memcpy(tex_map, &white_pixel, 4);
+        SDL_UnmapGPUTransferBuffer(_device, tex_tb);
+
+        SDL_GPUCommandBuffer *tex_cmd = SDL_AcquireGPUCommandBuffer(_device);
+        SDL_GPUCopyPass *tex_copy = SDL_BeginGPUCopyPass(tex_cmd);
+        SDL_GPUTextureTransferInfo tex_src = {.transfer_buffer = tex_tb, .offset = 0};
+        SDL_GPUTextureRegion tex_dst = {.texture = _white_texture, .w = 1, .h = 1, .d = 1};
+        SDL_UploadToGPUTexture(tex_copy, &tex_src, &tex_dst, false);
+        SDL_EndGPUCopyPass(tex_copy);
+        SDL_SubmitGPUCommandBuffer(tex_cmd);
+        SDL_ReleaseGPUTransferBuffer(_device, tex_tb);
     }
 
     void SDL3GPURenderer::createPipeline()
@@ -195,7 +222,7 @@ namespace engine::render
         glm::vec2 logical_size = base_size * scale;
 
         // 3. 变换矩阵计算
-        glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(glm::floor(position), 0.0f));
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(position, 0.0f));
         if (angle != 0.0)
         {
             glm::vec2 center = logical_size * 0.5f;
@@ -286,7 +313,7 @@ namespace engine::render
         {
             for (float y = start.y; y < stop.y; y += sprite_size.y)
             {
-                glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(glm::floor(glm::vec2(x, y)), 0.0f));
+                glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, 0.0f));
                 model = glm::scale(model, glm::vec3(sprite_size, 1.0f));
 
                 SpritePushConstants pc;
@@ -486,10 +513,14 @@ namespace engine::render
 
         SpritePushConstants constants;
         constants.mvp = camera.getProjectionMatrix() * camera.getViewMatrix() * model;
-        constants.color = color;
+        constants.color = glm::vec4(1.0f);
         constants.uv_rect = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
 
         SDL_PushGPUVertexUniformData(_current_cmd, 0, &constants, sizeof(constants));
+
+        SDL_GPUTextureSamplerBinding tex_binding = {_white_texture, _default_sampler};
+        SDL_BindGPUFragmentSamplers(_active_pass, 0, &tex_binding, 1);
+
         SDL_DrawGPUPrimitives(_active_pass, 6, 1, 0, 0);
     }
 } // namespace engine

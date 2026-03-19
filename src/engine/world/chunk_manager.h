@@ -40,6 +40,7 @@ namespace engine::world
         std::unordered_map<uint64_t, std::unique_ptr<Chunk>> m_chunks;
         std::string m_atlasTextureId;
         glm::ivec2 m_tileSize;
+        std::unique_ptr<TerrainGenerator> m_terrainGenerator; // 地形生成器
 
         // 辅助函数：将 (chunkX, chunkY) 编码为 uint64_t 键
         static uint64_t encodeChunkKey(int x, int y)

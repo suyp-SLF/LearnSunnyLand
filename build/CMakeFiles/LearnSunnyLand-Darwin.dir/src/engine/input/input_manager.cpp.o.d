@@ -1,5 +1,4 @@
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.o: \
-  /Library/Developer/CommandLineTools/usr/lib/clang/17/share/asan_ignorelist.txt \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/input/input_manager.cpp \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/input/input_manager.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/string \
@@ -1255,4 +1254,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.o: \
   /opt/homebrew/include/spdlog/details/circular_q.h \
   /opt/homebrew/include/spdlog/details/log_msg_buffer.h \
   /opt/homebrew/include/spdlog/details/log_msg.h \
-  /opt/homebrew/include/spdlog/version.h
+  /opt/homebrew/include/spdlog/version.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/imgui.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/imconfig.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/backends/imgui_impl_sdl3.h

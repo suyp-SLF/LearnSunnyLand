@@ -117,6 +117,8 @@ namespace engine::physics
         if (!b2World_IsValid(m_worldId))
             return;
 
+        constexpr float PIXELS_PER_METER = 32.0f;
+
         for (const auto &[userData, bodyId] : m_userDataToBody)
         {
             if (!b2Body_IsValid(bodyId))
@@ -135,10 +137,10 @@ namespace engine::physics
                     if (b2Shape_IsValid(shapes[i]))
                     {
                         b2Polygon poly = b2Shape_GetPolygon(shapes[i]);
-                        float width = (poly.vertices[1].x - poly.vertices[0].x) * 2.0f;
-                        float height = (poly.vertices[2].y - poly.vertices[1].y) * 2.0f;
+                        float width = (poly.vertices[1].x - poly.vertices[0].x) * 2.0f * PIXELS_PER_METER;
+                        float height = (poly.vertices[2].y - poly.vertices[1].y) * 2.0f * PIXELS_PER_METER;
 
-                        renderer.drawRect(camera, pos.x - width/2, pos.y - height/2, width, height, glm::vec4(0.0f, 0.5f, 1.0f, 0.3f));
+                        renderer.drawRect(camera, pos.x * PIXELS_PER_METER - width/2, pos.y * PIXELS_PER_METER - height/2, width, height, glm::vec4(0.0f, 0.5f, 1.0f, 0.3f));
                     }
                 }
             }

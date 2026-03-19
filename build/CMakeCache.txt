@@ -234,6 +234,26 @@ CMAKE_TAPI:FILEPATH=/Users/suyp/opt/anaconda3/bin/tapi
 // Studio IDE projects all commands are done without /nologo.
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 
+//Directory under which to collect all populated content
+FETCHCONTENT_BASE_DIR:PATH=/Users/suyp/C++/Projects/LearnSunnyLand/build/_deps
+
+//Disables all attempts to download or update content and assumes
+// source dirs already exist
+FETCHCONTENT_FULLY_DISCONNECTED:BOOL=OFF
+
+//Enables QUIET option for all content population
+FETCHCONTENT_QUIET:BOOL=ON
+
+//When not empty, overrides where to find pre-populated content
+// for imgui
+FETCHCONTENT_SOURCE_DIR_IMGUI:PATH=
+
+//Enables UPDATE_DISCONNECTED behavior for all content population
+FETCHCONTENT_UPDATES_DISCONNECTED:BOOL=OFF
+
+//Enables UPDATE_DISCONNECTED behavior just for population of imgui
+FETCHCONTENT_UPDATES_DISCONNECTED_IMGUI:BOOL=OFF
+
 //Path to a file.
 FREETYPE_INCLUDE_DIR_freetype2:PATH=/opt/homebrew/include/freetype2
 
@@ -245,6 +265,9 @@ FREETYPE_LIBRARY_DEBUG:FILEPATH=FREETYPE_LIBRARY_DEBUG-NOTFOUND
 
 //Path to a library.
 FREETYPE_LIBRARY_RELEASE:FILEPATH=/opt/homebrew/lib/libfreetype.dylib
+
+//Git command line client
+GIT_EXECUTABLE:FILEPATH=/usr/bin/git
 
 //Value Computed by CMake
 LearnSunnyLand_BINARY_DIR:STATIC=/Users/suyp/C++/Projects/LearnSunnyLand/build
@@ -459,6 +482,8 @@ FREETYPE_INCLUDE_DIR_ft2build-ADVANCED:INTERNAL=1
 FREETYPE_LIBRARY_DEBUG-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: FREETYPE_LIBRARY_RELEASE
 FREETYPE_LIBRARY_RELEASE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: GIT_EXECUTABLE
+GIT_EXECUTABLE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: OPENGL_GLU_INCLUDE_DIR
 OPENGL_GLU_INCLUDE_DIR-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: OPENGL_INCLUDE_DIR

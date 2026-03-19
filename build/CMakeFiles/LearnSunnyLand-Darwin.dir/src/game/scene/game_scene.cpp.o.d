@@ -1,5 +1,4 @@
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.o: \
-  /Library/Developer/CommandLineTools/usr/lib/clang/17/share/asan_ignorelist.txt \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/game_scene.cpp \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/game_scene.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/scene/scene.h \
@@ -1331,4 +1330,10 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.o: \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/world/terrain_generator.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/render/renderer.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/render/render_types.h \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/ecs/components.h
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/ecs/components.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/imgui.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/imconfig.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/backends/imgui_impl_sdl3.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/backends/imgui_impl_opengl3.h \
+  /opt/homebrew/include/SDL3/SDL_opengl.h \
+  /opt/homebrew/include/SDL3/SDL_opengl_glext.h

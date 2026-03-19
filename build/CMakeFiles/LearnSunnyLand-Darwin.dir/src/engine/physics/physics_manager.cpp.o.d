@@ -1,5 +1,4 @@
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/physics/physics_manager.cpp.o: \
-  /Library/Developer/CommandLineTools/usr/lib/clang/17/share/asan_ignorelist.txt \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/physics/physics_manager.cpp \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/physics/physics_manager.h \
   /opt/homebrew/include/box2d/box2d.h /opt/homebrew/include/box2d/base.h \

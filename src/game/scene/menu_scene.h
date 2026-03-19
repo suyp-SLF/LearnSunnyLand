@@ -1,7 +1,7 @@
 #pragma once
 #include "../../engine/scene/scene.h"
 #include "../../engine/ecs/registry.h"
-#include "../../engine/render/text_renderer.h"
+#include <SDL3/SDL.h>
 
 namespace game::scene
 {
@@ -18,7 +18,7 @@ namespace game::scene
 
     private:
         engine::ecs::Registry ecs_registry;
-        engine::render::TextRenderer* text_renderer = nullptr;
+        SDL_GLContext m_glContext = nullptr;
         void startGame();
     };
 }

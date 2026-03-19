@@ -61,8 +61,9 @@ namespace engine::component
         auto* transform = _owner->getComponent<TransformComponent>();
         if (transform)
         {
+            constexpr float PIXELS_PER_METER = 32.0f;
             b2Vec2 pos = b2Body_GetPosition(m_bodyId);
-            transform->setPosition({pos.x, pos.y});
+            transform->setPosition({pos.x * PIXELS_PER_METER, pos.y * PIXELS_PER_METER});
         }
     }
 }

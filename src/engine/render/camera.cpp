@@ -62,14 +62,8 @@ namespace engine::render
     glm::mat4 Camera::getViewMatrix() const
     {
         glm::mat4 view = glm::mat4(1.0f);
-
-        // ⚡️ 核心：逻辑坐标 _position 是带小数的，
-        // 但渲染偏移必须是整数，否则移动时 Tile 边缘会因采样误差出现缝隙（白线）
-        glm::vec2 renderPos = glm::floor(_position);
-
         view = glm::scale(view, glm::vec3(_zoom, _zoom, 1.0f));
-        view = glm::translate(view, glm::vec3(-renderPos.x, -renderPos.y, 0.0f));
-
+        view = glm::translate(view, glm::vec3(-_position.x, -_position.y, 0.0f));
         return view;
     }
     glm::mat4 Camera::getProjectionMatrix() const
@@ -80,8 +74,7 @@ namespace engine::render
     }
     glm::vec2 Camera::worldToScreen(const glm::vec2 &world_pos) const
     {
-        // ⚡️ 必须与 getViewMatrix 保持一致，使用 floor 防止瓦片抖动和错位
-        return world_pos - glm::floor(_position);
+        return world_pos - _position;
     }
 
     glm::vec2 Camera::worldToScreenWithParallax(const glm::vec2 &world_pos, const glm::vec2 &parallax_factor) const
@@ -112,12 +105,22 @@ namespace engine::render
 
     std::optional<engine::utils::FRect> Camera::getLimitBounds() const
     {
-        return std::optional<engine::utils::FRect>();
+        return _limit_bounds;
     }
 
     const glm::vec2 &Camera::getViewportSize() const
     {
         return _viewport_size;
+    }
+
+    void Camera::setZoom(float zoom)
+    {
+        _zoom = glm::clamp(zoom, 0.5f, 3.0f);
+    }
+
+    float Camera::getZoom() const
+    {
+        return _zoom;
     }
 
     void Camera::clampPosition()
@@ -134,6 +137,7 @@ namespace engine::render
             max_pos.y = std::max(max_pos.y, min_pos.y);
 
             _position.x = std::clamp(_position.x, min_pos.x, max_pos.x);
+            _position.y = std::clamp(_position.y, min_pos.y, max_pos.y);
         }
     }
 }

@@ -27,9 +27,12 @@ namespace game::scene
         engine::ecs::Registry ecs_registry;
 
         engine::object::GameObject* m_player = nullptr;
-        b2BodyId m_testBoxId = b2_nullBodyId;
 
         SDL_GPUTexture* m_textTexture = nullptr;
+        SDL_GLContext m_glContext = nullptr;
+
+        // 缩放滑块
+        float m_zoomSliderValue = 1.0f;
 
         void createTestObject();
         void testCamera();

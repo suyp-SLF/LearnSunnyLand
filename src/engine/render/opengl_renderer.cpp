@@ -3,212 +3,265 @@
 #include "sprite.h"
 #include "../resource/resource_manager.h"
 #include <spdlog/spdlog.h>
-
-// OpenGL headers
-#ifdef __APPLE__
-#include <OpenGL/gl3.h>
-#else
-#include <GL/glew.h>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#define IMGUI_IMPL_OPENGL_LOADER_CUSTOM
+#include <imgui_impl_opengl3_loader.h>
+#ifndef GL_STATIC_DRAW
+#define GL_STATIC_DRAW  0x88B4
+#endif
+#ifndef GL_DYNAMIC_DRAW
+#define GL_DYNAMIC_DRAW 0x88E8
 #endif
 
 namespace engine::render
 {
-    OpenGLRenderer::OpenGLRenderer(SDL_Window* window)
-        : m_window(window)
+    OpenGLRenderer::OpenGLRenderer(SDL_Window *window) : _window(window)
     {
-        if (!initOpenGL())
-        {
-            spdlog::error("Failed to initialize OpenGL");
-        }
-    }
-
-    OpenGLRenderer::~OpenGLRenderer()
-    {
-        clean();
-    }
-
-    bool OpenGLRenderer::initOpenGL()
-    {
-        // Create OpenGL context
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-        m_glContext = SDL_GL_CreateContext(m_window);
-        if (!m_glContext)
+        _glContext = SDL_GL_CreateContext(_window);
+        if (!_glContext)
         {
             spdlog::error("Failed to create OpenGL context: {}", SDL_GetError());
-            return false;
+            return;
         }
 
-        SDL_GL_MakeCurrent(m_window, m_glContext);
-        SDL_GL_SetSwapInterval(1); // Enable vsync
+        SDL_GL_MakeCurrent(_window, _glContext);
+        SDL_GL_SetSwapInterval(1);
 
-        spdlog::info("OpenGL initialized successfully");
-        spdlog::info("OpenGL Version: {}", (const char*)glGetString(GL_VERSION));
-
-        createSpriteShader();
-        createSpriteBuffers();
-
-        return true;
-    }
-
-    void OpenGLRenderer::drawTexture(SDL_GPUTexture* texture, float x, float y, float w, float h)
-    {
-        // OpenGLRenderer doesn't support GPU textures
-    }
-
-    void OpenGLRenderer::clean()
-    {
-        if (m_spriteVAO) glDeleteVertexArrays(1, &m_spriteVAO);
-        if (m_spriteVBO) glDeleteBuffers(1, &m_spriteVBO);
-        if (m_spriteShader) glDeleteProgram(m_spriteShader);
-
-        for (auto& [path, tex] : m_textures)
+        if (imgl3wInit() != 0)
         {
-            glDeleteTextures(1, &tex);
+            spdlog::error("OpenGLRenderer: imgl3wInit failed");
+            return;
         }
-        m_textures.clear();
 
-        if (m_glContext)
+        glEnable(GL_BLEND);
+        glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
+        initTileShader();
+
+        spdlog::info("OpenGL Renderer initialized");
+    }
+
+    OpenGLRenderer::~OpenGLRenderer()
+    {
+        if (_glContext)
         {
-            SDL_GL_DestroyContext(m_glContext);
-            m_glContext = nullptr;
+            SDL_GL_DestroyContext(_glContext);
         }
-    }
-
-    void OpenGLRenderer::createSpriteShader()
-    {
-        const char* vertexShaderSource = R"(
-            #version 330 core
-            layout (location = 0) in vec2 aPos;
-            layout (location = 1) in vec2 aTexCoord;
-
-            out vec2 TexCoord;
-
-            uniform mat4 projection;
-            uniform mat4 model;
-
-            void main()
-            {
-                gl_Position = projection * model * vec4(aPos, 0.0, 1.0);
-                TexCoord = aTexCoord;
-            }
-        )";
-
-        const char* fragmentShaderSource = R"(
-            #version 330 core
-            out vec4 FragColor;
-            in vec2 TexCoord;
-
-            uniform sampler2D texture1;
-
-            void main()
-            {
-                FragColor = texture(texture1, TexCoord);
-            }
-        )";
-
-        GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
-        glCompileShader(vertexShader);
-
-        GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
-        glCompileShader(fragmentShader);
-
-        m_spriteShader = glCreateProgram();
-        glAttachShader(m_spriteShader, vertexShader);
-        glAttachShader(m_spriteShader, fragmentShader);
-        glLinkProgram(m_spriteShader);
-
-        glDeleteShader(vertexShader);
-        glDeleteShader(fragmentShader);
-    }
-
-    void OpenGLRenderer::createSpriteBuffers()
-    {
-        float vertices[] = {
-            0.0f, 1.0f, 0.0f, 1.0f,
-            1.0f, 0.0f, 1.0f, 0.0f,
-            0.0f, 0.0f, 0.0f, 0.0f,
-
-            0.0f, 1.0f, 0.0f, 1.0f,
-            1.0f, 1.0f, 1.0f, 1.0f,
-            1.0f, 0.0f, 1.0f, 0.0f
-        };
-
-        glGenVertexArrays(1, &m_spriteVAO);
-        glGenBuffers(1, &m_spriteVBO);
-
-        glBindVertexArray(m_spriteVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, m_spriteVBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-        glEnableVertexAttribArray(1);
-
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
     }
 
     void OpenGLRenderer::clearScreen()
     {
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClearColor(0.1f, 0.1f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
     }
 
     void OpenGLRenderer::present()
     {
-        SDL_GL_SwapWindow(m_window);
-    }
-
-    void OpenGLRenderer::setDrawColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
-    {
-        glClearColor(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
+        SDL_GL_SwapWindow(_window);
     }
 
     glm::vec2 OpenGLRenderer::windowToLogical(float window_x, float window_y) const
     {
-        int w, h;
-        SDL_GetWindowSize(m_window, &w, &h);
-        return glm::vec2(window_x, window_y);
+        int win_w, win_h;
+        SDL_GetWindowSize(_window, &win_w, &win_h);
+        float scale = std::min((float)win_w / _logical_w, (float)win_h / _logical_h);
+        float offset_x = (win_w - _logical_w * scale) * 0.5f;
+        float offset_y = (win_h - _logical_h * scale) * 0.5f;
+        return {(window_x - offset_x) / scale, (window_y - offset_y) / scale};
     }
 
-    void OpenGLRenderer::drawSprite(const Camera &camera,
-                                    const Sprite &sprite,
-                                    const glm::vec2 &position,
-                                    const glm::vec2 &scale,
-                                    double angle,
-                                    const glm::vec4 &uv_rect)
+    void OpenGLRenderer::drawRect(const Camera &, float, float, float, float, const glm::vec4 &)
     {
-        // TODO: Implement OpenGL sprite rendering
-        // This is a placeholder - full implementation needed
     }
 
-    void OpenGLRenderer::drawParallax(const Camera &camera, const Sprite &sprite,
-                                      const glm::vec2 &position,
-                                      const glm::vec2 &scroll_factor,
-                                      const glm::bvec2 &repeat,
-                                      const glm::vec2 &scale, double angle)
+    void OpenGLRenderer::drawTexture(SDL_GPUTexture*, float, float, float, float)
     {
-        // TODO: Implement OpenGL parallax rendering
     }
 
-    void OpenGLRenderer::drawChunkVertices(const Camera &camera,
-                                          const std::unordered_map<SDL_GPUTexture *, std::vector<GPUVertex>> &verticesPerTexture,
-                                          const glm::vec2 &worldOffset)
+    void OpenGLRenderer::clean()
     {
-        // TODO: Implement OpenGL chunk rendering
-        // Note: Will need to convert SDL_GPUTexture to OpenGL textures
+        if (imgl3wProcs.gl.DeleteProgram)
+        {
+            if (_tileShader) { glDeleteProgram(_tileShader); _tileShader = 0; }
+            if (_quadVAO)    { glDeleteVertexArrays(1, &_quadVAO); _quadVAO = 0; }
+            if (_quadVBO)    { glDeleteBuffers(1, &_quadVBO); _quadVBO = 0; }
+        }
     }
 
-    void OpenGLRenderer::drawChunkBatches(const Camera &camera,
-                                         const std::unordered_map<SDL_GPUTexture *, engine::world::TextureBatch> &batches,
-                                         const glm::vec2 &worldOffset)
+    void OpenGLRenderer::initTileShader()
     {
-        // TODO: Implement OpenGL batch rendering
+        const char *vert = R"(
+#version 330 core
+layout(location = 0) in vec2 aPos;
+layout(location = 1) in vec2 aUV;
+out vec2 vUV;
+uniform mat4 uMVP;
+void main() {
+    gl_Position = uMVP * vec4(aPos, 0.0, 1.0);
+    vUV = aUV;
+}
+)";
+        const char *frag = R"(
+#version 330 core
+in vec2 vUV;
+out vec4 FragColor;
+uniform sampler2D uTex;
+void main() {
+    FragColor = texture(uTex, vUV);
+}
+)";
+        auto compile = [](GLenum type, const char *src) -> GLuint {
+            GLuint s = glCreateShader(type);
+            glShaderSource(s, 1, &src, nullptr);
+            glCompileShader(s);
+            GLint ok; glGetShaderiv(s, GL_COMPILE_STATUS, &ok);
+            if (!ok) {
+                char buf[512]; glGetShaderInfoLog(s, 512, nullptr, buf);
+                spdlog::error("Shader compile error: {}", buf);
+            }
+            return s;
+        };
+        GLuint vs = compile(GL_VERTEX_SHADER, vert);
+        GLuint fs = compile(GL_FRAGMENT_SHADER, frag);
+        _tileShader = glCreateProgram();
+        glAttachShader(_tileShader, vs);
+        glAttachShader(_tileShader, fs);
+        glLinkProgram(_tileShader);
+        glDeleteShader(vs);
+        glDeleteShader(fs);
+        _tileUniformMVP = glGetUniformLocation(_tileShader, "uMVP");
+        glUseProgram(_tileShader);
+        glUniform1i(glGetUniformLocation(_tileShader, "uTex"), 0);
+        glUseProgram(0);
+
+        _glDrawArrays = (PFNGLDRAWARRAYSPROC)SDL_GL_GetProcAddress("glDrawArrays");
+        if (!_glDrawArrays)
+            spdlog::error("OpenGLRenderer: failed to load glDrawArrays");
+
+        glGenVertexArrays(1, &_quadVAO);
+        glGenBuffers(1, &_quadVBO);
+        glBindVertexArray(_quadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, _quadVBO);
+        glBufferData(GL_ARRAY_BUFFER, 6 * 4 * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+        glBindVertexArray(0);
+
+        spdlog::info("OpenGLRenderer: tile shader compiled");
+    }
+
+    bool OpenGLRenderer::buildChunkMeshGL(unsigned int &vao, unsigned int &vbo, int &vertexCount,
+                                          const std::vector<float> &vertices)
+    {
+        if (vertices.empty())
+        {
+            vertexCount = 0;
+            return true;
+        }
+
+        if (vao == 0) glGenVertexArrays(1, &vao);
+        if (vbo == 0) glGenBuffers(1, &vbo);
+
+        glBindVertexArray(vao);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        // macOS Core Profile: use GL_DYNAMIC_DRAW instead of GL_STATIC_DRAW
+        glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(vertices.size() * sizeof(float)), vertices.data(), GL_DYNAMIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+        glBindVertexArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        vertexCount = static_cast<int>(vertices.size() / 4);
+        return true;
+    }
+
+    void OpenGLRenderer::drawChunkGL(const Camera &camera, unsigned int vao, unsigned int vbo, int vertexCount,
+                                     unsigned int glTex, const glm::vec2 &worldOffset)
+    {
+        if (!_tileShader || !vao || !vbo || !glTex || vertexCount == 0)
+            return;
+
+        glm::mat4 proj = camera.getProjectionMatrix();
+        glm::mat4 view = camera.getViewMatrix();
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(worldOffset, 0.0f));
+        glm::mat4 mvp = proj * view * model;
+
+        glUseProgram(_tileShader);
+        glUniformMatrix4fv(_tileUniformMVP, 1, GL_FALSE, glm::value_ptr(mvp));
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, glTex);
+
+        glBindVertexArray(vao);
+        if (_glDrawArrays) _glDrawArrays(GL_TRIANGLES, 0, (GLsizei)vertexCount);
+
+        glBindVertexArray(0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glUseProgram(0);
+    }
+
+    void OpenGLRenderer::drawSprite(const Camera &camera, const Sprite &sprite,
+                                     const glm::vec2 &position, const glm::vec2 &scale,
+                                     double angle, const glm::vec4 &uv_rect)
+    {
+        if (!_res_mgr || !_tileShader) return;
+
+        unsigned int glTex = _res_mgr->getGLTexture(sprite.getTextureId());
+        if (!glTex) return;
+
+        glm::vec2 size = sprite.getSize();
+        if (size.x <= 0 || size.y <= 0) return;
+
+        glm::mat4 proj = camera.getProjectionMatrix();
+        glm::mat4 view = camera.getViewMatrix();
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(position, 0.0f));
+        model = glm::scale(model, glm::vec3(scale, 1.0f));
+        if (angle != 0.0)
+            model = glm::rotate(model, (float)glm::radians(angle), glm::vec3(0, 0, 1));
+        glm::mat4 mvp = proj * view * model;
+
+        drawQuad(glTex, mvp, uv_rect, size.x, size.y, sprite.isFlipped());
+    }
+
+    void OpenGLRenderer::drawQuad(unsigned int glTex, const glm::mat4 &mvp,
+                                   const glm::vec4 &uvRect, float w, float h, bool flipped)
+    {
+        float u0 = uvRect.x;
+        float v0 = uvRect.y;
+        float u1 = u0 + uvRect.z;
+        float v1 = v0 + uvRect.w;
+        if (flipped) std::swap(u0, u1);
+
+        float verts[6][4] = {
+            {0,  0,  u0, v0},
+            {w,  0,  u1, v0},
+            {0,  h,  u0, v1},
+            {w,  0,  u1, v0},
+            {w,  h,  u1, v1},
+            {0,  h,  u0, v1},
+        };
+
+        glUseProgram(_tileShader);
+        glUniformMatrix4fv(_tileUniformMVP, 1, GL_FALSE, glm::value_ptr(mvp));
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, glTex);
+
+        glBindVertexArray(_quadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, _quadVBO);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(verts), verts);
+        if (_glDrawArrays) _glDrawArrays(GL_TRIANGLES, 0, 6);
+        glBindVertexArray(0);
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glUseProgram(0);
     }
 }

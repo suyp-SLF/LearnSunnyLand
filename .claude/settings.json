@@ -16,7 +16,33 @@
       "Bash(pkill -f LearnSunnyLand-Darwin)",
       "Bash(kill 1687)",
       "Bash(kill 4270)",
-      "Bash(kill 4746)"
+      "Bash(kill 4746)",
+      "Bash(make)",
+      "Bash(find . -name *imgui* -o -name *ImGui*)",
+      "Bash(cmake ..)",
+      "Bash(grep -r \"SDL_Window\" src/engine/core/*.h)",
+      "Bash(make -j8)",
+      "Bash(find /Users/suyp/C++/Projects/LearnSunnyLand/build/_deps -name *.h)",
+      "Bash(grep -r \"DrawArrays\\\\|drawArrays\\\\|glDrawArrays\" /Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/ --include=*.h -l)",
+      "Bash(lldb ./LearnSunnyLand-Darwin -o \"run\" -o \"bt\" -o \"quit\")",
+      "Bash(grep -E \"stop reason|= [0-9]|$buf|$ena|error\")",
+      "Bash(grep -E \"stop reason|$prog|$linked|$vshader|$log|= [0-9]\")",
+      "Bash(grep -E \"stop reason|$status|$vlog\")",
+      "Bash(grep -E \"stop reason|$v|$cur|$a\")",
+      "Bash(lldb ./LearnSunnyLand-Darwin -o \"breakpoint set --file chunk.cpp --line 201\" -o \"run\" -o \"expr \\(void*\\)imgl3wProcs.gl.VertexAttribPointer\" -o \"expr \\(void*\\)imgl3wProcs.gl.BufferData\" -o \"expr \\(void*\\)imgl3wProcs.gl.GenVertexArrays\" -o \"quit\")",
+      "Bash(lldb ./LearnSunnyLand-Darwin -o \"breakpoint set --file chunk.cpp --line 206\" -o \"run\" -o \"expr m_gl_vao\" -o \"expr m_gl_vbo\" -o \"expr m_gl_vertex_count\" -o \"expr \\(void*\\)imgl3wProcs.gl.BindVertexArray\" -o \"expr \\(int\\)imgl3wProcs.gl.BindVertexArray\\(m_gl_vao\\)\" -o \"expr \\(int\\)imgl3wProcs.gl.GetError\\(\\)\" -o \"quit\")",
+      "Bash(lldb ./LearnSunnyLand-Darwin -o \"breakpoint set --file chunk.cpp --line 208\" -o \"run\" -o \"expr \\(void\\)imgl3wProcs.gl.UseProgram\\(3\\)\" -o \"expr \\(void\\)imgl3wProcs.gl.BindVertexArray\\(m_gl_vao\\)\" -o \"expr \\(int\\)imgl3wProcs.gl.GetError\\(\\)\" -o \"expr \\(void\\)imgl3wProcs.gl.DrawArrays\\(4, 0, m_gl_vertex_count\\)\" -o \"expr \\(int\\)imgl3wProcs.gl.GetError\\(\\)\" -o \"quit\")",
+      "Bash(lldb ./LearnSunnyLand-Darwin -o \"breakpoint set --file chunk.cpp --line 192\" -o \"run\" -o \"expr \\(int\\)imgl3wProcs.gl.GetError\\(\\)\" -o \"stepi 5\" -o \"expr \\(int\\)imgl3wProcs.gl.GetError\\(\\)\" -o \"stepi 5\" -o \"expr \\(int\\)imgl3wProcs.gl.GetError\\(\\)\" -o \"stepi 5\" -o \"expr \\(int\\)imgl3wProcs.gl.GetError\\(\\)\" -o \"stepi 5\" -o \"expr \\(int\\)imgl3wProcs.gl.GetError\\(\\)\" -o \"stepi 5\" -o \"expr \\(int\\)imgl3wProcs.gl.GetError\\(\\)\" -o \"quit\")",
+      "Bash(head -5 grep -r \"GL_ARRAY_BUFFER\\\\|GL_STATIC_DRAW\" /Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/ --include=*.h)",
+      "Bash(lldb ./LearnSunnyLand-Darwin -o \"run\" -o \"quit\")",
+      "Bash(grep -E \"stop reason|$p[01]\")",
+      "Bash(lldb ./LearnSunnyLand-Darwin -o \"image lookup --address 0x1e8cf8a94\" -o \"quit\")",
+      "Bash(lldb ./LearnSunnyLand-Darwin -o \"run\" -o \"image lookup --address 0x1e8cf8a94\" -o \"quit\")",
+      "Bash(cmake -B build)",
+      "Bash(echo \"exit: $?\")"
+    ],
+    "additionalDirectories": [
+      "/Users/suyp/C++/Projects/LearnSunnyLand/build/_deps"
     ]
   }
 }

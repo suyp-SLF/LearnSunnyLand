@@ -1,5 +1,4 @@
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/resource/shader_manager.cpp.o: \
-  /Library/Developer/CommandLineTools/usr/lib/clang/17/share/asan_ignorelist.txt \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/shader_manager.cpp \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/resource/shader_manager.h \
   /opt/homebrew/include/SDL3/SDL_gpu.h \

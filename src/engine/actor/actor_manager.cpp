@@ -9,6 +9,8 @@ namespace engine::actor
     {
     }
 
+    ActorManager::~ActorManager() = default;
+
     engine::object::GameObject* ActorManager::createActor(const std::string &name)
     {
         auto actor = std::make_unique<engine::object::GameObject>(m_context, name);

@@ -26,10 +26,8 @@ namespace engine::world
 
     void PerlinNoiseGenerator::generateChunk(int chunkX, int chunkY, std::vector<TileData> &outTiles) const
     {
-        // 确保输出缓冲区大小正确
         outTiles.resize(WorldConfig::CHUNK_SIZE * WorldConfig::CHUNK_SIZE);
 
-        // 计算该区块的世界坐标原点（左下角，取决于你的坐标系）
         int baseX = chunkX * WorldConfig::CHUNK_SIZE;
         int baseY = chunkY * WorldConfig::CHUNK_SIZE;
 
@@ -40,43 +38,35 @@ namespace engine::world
                 int worldX = baseX + lx;
                 int worldY = baseY + ly;
 
-                float height = getHeightAt(worldX, 0); // 我们使用 X 坐标，Y 为 0，生成二维地形（类似泰拉瑞亚，高度随 X 变化）
-                // 对于真正的 2D 横向卷轴，你可能需要基于 (worldX, 0) 生成一个高度值，然后决定该列每个 y 的方块类型。
-                // 这里简化为：高度表示地表的 Y 坐标。如果 worldY 小于高度，则为固体方块，否则为空气。
-                // 更真实的做法：使用二维噪声同时生成地形起伏和地层。
+                // 使用X坐标生成地表高度（类似泰拉瑞亚）
+                float noiseVal = m_noise->GetNoise(static_cast<float>(worldX), 0.0f);
+                float heightOffset = m_config.amplitude * (noiseVal * 0.5f + 0.5f);
+                int surfaceY = m_config.seaLevel - static_cast<int>(heightOffset);
 
-                // 示例：简单地层逻辑
                 TileType type = TileType::Air;
-                if (worldY < height)
+
+                if (worldY < surfaceY)
                 {
-                    // 根据地层深度决定类型
-                    int depth = static_cast<int>(height) - worldY;
-                    if (depth == 0)
-                    {
-                        type = TileType::Air;
-                    }
-                    else if (depth < m_config.grassDepth)
-                    {
-                        type = TileType::Dirt;
-                    }
-                    else if (worldY < m_config.stoneStart)
-                    {
-                        type = TileType::Stone;
-                    }
-                    else
-                    {
-                        type = TileType::Dirt;
-                    }
+                    // 地表以上是空气
+                    type = TileType::Air;
                 }
-                else if (worldY < m_config.seaLevel && worldY >= height)
+                else if (worldY == surfaceY)
                 {
-                    // 水下空气部分？实际可能是水方块，这里暂略。
-                    // type = TileType::Water;
+                    // 地表是草地
+                    type = TileType::Grass;
+                }
+                else if (worldY < surfaceY + m_config.grassDepth)
+                {
+                    // 草地下面是泥土
+                    type = TileType::Dirt;
+                }
+                else
+                {
+                    // 更深处是石头
+                    type = TileType::Stone;
                 }
 
-                // 设置 TileData
                 outTiles[ly * WorldConfig::CHUNK_SIZE + lx] = TileData(type);
-                // 如果你还需要设置光照、液体等，可在此处理
             }
         }
     }

@@ -1,5 +1,4 @@
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o: \
-  /Library/Developer/CommandLineTools/usr/lib/clang/17/share/asan_ignorelist.txt \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/game_app.cpp \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/game_app.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/memory \
@@ -1175,6 +1174,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o: \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../render/sdl3_gpu_renderer.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../render/../world/chunk.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../render/../world/tile_info.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../render/opengl_renderer.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../render/camera.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../input/input_manager.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../component/transform_component.h \

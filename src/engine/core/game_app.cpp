@@ -8,6 +8,7 @@
 #include "../render/renderer.h"
 #include "../render/sdl_renderer.h"
 #include "../render/sdl3_gpu_renderer.h"
+#include "../render/opengl_renderer.h"
 #include "../render/camera.h"
 #include "../input/input_manager.h"
 #include "../component/transform_component.h"
@@ -45,28 +46,30 @@ namespace engine::core
     {
         spdlog::trace("开始清理 GameApp 资源...");
 
-        // 1. 先停掉场景（场景可能持有 GameObject，GameObject 持有纹理引用）
-        _scene_manager.reset();
-
-        // 2. 停掉上下文
-        _context.reset();
-
-        // 3. 【核心修复】在 Renderer (GPU Device) 销毁之前，先清空所有 GPU 资源
+        // 1. 先清空 GPU/GL 资源（此时 GL context 和 ImGui 都还有效）
         if (_resource_manager)
         {
             spdlog::trace("正在清空 GPU 纹理资源...");
             _resource_manager->clear();
-            _resource_manager.reset();
         }
 
-        // 4. 现在销毁渲染器是安全的（它会关闭 SDL_GPUDevice）
+        // 2. 停掉场景（会触发 ImGui_ImplOpenGL3_Shutdown，清空 loader 函数指针）
+        _scene_manager.reset();
+
+        // 3. 停掉上下文
+        _context.reset();
+
+        // 4. 销毁资源管理器
+        _resource_manager.reset();
+
+        // 5. 销毁渲染器（GL context 在这里销毁）
         if (_renderer)
         {
             _renderer->clean();
             _renderer.reset();
         }
 
-        // 5. 最后关闭窗口和 SDL 系统
+        // 6. 最后关闭窗口和 SDL 系统
         if (_window)
         {
             SDL_DestroyWindow(_window);
@@ -315,21 +318,16 @@ namespace engine::core
         {
             if (_config->_render_type == 1)
             {
-                auto gpu_renderer = std::make_unique<engine::render::SDL3GPURenderer>(_window);
+                auto opengl_renderer = std::make_unique<engine::render::OpenGLRenderer>(_window);
 
-                // ⚡️ 核心修正：获取刚创建好的 GPU 设备
-                SDL_GPUDevice *device = gpu_renderer->getDevice();
-
-                // ⚡️ 核心修正：通知资源管理器“硬件已就绪”
+                // OpenGL 模式：通知 ResourceManager 使用 OpenGL 纹理路径
                 if (_resource_manager)
                 {
-                    _resource_manager->init(nullptr, device);
+                    _resource_manager->init(nullptr, nullptr);
                 }
 
-                // ⚡️ 核心修正：手动给渲染器设置资源管理器引用
-                gpu_renderer->setResourceManager(_resource_manager.get());
-
-                _renderer = std::move(gpu_renderer);
+                opengl_renderer->setResourceManager(_resource_manager.get());
+                _renderer = std::move(opengl_renderer);
             }
             else
             {

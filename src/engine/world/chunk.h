@@ -27,7 +27,7 @@ namespace engine::world
     class Chunk
     {
     public:
-        static constexpr int SIZE = 32; // 每个块 32x32 瓦片
+        static constexpr int SIZE = 16; // 每个块 16x16 瓦片
         static constexpr int TILE_COUNT = SIZE * SIZE;
 
         Chunk(int chunkX, int chunkY);
@@ -45,6 +45,12 @@ namespace engine::world
         bool buildMesh(const std::string &textureId,
                        const glm::ivec2 &tileSize,
                        engine::resource::ResourceManager *resMgr);
+
+        // OpenGL 路径：构建 VAO/VBO（委托给 renderer）
+        bool buildMeshGL(const std::string &textureId,
+                         const glm::ivec2 &tileSize,
+                         engine::resource::ResourceManager *resMgr,
+                         engine::render::Renderer &renderer);
 
         // 渲染该块（绑定缓冲并绘制）
         void render(engine::core::Context &ctx);
@@ -81,5 +87,11 @@ namespace engine::world
         // 纹理图集ID（每个块使用同一个图集，实际可以全局统一）
         std::unordered_map<SDL_GPUTexture *, TextureBatch> m_batches;
         std::string m_textureId;
+
+        // OpenGL 路径
+        unsigned int m_gl_vao = 0;
+        unsigned int m_gl_vbo = 0;
+        unsigned int m_gl_tex = 0;
+        int m_gl_vertex_count = 0;
     };
 }

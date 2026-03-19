@@ -14,7 +14,7 @@ namespace engine::world
         Air = 0,
         Stone = 1,
         Dirt = 2,
-        // 后续可扩展，例如 Grass = 3,
+        Grass = 3,
     };
 
     /**
@@ -31,10 +31,24 @@ namespace engine::world
 
         // 新增：接受 TileType 的构造函数
         explicit TileData(TileType t)
-            : uv_rect(0.0f, 0.0f, 32.0f, 32.0f), // 默认使用整张纹理
-              type(t)
+            : type(t)
         {
-
+            // 根据瓦片类型设置 UV 坐标（像素坐标）
+            switch (t)
+            {
+            case TileType::Stone:
+                uv_rect = glm::vec4(0.0f, 0.0f, 16.0f, 16.0f);
+                break;
+            case TileType::Dirt:
+                uv_rect = glm::vec4(16.0f, 0.0f, 16.0f, 16.0f);
+                break;
+            case TileType::Grass:
+                uv_rect = glm::vec4(32.0f, 0.0f, 16.0f, 16.0f);
+                break;
+            default:
+                uv_rect = glm::vec4(0.0f, 0.0f, 16.0f, 16.0f);
+                break;
+            }
         }
 
         // 原有的三参数构造函数

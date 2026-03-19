@@ -1,5 +1,4 @@
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk_manager.cpp.o: \
-  /Library/Developer/CommandLineTools/usr/lib/clang/17/share/asan_ignorelist.txt \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/world/chunk_manager.cpp \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/world/chunk_manager.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/world/chunk.h \
@@ -1114,5 +1113,6 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk_manager.cpp.o: \
   /opt/homebrew/include/SDL3/SDL_blendmode.h \
   /opt/homebrew/include/SDL3/SDL_iostream.h \
   /opt/homebrew/include/SDL3/SDL_video.h \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/world/../core/context.h \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/world/world_config.h
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/world/terrain_generator.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/world/world_config.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/world/../core/context.h

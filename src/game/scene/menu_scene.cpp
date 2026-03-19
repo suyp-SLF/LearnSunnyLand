@@ -4,14 +4,10 @@
 #include "../../engine/scene/scene_manager.h"
 #include "../../engine/input/input_manager.h"
 #include "../../engine/render/renderer.h"
-#include "../../engine/resource/resource_manager.h"
-#include "../../engine/resource/font_manager.h"
-#include "../../engine/ecs/ui_components.h"
-#include "../../engine/actor/actor_manager.h"
-#include "../../engine/object/game_object.h"
-#include "../../engine/world/chunk_manager.h"
-#include "../../engine/physics/physics_manager.h"
 #include <spdlog/spdlog.h>
+#include <imgui.h>
+#include <imgui_impl_sdl3.h>
+#include <imgui_impl_opengl3.h>
 
 namespace game::scene
 {
@@ -22,18 +18,19 @@ namespace game::scene
 
     void MenuScene::init()
     {
-        auto& fontMgr = _context.getResourceManager().getFontManager();
-        fontMgr.setDevice(_context.getRenderer().getDevice());
-        text_renderer = fontMgr.loadFont("assets/fonts/VonwaonBitmap-16px.ttf", 32);
-
-        auto entity = ecs_registry.create();
-        ecs_registry.add<engine::ecs::Button>(entity,
-            glm::vec2(220.0f, 150.0f),
-            glm::vec2(200.0f, 50.0f),
-            "Start Game",
-            [this]() { startGame(); });
-        ecs_registry.add<engine::ecs::Renderable>(entity, glm::vec4(0.2f, 0.6f, 0.8f, 1.0f));
-
+        SDL_Window* window = _context.getRenderer().getWindow();
+        if (window)
+        {
+            m_glContext = SDL_GL_GetCurrentContext();
+            if (m_glContext)
+            {
+                IMGUI_CHECKVERSION();
+                ImGui::CreateContext();
+                ImGui_ImplSDL3_InitForOpenGL(window, m_glContext);
+                ImGui_ImplOpenGL3_Init("#version 330");
+                spdlog::info("MenuScene: ImGui initialized");
+            }
+        }
         spdlog::info("MenuScene 初始化完成");
     }
 
@@ -43,48 +40,40 @@ namespace game::scene
 
     void MenuScene::render()
     {
-        if (!text_renderer)
-            return;
-
-        auto& renderer = _context.getRenderer();
-
-        for (auto entity : ecs_registry.view<engine::ecs::Button>())
+        if (m_glContext)
         {
-            auto* btn = ecs_registry.get<engine::ecs::Button>(entity);
-            if (btn)
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplSDL3_NewFrame();
+            ImGui::NewFrame();
+
+            ImGui::SetNextWindowPos(ImVec2(540, 300), ImGuiCond_Always);
+            ImGui::SetNextWindowSize(ImVec2(200, 100), ImGuiCond_Always);
+            ImGui::Begin("Menu", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+
+            if (ImGui::Button("Start Game", ImVec2(180, 60)))
             {
-                auto glyphs = text_renderer->prepareText(btn->text, btn->pos.x, btn->pos.y + 30.0f);
-                for (const auto& glyph : glyphs)
-                {
-                    renderer.drawTexture(glyph.texture, glyph.x, glyph.y, glyph.w, glyph.h);
-                }
+                startGame();
             }
+
+            ImGui::End();
+            ImGui::Render();
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         }
     }
 
     void MenuScene::handleInput()
     {
-        auto& input = _context.getInputManager();
-
-        if (input.isActionPressed("attack"))
-        {
-            glm::vec2 mousePos = input.getLogicalMousePosition();
-
-            for (auto entity : ecs_registry.view<engine::ecs::Button>())
-            {
-                auto* btn = ecs_registry.get<engine::ecs::Button>(entity);
-                if (btn && mousePos.x >= btn->pos.x && mousePos.x <= btn->pos.x + btn->size.x &&
-                    mousePos.y >= btn->pos.y && mousePos.y <= btn->pos.y + btn->size.y)
-                {
-                    if (btn->onClick)
-                        btn->onClick();
-                }
-            }
-        }
     }
 
     void MenuScene::clean()
     {
+        if (m_glContext)
+        {
+            ImGui_ImplOpenGL3_Shutdown();
+            ImGui_ImplSDL3_Shutdown();
+            ImGui::DestroyContext();
+            m_glContext = nullptr;
+        }
     }
 
     void MenuScene::startGame()

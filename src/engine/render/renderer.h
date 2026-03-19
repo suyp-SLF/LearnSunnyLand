@@ -32,6 +32,7 @@ namespace engine::render
         }
 
         virtual SDL_GPUDevice* getDevice() const { return nullptr; }
+        virtual SDL_Window* getWindow() const { return nullptr; }
 
         // --- 核心绘图接口 (System 必须调用的) ---
         virtual void drawSprite(const Camera &camera,
@@ -58,6 +59,14 @@ namespace engine::render
         virtual void drawChunkBatches(const Camera &camera,
                                       const std::unordered_map<SDL_GPUTexture *, engine::world::TextureBatch> &batches,
                                       const glm::vec2 &worldOffset) = 0;
+
+        // OpenGL 路径：直接传 VAO、VBO、顶点数、GL 纹理 ID
+        virtual void drawChunkGL(const Camera &camera, unsigned int vao, unsigned int vbo, int vertexCount,
+                                 unsigned int glTex, const glm::vec2 &worldOffset) {}
+
+        // OpenGL 路径：在 renderer 内部构建 chunk mesh，确保 GL 函数在正确上下文调用
+        virtual bool buildChunkMeshGL(unsigned int &vao, unsigned int &vbo, int &vertexCount,
+                                      const std::vector<float> &vertices) { return false; }
 
         virtual void drawTexture(SDL_GPUTexture* texture, float x, float y, float w, float h) = 0;
         virtual void drawRect(const Camera &camera, float x, float y, float w, float h, const glm::vec4 &color) = 0;

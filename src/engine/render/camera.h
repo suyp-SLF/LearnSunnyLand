@@ -48,10 +48,12 @@ namespace engine::render
 
         void setPosition(const glm::vec2 &position);
         void setLimitBounds(const std::optional<engine::utils::FRect> &limit_bounds);
+        void setZoom(float zoom);
 
         const glm::vec2 &getPosition() const;
         std::optional<engine::utils::FRect> getLimitBounds() const; // 获取限制范围
         const glm::vec2 &getViewportSize() const;
+        float getZoom() const;
 
     private:
         void clampPosition(); // 限制位置

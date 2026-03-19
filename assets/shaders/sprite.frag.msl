@@ -25,8 +25,8 @@ fragment main0_out main0(main0_in in [[stage_in]], constant Constants& pc [[buff
     main0_out out = {};
     float4 texColor = texSampler.sample(texSamplerSmplr, in.inUV);
 
-    // 测试：如果是单通道纹理，输出固定的黄色
-    if (texColor.r > 0.0 && texColor.g < 0.1 && texColor.b < 0.1) {
+    // 检测文本纹理并输出黄色
+    if (texColor.r > 0.0 && texColor.g < 0.01 && texColor.b < 0.01) {
         out.outColor = float4(1.0, 1.0, 0.0, texColor.r);
     } else {
         out.outColor = texColor;

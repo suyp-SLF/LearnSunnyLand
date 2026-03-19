@@ -1,5 +1,4 @@
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/render/camera.cpp.o: \
-  /Library/Developer/CommandLineTools/usr/lib/clang/17/share/asan_ignorelist.txt \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/camera.cpp \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/camera.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/render/../utils/math.h \

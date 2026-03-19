@@ -1,5 +1,4 @@
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/controller_component.cpp.o: \
-  /Library/Developer/CommandLineTools/usr/lib/clang/17/share/asan_ignorelist.txt \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/controller_component.cpp \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/controller_component.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/component.h \

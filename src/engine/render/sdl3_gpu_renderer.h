@@ -19,7 +19,8 @@ namespace engine::render
         ~SDL3GPURenderer() override;
 
         void setResourceManager(engine::resource::ResourceManager *mgr) override;
-        SDL_GPUDevice *getDevice() const { return _device; }
+        SDL_GPUDevice *getDevice() const override { return _device; }
+        SDL_Window *getWindow() const override { return _window; }
 
         // 实现基类接口
         void clearScreen() override;
@@ -62,6 +63,7 @@ namespace engine::render
         SDL_GPUBuffer *_tile_vertex_buffer = nullptr; // 瓦片地图顶点缓冲区
         SDL_GPUSampler *_default_sampler = nullptr;   // 默认采样器
         SDL_GPUBuffer *_unit_quad_buffer = nullptr;   // 单位四边形缓冲区
+        SDL_GPUTexture *_white_texture = nullptr;     // 1x1 白色纹理
 
         void initGPU();
         void createPipeline();

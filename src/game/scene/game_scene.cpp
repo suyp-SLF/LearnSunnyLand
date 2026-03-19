@@ -18,6 +18,10 @@
 #include "../../engine/render/renderer.h"
 #include "../../engine/ecs/components.h"
 #include <spdlog/spdlog.h>
+#include <imgui.h>
+#include <imgui_impl_sdl3.h>
+#include <imgui_impl_opengl3.h>
+#include <SDL3/SDL_opengl.h>
 
 namespace game::scene
 {
@@ -34,16 +38,12 @@ namespace game::scene
         physics_manager = std::make_unique<engine::physics::PhysicsManager>();
         physics_manager->init({0.0f, 10.0f});
 
-        b2Vec2 position = {10.0f, -50.0f};
-        b2Vec2 halfSize = {0.5f, 0.5f};
-        m_testBoxId = physics_manager->createDynamicBody(position, halfSize, nullptr);
-
         engine::world::WorldConfig config;
         config.loadFromFile("assets/world_config.json");
         config.seed = 12345;
 
         chunk_manager = std::make_unique<engine::world::ChunkManager>(
-            "assets/dimensions/tileset_atlas.svg",
+            "assets/textures/Tiles/tileset.svg",
             config.TILE_SIZE,
             &_context.getResourceManager(),
             physics_manager.get());
@@ -54,9 +54,35 @@ namespace game::scene
         actor_manager = std::make_unique<engine::actor::ActorManager>(_context);
         createPlayer();
 
-        auto& fontMgr = _context.getResourceManager().getFontManager();
-        fontMgr.setDevice(_context.getRenderer().getDevice());
-        text_renderer = fontMgr.loadFont("assets/fonts/VonwaonBitmap-16px.ttf", 16);
+        // OpenGL模式下暂时不加载字体（TextRenderer需要SDL_GPUDevice）
+        // auto& fontMgr = _context.getResourceManager().getFontManager();
+        // fontMgr.setDevice(_context.getRenderer().getDevice());
+        // text_renderer = fontMgr.loadFont("assets/fonts/VonwaonBitmap-16px.ttf", 16);
+
+        // 初始化ImGui
+        SDL_Window* window = _context.getRenderer().getWindow();
+        spdlog::debug("GameScene::init() - window ptr: {}", (void*)window);
+        if (window)
+        {
+            m_glContext = SDL_GL_GetCurrentContext();
+            spdlog::debug("GameScene::init() - GL context ptr: {}", (void*)m_glContext);
+            if (m_glContext)
+            {
+                IMGUI_CHECKVERSION();
+                ImGui::CreateContext();
+                ImGui_ImplSDL3_InitForOpenGL(window, m_glContext);
+                ImGui_ImplOpenGL3_Init("#version 330");
+                spdlog::info("ImGui initialized with OpenGL3");
+            }
+            else
+            {
+                spdlog::error("Failed to get OpenGL context for ImGui");
+            }
+        }
+        else
+        {
+            spdlog::error("Failed to get window for ImGui");
+        }
 
         // ECS测试
         for (int i = 0; i < 5; i++)
@@ -100,7 +126,17 @@ namespace game::scene
         }
 
         glm::vec2 playerPos = {0.0, 0.0};
-        chunk_manager->updateVisibleChunks(playerPos, 8);
+        if (m_player)
+        {
+            auto* transform = m_player->getComponent<engine::component::TransformComponent>();
+            if (transform)
+            {
+                playerPos = transform->getPosition();
+            }
+        }
+
+        // 区块加载距离（配置文件中设置为3）
+        chunk_manager->updateVisibleChunks(playerPos, 3);
     }
 
     void GameScene::render()
@@ -121,17 +157,18 @@ namespace game::scene
             physics_manager->debugDraw(_context.getRenderer(), _context.getCamera());
         }
 
+        // 渲染UI文字
+        // 渲染UI文字
         if (text_renderer && m_player)
         {
             auto* transform = m_player->getComponent<engine::component::TransformComponent>();
             if (transform)
             {
-                float height = transform->getPosition().y;
-                std::string text = "Player: " + m_player->getName() + " | Height: " + std::to_string(static_cast<int>(height));
+                glm::vec2 pos = transform->getPosition();
+                std::string text = "X: " + std::to_string(static_cast<int>(pos.x)) +
+                                   " Y: " + std::to_string(static_cast<int>(pos.y));
 
-                float screenWidth = _context.getCamera().getViewportSize().x;
-                auto glyphs = text_renderer->prepareText(text, screenWidth - 300.0f, 30.0f);
-                spdlog::debug("准备渲染 {} 个字形", glyphs.size());
+                auto glyphs = text_renderer->prepareText(text, 10.0f, 10.0f);
                 auto& renderer = _context.getRenderer();
 
                 for (const auto& glyph : glyphs)
@@ -139,6 +176,25 @@ namespace game::scene
                     renderer.drawTexture(glyph.texture, glyph.x, glyph.y, glyph.w, glyph.h);
                 }
             }
+        }
+
+        // ImGui滑块
+        if (m_glContext)
+        {
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplSDL3_NewFrame();
+            ImGui::NewFrame();
+
+            ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 250, 20), ImGuiCond_Always);
+            ImGui::Begin("Camera", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+            if (ImGui::SliderFloat("Zoom", &m_zoomSliderValue, 0.5f, 3.0f))
+            {
+                _context.getCamera().setZoom(m_zoomSliderValue);
+            }
+            ImGui::End();
+
+            ImGui::Render();
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         }
     }
 
@@ -155,6 +211,14 @@ namespace game::scene
     void GameScene::clean()
     {
         Scene::clean();
+
+        if (m_glContext)
+        {
+            ImGui_ImplOpenGL3_Shutdown();
+            ImGui_ImplSDL3_Shutdown();
+            ImGui::DestroyContext();
+            m_glContext = nullptr;
+        }
     }
     void GameScene::createTestObject()
     {
@@ -188,14 +252,15 @@ namespace game::scene
     {
         m_player = actor_manager->createActor("player");
 
-        // 初始位置在空中，避免卡在地下
-        glm::vec2 startPos = {0.0f, -10.0f};
+        // 玩家初始位置（从天空下落）
+        glm::vec2 startPos = {0.0f, 0.0f};
+
         auto* transform = m_player->addComponent<engine::component::TransformComponent>(startPos);
-        m_player->addComponent<engine::component::SpriteComponent>("assets/textures/Props/bubble1.svg", engine::utils::Alignment::CENTER);
+        m_player->addComponent<engine::component::SpriteComponent>("assets/textures/Characters/player.svg", engine::utils::Alignment::CENTER);
         m_player->addComponent<engine::component::ControllerComponent>(25.0f, 30.0f);
 
-        // 创建物理体并添加 PhysicsComponent
-        b2BodyId bodyId = physics_manager->createDynamicBody({startPos.x, startPos.y}, {0.5f, 0.5f}, m_player);
+        // 创建物理体并添加 PhysicsComponent (32x48 像素 = 1x1.5 米)
+        b2BodyId bodyId = physics_manager->createDynamicBody({startPos.x, startPos.y}, {0.5f, 0.75f}, m_player);
         m_player->addComponent<engine::component::PhysicsComponent>(bodyId);
 
         // 相机跟随玩家

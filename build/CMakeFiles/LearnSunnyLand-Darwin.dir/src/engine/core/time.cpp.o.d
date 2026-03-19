@@ -1,5 +1,4 @@
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/time.cpp.o: \
-  /Library/Developer/CommandLineTools/usr/lib/clang/17/share/asan_ignorelist.txt \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/time.cpp \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/time.h \
   /opt/homebrew/include/SDL3/SDL_stdinc.h \

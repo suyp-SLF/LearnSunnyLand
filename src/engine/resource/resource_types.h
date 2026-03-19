@@ -10,21 +10,10 @@ namespace engine::resource
     {
         SDL_Texture *sdl_tex = nullptr;    // 对应之前的 legacy
         SDL_GPUTexture *gpu_tex = nullptr; // 对应之前的 gpu
+        unsigned int gl_tex = 0;           // OpenGL 纹理 ID
         glm::vec2 size = {0.0f, 0.0f};     // 统一使用 glm::vec2 方便计算
 
-        void release(SDL_Renderer *ren, SDL_GPUDevice *dev)
-        {
-            if (sdl_tex)
-            {
-                SDL_DestroyTexture(sdl_tex);
-                sdl_tex = nullptr;
-            }
-            if (gpu_tex && dev)
-            {
-                SDL_ReleaseGPUTexture(dev, gpu_tex);
-                gpu_tex = nullptr;
-            }
-        }
+        void release(SDL_Renderer *ren, SDL_GPUDevice *dev);
     };
 
     // GPU 管线资源包

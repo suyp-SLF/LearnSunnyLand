@@ -1,4 +1,5 @@
 #include "chunk_manager.h"
+#include "terrain_generator.h"
 #include "../core/context.h"
 #include "world_config.h"
 #include "tile_info.h"
@@ -106,32 +107,29 @@ namespace engine::world
     {
         auto chunk = std::make_unique<Chunk>(chunkX, chunkY);
 
-        for (int ly = 0; ly < Chunk::SIZE; ++ly)
+        // 使用地形生成器生成瓦片
+        if (m_terrainGenerator)
         {
-            for (int lx = 0; lx < Chunk::SIZE; ++lx)
+            std::vector<TileData> tiles;
+            m_terrainGenerator->generateChunk(chunkX, chunkY, tiles);
+
+            for (int ly = 0; ly < Chunk::SIZE; ++ly)
             {
-                int worldY = chunkY * Chunk::SIZE + ly;
-                if (worldY == -8)
+                for (int lx = 0; lx < Chunk::SIZE; ++lx)
                 {
-                    chunk->tileAt(lx, ly) = engine::world::TileData(engine::world::TileType::Stone);
-                }
-                else if (worldY == 0)
-                {
-                    chunk->tileAt(lx, ly) = engine::world::TileData(engine::world::TileType::Dirt);
-                }
-                else
-                {
-                    chunk->tileAt(lx, ly) = engine::world::TileData(engine::world::TileType::Air);
+                    chunk->tileAt(lx, ly) = tiles[ly * Chunk::SIZE + lx];
                 }
             }
         }
+
         chunk->createPhysicsBodies(m_physicsMgr, WorldConfig::TILE_SIZE, WorldConfig::PIXELS_PER_METER);
-        chunk->buildMesh("assets/dimensions/tileset_atlas.svg", m_tileSize, m_resMgr);
+        chunk->buildMesh(m_atlasTextureId, m_tileSize, m_resMgr);
         m_chunks[encodeChunkKey(chunkX, chunkY)] = std::move(chunk);
     }
 
     void ChunkManager::setTerrainGenerator(std::unique_ptr<TerrainGenerator> generator)
     {
+        m_terrainGenerator = std::move(generator);
     }
 
     void ChunkManager::unloadChunk(int chunkX, int chunkY)

@@ -10,11 +10,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 if (MSVC)
     add_compile_options(/W4)
 elseif(APPLE)
-    # 告诉编译器注入内存监控代码
-    add_compile_options(-fsanitize=address -fno-omit-frame-pointer -g)
-    # 告诉链接器链接内存监控库
-    add_link_options(-fsanitize=address)
-    message(STATUS "Mac Address Sanitizer (ASan) 已激活")
     add_compile_options(-Wall -Wextra -Wpedantic)
 else()
     add_compile_options(-Wall -Wextra -Wpedantic)
@@ -45,6 +40,15 @@ find_package(box2d REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(Freetype REQUIRED)
 find_package(harfbuzz REQUIRED)
+
+# 添加ImGui
+include(FetchContent)
+FetchContent_Declare(
+    imgui
+    GIT_REPOSITORY https://github.com/ocornut/imgui.git
+    GIT_TAG docking
+)
+FetchContent_MakeAvailable(imgui)
 
 # 添加可执行文件
 add_executable(
@@ -109,10 +113,19 @@ add_executable(
 
     src/game/scene/game_scene.cpp
     src/game/scene/menu_scene.cpp
+
+    # ImGui源文件
+    ${imgui_SOURCE_DIR}/imgui.cpp
+    ${imgui_SOURCE_DIR}/imgui_draw.cpp
+    ${imgui_SOURCE_DIR}/imgui_tables.cpp
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
     )
 
 # 这样编译器才能进入 /Users/suyp/C++/Library/build/include 找到 SDL3_mixer 文件夹
 target_include_directories(${TARGET} PRIVATE "${MY_SDL_BASE}/include")
+target_include_directories(${TARGET} PRIVATE "${imgui_SOURCE_DIR}" "${imgui_SOURCE_DIR}/backends")
 
 # 链接库
 target_link_libraries(

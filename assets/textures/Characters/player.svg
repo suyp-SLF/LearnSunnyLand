@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<svg version="1.1" width="32" height="48" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+<!-- 头发 -->
+<rect x="10" y="4" width="12" height="2" fill="#8B4513" />
+<rect x="8" y="6" width="16" height="2" fill="#8B4513" />
+<rect x="8" y="8" width="2" height="2" fill="#8B4513" />
+<rect x="22" y="8" width="2" height="2" fill="#8B4513" />
+
+<!-- 头部 -->
+<rect x="10" y="6" width="12" height="8" fill="#FFD4A3" />
+
+<!-- 眼睛 -->
+<rect x="12" y="9" width="2" height="2" fill="#000000" />
+<rect x="18" y="9" width="2" height="2" fill="#000000" />
+
+<!-- 嘴巴 -->
+<rect x="14" y="12" width="4" height="1" fill="#FF6B6B" />
+
+<!-- 脖子 -->
+<rect x="13" y="14" width="6" height="2" fill="#FFD4A3" />
+
+<!-- 上衣 -->
+<rect x="10" y="16" width="12" height="8" fill="#4ECDC4" />
+<rect x="9" y="18" width="2" height="6" fill="#4ECDC4" />
+<rect x="21" y="18" width="2" height="6" fill="#4ECDC4" />
+
+<!-- 腰带 -->
+<rect x="10" y="24" width="12" height="2" fill="#8B4513" />
+
+<!-- 裤子 -->
+<rect x="10" y="26" width="12" height="10" fill="#2C3E50" />
+
+<!-- 左臂 -->
+<rect x="7" y="18" width="2" height="2" fill="#FFD4A3" />
+<rect x="6" y="20" width="3" height="6" fill="#FFD4A3" />
+
+<!-- 右臂 -->
+<rect x="23" y="18" width="2" height="2" fill="#FFD4A3" />
+<rect x="23" y="20" width="3" height="6" fill="#FFD4A3" />
+
+<!-- 左腿 -->
+<rect x="11" y="36" width="4" height="10" fill="#2C3E50" />
+
+<!-- 右腿 -->
+<rect x="17" y="36" width="4" height="10" fill="#2C3E50" />
+
+<!-- 左脚 -->
+<rect x="10" y="46" width="5" height="2" fill="#34495E" />
+
+<!-- 右脚 -->
+<rect x="17" y="46" width="5" height="2" fill="#34495E" />
+</svg>
