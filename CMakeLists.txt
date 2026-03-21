@@ -126,6 +126,9 @@ add_executable(
 
     src/game/mission/planet_mission_ui.cpp
 
+    src/game/monster/monster_ai_component.cpp
+    src/game/monster/monster_manager.cpp
+
     src/game/route/route_data.cpp
     src/game/scene/route_select_scene.cpp
 

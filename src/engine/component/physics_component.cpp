@@ -1,11 +1,13 @@
 #include "physics_component.h"
 #include "transform_component.h"
+#include "../physics/physics_manager.h"
 #include "../object/game_object.h"
 
 namespace engine::component
 {
-    PhysicsComponent::PhysicsComponent(b2BodyId bodyId)
+    PhysicsComponent::PhysicsComponent(b2BodyId bodyId, ::engine::physics::PhysicsManager *physicsManager)
         : m_bodyId(bodyId)
+        , m_physicsManager(physicsManager)
     {
     }
 
@@ -14,6 +16,18 @@ namespace engine::component
         if (B2_IS_NON_NULL(m_bodyId))
         {
             b2Body_SetLinearVelocity(m_bodyId, {velocity.x, velocity.y});
+        }
+    }
+
+    void PhysicsComponent::setWorldPosition(const glm::vec2& position)
+    {
+        if (B2_IS_NON_NULL(m_bodyId))
+        {
+            constexpr float PIXELS_PER_METER = 32.0f;
+            b2Rot rotation = b2Body_GetRotation(m_bodyId);
+            b2Body_SetTransform(m_bodyId,
+                                {position.x / PIXELS_PER_METER, position.y / PIXELS_PER_METER},
+                                rotation);
         }
     }
 
@@ -65,5 +79,18 @@ namespace engine::component
             b2Vec2 pos = b2Body_GetPosition(m_bodyId);
             transform->setPosition({pos.x * PIXELS_PER_METER, pos.y * PIXELS_PER_METER});
         }
+    }
+
+    void PhysicsComponent::clean()
+    {
+        if (B2_IS_NULL(m_bodyId))
+            return;
+
+        if (m_physicsManager)
+            m_physicsManager->destroyBody(m_bodyId);
+        else if (b2Body_IsValid(m_bodyId))
+            b2DestroyBody(m_bodyId);
+
+        m_bodyId = b2_nullBodyId;
     }
 }

@@ -141,6 +141,13 @@ namespace game::world
         // 找树根，收集整棵树，然后清空+掉落
         glm::ivec2 root = findTreeRoot(tileX, tileY, chunkMgr);
         auto treeTiles = collectTreeTiles(root.x, root.y, chunkMgr);
+        if (treeTiles.empty())
+        {
+            chunkMgr.setTile(tileX, tileY, TileData(TileType::Air));
+            return;
+        }
+
+        const size_t oldDropCount = m_drops.size();
 
         // 先生成掉落物
         spawnDrops(treeTiles, chunkMgr);
@@ -151,12 +158,11 @@ namespace game::world
             chunkMgr.setTile(tp.x, tp.y, TileData(TileType::Air));
         }
 
-        // 把本次掉落追加到 outDrops
-        outDrops.insert(outDrops.end(), m_drops.end() -
-            static_cast<int>(treeTiles.size() / 3 + 1), m_drops.end());
-        // （spawnDrops 已直接 push 到 m_drops，outDrops 是外部视图引用，所以这里
-        //  outDrops 和 m_drops 同为 m_drops，无需额外 insert；
-        //  outDrops 参数是为了兼容未来可能的外部传入，此处简化处理）
+        // 如果外部传入的是不同容器，则仅把本次新增掉落同步过去。
+        if (&outDrops != &m_drops)
+        {
+            outDrops.insert(outDrops.end(), m_drops.begin() + static_cast<std::ptrdiff_t>(oldDropCount), m_drops.end());
+        }
     }
 
     // ──────────────────────────────────────────────

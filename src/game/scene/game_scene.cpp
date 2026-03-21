@@ -20,12 +20,16 @@
 #include "../../engine/render/renderer.h"
 #include "../../engine/ecs/components.h"
 #include "../locale/locale_manager.h"
-#include <filesystem>
+#include "../../engine/utils/math.h"
 #include <spdlog/spdlog.h>
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_opengl3.h>
 #include <SDL3/SDL_opengl.h>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <unordered_set>
 
 namespace game::scene
 {
@@ -63,10 +67,9 @@ namespace game::scene
         // 绑定生物群系查询：根据世界 X 坐标查询当前路线格子的地形类型
         if (m_routeData.isValid())
         {
-            const int TPC = game::route::RouteData::TILES_PER_CELL;
             auto rd = m_routeData;  // 捕获副本，生成器生命周期内始终有效
-            generator->setBiomeLookup([rd, TPC](int tileX) -> int {
-                int zone = tileX / TPC;
+            generator->setBiomeLookup([rd](int tileX) -> int {
+                int zone = tileX / game::route::RouteData::TILES_PER_CELL;
                 if (zone < 0 || zone >= static_cast<int>(rd.path.size()))
                     return 0;  // 路线外：草原
                 auto cell = rd.path[zone];
@@ -78,6 +81,12 @@ namespace game::scene
 
         actor_manager = std::make_unique<engine::actor::ActorManager>(_context);
         createPlayer();
+        m_monsterManager = std::make_unique<game::monster::MonsterManager>(
+            _context,
+            *actor_manager,
+            *physics_manager,
+            *chunk_manager,
+            m_player);
 
         // OpenGL模式下暂时不加载字体（TextRenderer需要SDL_GPUDevice）
         // auto& fontMgr = _context.getResourceManager().getFontManager();
@@ -143,6 +152,12 @@ namespace game::scene
     {
         Scene::update(delta_time);
 
+        m_mechAttackCooldown = std::max(0.0f, m_mechAttackCooldown - delta_time);
+        m_mechAttackFlashTimer = std::max(0.0f, m_mechAttackFlashTimer - delta_time);
+
+        if (m_monsterManager)
+            m_monsterManager->update(delta_time);
+
         // 更新相机
         _context.getCamera().update(delta_time);
 
@@ -174,12 +189,7 @@ namespace game::scene
 
         // 更新掉落物（重力、拾取）
         {
-            glm::vec2 ppos{0.0f, 0.0f};
-            if (m_player)
-            {
-                auto* tr = m_player->getComponent<engine::component::TransformComponent>();
-                if (tr) ppos = tr->getPosition();
-            }
+            glm::vec2 ppos = getActorWorldPosition(getControlledActor());
             m_treeManager.updateDrops(delta_time, ppos, m_inventory, *chunk_manager);
         }
 
@@ -191,11 +201,7 @@ namespace game::scene
 
         // 更新星球任务规划 UI
         {
-            glm::vec2 ppos{0.0f, 0.0f};
-            if (m_player) {
-                auto* tr = m_player->getComponent<engine::component::TransformComponent>();
-                if (tr) ppos = tr->getPosition();
-            }
+            glm::vec2 ppos = getActorWorldPosition(getControlledActor());
             m_missionUI.update(delta_time, ppos, *chunk_manager);
         }
 
@@ -203,11 +209,7 @@ namespace game::scene
         if (!m_routeData.path.empty())
         {
             // tile X = worldX / 16 ; zone = tileX / TILES_PER_CELL
-            glm::vec2 ppos{0.0f, 0.0f};
-            if (m_player) {
-                auto* tr = m_player->getComponent<engine::component::TransformComponent>();
-                if (tr) ppos = tr->getPosition();
-            }
+            glm::vec2 ppos = getActorWorldPosition(getControlledActor());
             int tileX = static_cast<int>(ppos.x) / 16;
             int zone  = tileX / game::route::RouteData::TILES_PER_CELL;
             zone = std::max(0, std::min(zone, static_cast<int>(m_routeData.path.size()) - 1));
@@ -221,15 +223,7 @@ namespace game::scene
             }
         }
 
-        glm::vec2 playerPos = {0.0, 0.0};
-        if (m_player)
-        {
-            auto* transform = m_player->getComponent<engine::component::TransformComponent>();
-            if (transform)
-            {
-                playerPos = transform->getPosition();
-            }
-        }
+        glm::vec2 playerPos = getActorWorldPosition(getControlledActor());
 
         // 只在玩家移动超过半个 chunk 时才更新可见区块
         constexpr float CHUNK_UPDATE_THRESHOLD = engine::world::Chunk::SIZE * 16.0f * 0.5f;
@@ -349,14 +343,12 @@ namespace game::scene
 
             // 撤离结算界面
             renderSettlementUI();
+            renderCommandTerminal();
+            renderMechPrompt();
 
             // 星球任务规划 UI
             {
-                glm::vec2 ppos{0.0f, 0.0f};
-                if (m_player) {
-                    auto* tr = m_player->getComponent<engine::component::TransformComponent>();
-                    if (tr) ppos = tr->getPosition();
-                }
+                glm::vec2 ppos = getActorWorldPosition(getControlledActor());
                 m_missionUI.render(*chunk_manager, ppos);
             }
 
@@ -369,10 +361,22 @@ namespace game::scene
     {
         Scene::handleInput();
 
+        auto &input = _context.getInputManager();
+
+        if (input.isActionPressed("command_mode"))
+        {
+            m_showCommandInput = !m_showCommandInput;
+            m_focusCommandInput = m_showCommandInput;
+            if (!m_showCommandInput)
+                m_commandBuffer[0] = '\0';
+        }
+
+        if (m_showCommandInput)
+            return;
+
         if (actor_manager)
             actor_manager->handleInput();
 
-        auto &input = _context.getInputManager();
         glm::vec2 mousePos = input.getLogicalMousePosition();
         glm::vec2 worldPos = _context.getCamera().screenToWorld(mousePos);
         m_hoveredTile = chunk_manager->worldToTile(worldPos);
@@ -381,26 +385,29 @@ namespace game::scene
         // 鼠标左键点击摧毁瓦片（树木会触发倒树逻辑）
         if (input.isActionPressed("attack"))
         {
-            using engine::world::TileType;
-            TileType t = chunk_manager->tileAt(m_hoveredTile.x, m_hoveredTile.y).type;
-            if (t == TileType::Wood || t == TileType::Leaves)
-            {
-                // 交给树木管理器处理（倒树+掉落）
-                m_treeManager.digTile(m_hoveredTile.x, m_hoveredTile.y,
-                                      *chunk_manager, m_treeManager.getDrops());
-            }
-            else if (t == TileType::Ore)
-            {
-                // 挖矿石 → 直接加入背包
-                chunk_manager->setTile(m_hoveredTile.x, m_hoveredTile.y,
-                                       engine::world::TileData(TileType::Air));
-                using Cat = game::inventory::ItemCategory;
-                m_inventory.addItem({"ore", "矿石", 64, Cat::Material}, 1);
-            }
+            if (m_isPlayerInMech)
+                performMechAttack();
             else
             {
-                chunk_manager->setTile(m_hoveredTile.x, m_hoveredTile.y,
-                                       engine::world::TileData(TileType::Air));
+                using engine::world::TileType;
+                TileType t = chunk_manager->tileAt(m_hoveredTile.x, m_hoveredTile.y).type;
+                if (t == TileType::Wood || t == TileType::Leaves)
+                {
+                    m_treeManager.digTile(m_hoveredTile.x, m_hoveredTile.y,
+                                          *chunk_manager, m_treeManager.getDrops());
+                }
+                else if (t == TileType::Ore)
+                {
+                    chunk_manager->setTile(m_hoveredTile.x, m_hoveredTile.y,
+                                           engine::world::TileData(TileType::Air));
+                    using Cat = game::inventory::ItemCategory;
+                    m_inventory.addItem({"ore", "矿石", 64, Cat::Material}, 1);
+                }
+                else
+                {
+                    chunk_manager->setTile(m_hoveredTile.x, m_hoveredTile.y,
+                                           engine::world::TileData(TileType::Air));
+                }
             }
         }
 
@@ -423,6 +430,13 @@ namespace game::scene
                 else
                     spdlog::info("B键：还未到达撤离区 (当前区域 {}/{})", m_currentZone + 1, lastZone + 1);
             }
+        }
+        if (input.isActionPressed("interact"))
+        {
+            if (m_isPlayerInMech)
+                exitMech();
+            else
+                tryEnterMech();
         }
 
         // 滚轮切换武器栏
@@ -562,7 +576,6 @@ namespace game::scene
         ImGui::Spacing();
 
         // 显示背包中各种材料数量
-        using Cat = game::inventory::ItemCategory;
         const struct { const char* id; const char* name; } kItems[] = {
             {"ore",    "矿石"},
             {"wood",   "木材"},
@@ -623,17 +636,161 @@ namespace game::scene
         if (sprite->isFlipped() != shouldFlip)
             sprite->setFlipped(shouldFlip);
 
-        const std::string baseDir = "assets/textures/Characters/";
+        constexpr float FRAME_W = 32.0f;
+        constexpr float FRAME_H = 48.0f;
         const std::string animKey = controller->getAnimationStateKey();
-        const std::string candidate = baseDir + "player_" + animKey + ".svg";
-        const std::string fallback = baseDir + "player.svg";
-        const std::string& resolved = std::filesystem::exists(candidate) ? candidate : fallback;
 
-        if (resolved != m_playerAnimationTexture)
+        if (m_playerAnimationTexture != "assets/textures/Characters/player_sheet.svg")
         {
-            sprite->setSpriteById(resolved);
-            m_playerAnimationTexture = resolved;
+            sprite->setSpriteById("assets/textures/Characters/player_sheet.svg");
+            m_playerAnimationTexture = "assets/textures/Characters/player_sheet.svg";
         }
+
+        if (animKey != m_playerAnimationState)
+        {
+            m_playerAnimationState = animKey;
+            m_playerAnimationTimer = 0.0f;
+            m_playerAnimationFrame = 0;
+        }
+
+        int frameStart = 0;
+        int frameCount = 1;
+        float frameDuration = 0.12f;
+
+        if (animKey == "idle")
+        {
+            frameStart = 0;
+            frameCount = 2;
+            frameDuration = 0.38f;
+        }
+        else if (animKey == "run")
+        {
+            frameStart = 2;
+            frameCount = 4;
+            frameDuration = 0.09f;
+        }
+        else if (animKey == "jump")
+        {
+            frameStart = 6;
+            frameCount = 1;
+        }
+        else if (animKey == "fall")
+        {
+            frameStart = 7;
+            frameCount = 1;
+        }
+        else if (animKey == "jetpack")
+        {
+            frameStart = 8;
+            frameCount = 2;
+            frameDuration = 0.08f;
+        }
+
+        if (frameCount > 1)
+        {
+            m_playerAnimationTimer += ImGui::GetIO().DeltaTime;
+            while (m_playerAnimationTimer >= frameDuration)
+            {
+                m_playerAnimationTimer -= frameDuration;
+                m_playerAnimationFrame = (m_playerAnimationFrame + 1) % frameCount;
+            }
+        }
+        else
+        {
+            m_playerAnimationFrame = 0;
+        }
+
+        const float frameX = (frameStart + m_playerAnimationFrame) * FRAME_W;
+        sprite->setSourceRect(engine::utils::FRect{{frameX, 0.0f}, {FRAME_W, FRAME_H}});
+
+        if (m_mech)
+        {
+            auto* mechController = m_mech->getComponent<engine::component::ControllerComponent>();
+            auto* mechSprite = m_mech->getComponent<engine::component::SpriteComponent>();
+            if (mechController && mechSprite)
+            {
+                bool mechFlip = mechController->getFacingDirection() == engine::component::ControllerComponent::FacingDirection::Left;
+                if (mechSprite->isFlipped() != mechFlip)
+                    mechSprite->setFlipped(mechFlip);
+            }
+        }
+    }
+
+    void GameScene::renderCommandTerminal()
+    {
+        if (!m_showCommandInput)
+            return;
+
+        ImGuiIO &io = ImGui::GetIO();
+        const float width = 420.0f;
+        ImGui::SetNextWindowPos({(io.DisplaySize.x - width) * 0.5f, 40.0f}, ImGuiCond_Always);
+        ImGui::SetNextWindowSize({width, 118.0f}, ImGuiCond_Always);
+        ImGui::SetNextWindowBgAlpha(0.94f);
+        ImGui::Begin("指令终端", nullptr,
+            ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings);
+        ImGui::TextUnformatted("输入 001 呼叫空投机甲。再次按 R 可退出指令模式。") ;
+        ImGui::Spacing();
+        if (m_focusCommandInput)
+        {
+            ImGui::SetKeyboardFocusHere();
+            m_focusCommandInput = false;
+        }
+
+        bool submitted = ImGui::InputText("##command", m_commandBuffer.data(), m_commandBuffer.size(),
+                                          ImGuiInputTextFlags_EnterReturnsTrue);
+        ImGui::SameLine();
+        if (ImGui::Button("执行") || submitted)
+            executeCommand();
+
+        ImGui::TextDisabled("当前可用指令: 001") ;
+        ImGui::End();
+    }
+
+    void GameScene::renderMechPrompt()
+    {
+        if (!m_mech)
+            return;
+
+        if (m_isPlayerInMech)
+        {
+            ImGuiIO &io = ImGui::GetIO();
+            const float width = 280.0f;
+            ImGui::SetNextWindowPos({(io.DisplaySize.x - width) * 0.5f, io.DisplaySize.y - 110.0f}, ImGuiCond_Always);
+            ImGui::SetNextWindowSize({width, 78.0f}, ImGuiCond_Always);
+            ImGui::SetNextWindowBgAlpha(0.84f);
+            ImGui::Begin("##mechhud", nullptr,
+                ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoNav |
+                ImGuiWindowFlags_NoSavedSettings);
+            ImGui::TextUnformatted("F 下机   鼠标左键 震荡重击");
+            if (m_mechAttackCooldown > 0.0f)
+                ImGui::Text("重击冷却: %.2fs", m_mechAttackCooldown);
+            else
+                ImGui::TextColored({0.55f, 1.0f, 0.7f, 1.0f}, "重击就绪");
+            if (m_mechLastAttackHits > 0)
+                ImGui::Text("上次重击命中: %d", m_mechLastAttackHits);
+            else
+                ImGui::TextDisabled("上次重击未命中目标");
+            ImGui::End();
+            return;
+        }
+
+        if (!m_player)
+            return;
+
+        glm::vec2 playerPos = getActorWorldPosition(m_player);
+        glm::vec2 mechPos = getActorWorldPosition(m_mech);
+        if (glm::distance(playerPos, mechPos) > 220.0f)
+            return;
+
+        glm::vec2 screen = _context.getCamera().worldToScreen({mechPos.x, mechPos.y - 220.0f});
+        const char* text = "按 F 进入机甲";
+        ImDrawList *dl = ImGui::GetForegroundDrawList();
+        ImVec2 textSize = ImGui::CalcTextSize(text);
+        ImVec2 min{screen.x - textSize.x * 0.5f - 10.0f, screen.y - 6.0f};
+        ImVec2 max{screen.x + textSize.x * 0.5f + 10.0f, screen.y + textSize.y + 6.0f};
+        dl->AddRectFilled(min, max, IM_COL32(9, 17, 26, 220), 8.0f);
+        dl->AddRect(min, max, IM_COL32(120, 220, 255, 220), 8.0f, 0, 1.2f);
+        dl->AddText({screen.x - textSize.x * 0.5f, screen.y}, IM_COL32(240, 248, 255, 255), text);
     }
 
     // ------------------------------------------------------------------
@@ -641,25 +798,28 @@ namespace game::scene
     // ------------------------------------------------------------------
     void GameScene::renderPlayerStateTag()
     {
-        if (!m_player) return;
+        auto* actor = getControlledActor();
+        if (!actor) return;
 
-        auto* transform = m_player->getComponent<engine::component::TransformComponent>();
-        auto* controller = m_player->getComponent<engine::component::ControllerComponent>();
+        auto* transform = actor->getComponent<engine::component::TransformComponent>();
+        auto* controller = actor->getComponent<engine::component::ControllerComponent>();
         if (!transform || !controller) return;
 
         glm::vec2 screen = _context.getCamera().worldToScreen(transform->getPosition());
-        const char* stateName = controller->getMovementStateName();
+        std::string stateLabel = controller->getMovementStateName();
+        if (m_isPlayerInMech)
+            stateLabel = "机甲·" + stateLabel;
         float fuelRatio = controller->getJetpackFuelRatio();
 
         ImDrawList *dl = ImGui::GetForegroundDrawList();
-        ImVec2 textSize = ImGui::CalcTextSize(stateName);
+        ImVec2 textSize = ImGui::CalcTextSize(stateLabel.c_str());
         ImVec2 textPos{screen.x - textSize.x * 0.5f, screen.y - 58.0f};
         ImVec2 boxMin{textPos.x - 8.0f, textPos.y - 4.0f};
         ImVec2 boxMax{textPos.x + textSize.x + 8.0f, textPos.y + textSize.y + 14.0f};
 
         dl->AddRectFilled(boxMin, boxMax, IM_COL32(12, 18, 30, 210), 6.0f);
         dl->AddRect(boxMin, boxMax, IM_COL32(100, 180, 255, 220), 6.0f, 0, 1.2f);
-        dl->AddText(textPos, IM_COL32(240, 245, 255, 255), stateName);
+        dl->AddText(textPos, IM_COL32(240, 245, 255, 255), stateLabel.c_str());
 
         ImVec2 fuelBarMin{boxMin.x + 6.0f, boxMax.y - 8.0f};
         ImVec2 fuelBarMax{boxMax.x - 6.0f, boxMax.y - 3.0f};
@@ -935,7 +1095,7 @@ namespace game::scene
                     if (def->ammo_capacity > 0)
                         ImGui::TextDisabled("%s: %d", locale::T("weapon.ammo").c_str(), def->ammo_capacity);
                 }
-                ImGui::TextDisabled(locale::T("weapon_bar.dblclick_unequip").c_str());
+                ImGui::TextDisabled("%s", locale::T("weapon_bar.dblclick_unequip").c_str());
                 ImGui::EndTooltip();
             }
 
@@ -944,7 +1104,7 @@ namespace game::scene
 
         // 底部提示
         ImGui::Separator();
-        ImGui::TextDisabled(locale::T("weapon_bar.scroll_hint").c_str());
+        ImGui::TextDisabled("%s", locale::T("weapon_bar.scroll_hint").c_str());
 
         ImGui::End();
         ImGui::PopStyleVar();
@@ -1011,7 +1171,7 @@ namespace game::scene
                     ImGui::SetDragDropPayload("INV_SLOT", &idx, sizeof(int));
                     ImGui::TextUnformatted(slot.item->name.c_str());
                     if (is_weapon)
-                        ImGui::TextDisabled(locale::T("weapon_bar.drag_hint").c_str());
+                        ImGui::TextDisabled("%s", locale::T("weapon_bar.drag_hint").c_str());
                     ImGui::EndDragDropSource();
                 }
 
@@ -1029,7 +1189,7 @@ namespace game::scene
                             ImGui::TextDisabled("%s: %d", locale::T("weapon.damage").c_str(), def->damage);
                             ImGui::TextDisabled("%s: %.1f/s", locale::T("weapon.speed").c_str(), def->attack_speed);
                         }
-                        ImGui::TextDisabled(locale::T("weapon_bar.drag_hint").c_str());
+                        ImGui::TextDisabled("%s", locale::T("weapon_bar.drag_hint").c_str());
                     }
                     else
                         ImGui::TextDisabled("%s: %d / %d",
@@ -1053,14 +1213,285 @@ namespace game::scene
         glm::vec2 startPos = {0.0f, 0.0f};
 
         auto* transform = m_player->addComponent<engine::component::TransformComponent>(startPos);
-        m_player->addComponent<engine::component::SpriteComponent>("assets/textures/Characters/player.svg", engine::utils::Alignment::CENTER);
+        m_player->addComponent<engine::component::SpriteComponent>(
+            "assets/textures/Characters/player_sheet.svg",
+            engine::utils::Alignment::CENTER,
+            engine::utils::FRect{{0.0f, 0.0f}, {32.0f, 48.0f}});
         m_player->addComponent<engine::component::ControllerComponent>(25.0f, 30.0f);
 
         // 创建物理体并添加 PhysicsComponent (32x48 像素 = 1x1.5 米)
         b2BodyId bodyId = physics_manager->createDynamicBody({startPos.x, startPos.y}, {0.5f, 0.75f}, m_player);
-        m_player->addComponent<engine::component::PhysicsComponent>(bodyId);
+        m_player->addComponent<engine::component::PhysicsComponent>(bodyId, physics_manager.get());
 
         // 相机跟随玩家
         _context.getCamera().setFollowTarget(&transform->getPosition(), 5.0f);
+    }
+
+    void GameScene::executeCommand()
+    {
+        std::string command = m_commandBuffer.data();
+        command.erase(std::remove_if(command.begin(), command.end(), [](unsigned char c) {
+            return std::isspace(c) != 0;
+        }), command.end());
+
+        if (command == "001")
+        {
+            spawnMechDrop();
+            m_showCommandInput = false;
+            m_commandBuffer[0] = '\0';
+            return;
+        }
+
+        spdlog::warn("未知指令: {}", command.empty() ? "<empty>" : command);
+    }
+
+    void GameScene::spawnMechDrop()
+    {
+        if (m_isPlayerInMech)
+        {
+            spdlog::info("机甲已连接驾驶员，忽略重复空投指令");
+            return;
+        }
+
+        constexpr float kPixelsPerMeter = 32.0f;
+        glm::vec2 playerPos = getActorWorldPosition(m_player);
+        glm::vec2 dropTarget = {playerPos.x + 180.0f, playerPos.y - 32.0f};
+        glm::vec2 spawnPos = {dropTarget.x, dropTarget.y - 640.0f};
+
+        if (!m_mech)
+        {
+            m_mech = actor_manager->createActor("mech_drop");
+            auto* mechTransform = m_mech->addComponent<engine::component::TransformComponent>(spawnPos, glm::vec2{5.0f, 5.0f});
+            mechTransform->setScale({5.0f, 5.0f});
+            m_mech->addComponent<engine::component::SpriteComponent>(
+                "assets/textures/Characters/mech.svg",
+                engine::utils::Alignment::CENTER);
+            auto* mechController = m_mech->addComponent<engine::component::ControllerComponent>(18.0f, 8.0f);
+            mechController->setGroundAcceleration(58.0f);
+            mechController->setAirAcceleration(28.0f);
+            mechController->setJumpSpeed(10.5f);
+            mechController->setJumpCutFactor(0.78f);
+            mechController->setCoyoteTime(0.16f);
+            mechController->setGroundedThreshold(0.18f);
+            mechController->setJetpackEnabled(false);
+            mechController->setJetpackProfile(0.0f, 0.0f, 0.0f, 0.0f);
+            mechController->setEnabled(false);
+            b2BodyId bodyId = physics_manager->createDynamicBody(
+                {spawnPos.x / kPixelsPerMeter, spawnPos.y / kPixelsPerMeter},
+                {2.4f, 3.4f},
+                m_mech);
+            m_mech->addComponent<engine::component::PhysicsComponent>(bodyId, physics_manager.get());
+        }
+        else
+        {
+            if (auto* transform = m_mech->getComponent<engine::component::TransformComponent>())
+                transform->setPosition(spawnPos);
+            if (auto* sprite = m_mech->getComponent<engine::component::SpriteComponent>())
+                sprite->setHidden(false);
+            if (auto* physics = m_mech->getComponent<engine::component::PhysicsComponent>())
+            {
+                physics->setWorldPosition(spawnPos);
+                physics->setVelocity({0.0f, 4.0f});
+            }
+            if (auto* controller = m_mech->getComponent<engine::component::ControllerComponent>())
+            {
+                controller->setGroundAcceleration(58.0f);
+                controller->setAirAcceleration(28.0f);
+                controller->setJumpSpeed(10.5f);
+                controller->setJumpCutFactor(0.78f);
+                controller->setCoyoteTime(0.16f);
+                controller->setGroundedThreshold(0.18f);
+                controller->setJetpackEnabled(false);
+                controller->setEnabled(false);
+            }
+        }
+
+        m_mechAttackCooldown = 0.0f;
+        m_mechLastAttackHits = 0;
+
+        spdlog::info("指令 001 已执行：机甲开始空投，目标坐标 ({:.1f}, {:.1f})", dropTarget.x, dropTarget.y);
+    }
+
+    void GameScene::tryEnterMech()
+    {
+        if (!m_mech || m_isPlayerInMech || !m_player)
+            return;
+
+        glm::vec2 playerPos = getActorWorldPosition(m_player);
+        glm::vec2 mechPos = getActorWorldPosition(m_mech);
+        if (glm::distance(playerPos, mechPos) > 220.0f)
+            return;
+
+        auto* mechController = m_mech->getComponent<engine::component::ControllerComponent>();
+        auto* mechTransform = m_mech->getComponent<engine::component::TransformComponent>();
+        auto* playerController = m_player->getComponent<engine::component::ControllerComponent>();
+        auto* playerPhysics = m_player->getComponent<engine::component::PhysicsComponent>();
+        auto* playerTransform = m_player->getComponent<engine::component::TransformComponent>();
+        auto* playerSprite = m_player->getComponent<engine::component::SpriteComponent>();
+        if (!mechController || !mechTransform || !playerController || !playerPhysics || !playerTransform || !playerSprite)
+            return;
+
+        playerController->setEnabled(false);
+        playerPhysics->setVelocity({0.0f, 0.0f});
+        playerPhysics->setWorldPosition({-4096.0f, -4096.0f});
+        playerTransform->setPosition({-4096.0f, -4096.0f});
+        playerSprite->setHidden(true);
+
+        mechController->setEnabled(true);
+        _context.getCamera().setFollowTarget(&mechTransform->getPosition(), 4.2f);
+        m_isPlayerInMech = true;
+        spdlog::info("驾驶员已进入机甲");
+    }
+
+    void GameScene::exitMech()
+    {
+        if (!m_isPlayerInMech || !m_mech || !m_player)
+            return;
+
+        auto* mechController = m_mech->getComponent<engine::component::ControllerComponent>();
+        auto* playerController = m_player->getComponent<engine::component::ControllerComponent>();
+        auto* playerPhysics = m_player->getComponent<engine::component::PhysicsComponent>();
+        auto* playerTransform = m_player->getComponent<engine::component::TransformComponent>();
+        auto* playerSprite = m_player->getComponent<engine::component::SpriteComponent>();
+        if (!mechController || !playerController || !playerPhysics || !playerTransform || !playerSprite)
+            return;
+
+        glm::vec2 exitPos = findSafeDisembarkPosition();
+        mechController->setEnabled(false);
+        playerSprite->setHidden(false);
+        playerTransform->setPosition(exitPos);
+        playerPhysics->setWorldPosition(exitPos);
+        playerPhysics->setVelocity({0.0f, 0.0f});
+        playerController->setEnabled(true);
+        _context.getCamera().setFollowTarget(&playerTransform->getPosition(), 5.0f);
+        m_isPlayerInMech = false;
+        spdlog::info("驾驶员已离开机甲");
+    }
+
+    void GameScene::performMechAttack()
+    {
+        if (!m_isPlayerInMech || !m_mech || m_mechAttackCooldown > 0.0f)
+            return;
+
+        auto* mechController = m_mech->getComponent<engine::component::ControllerComponent>();
+        auto* mechTransform = m_mech->getComponent<engine::component::TransformComponent>();
+        auto* mechPhysics = m_mech->getComponent<engine::component::PhysicsComponent>();
+        if (!mechController || !mechTransform || !mechPhysics)
+            return;
+
+        const float facing = mechController->getFacingDirection() == engine::component::ControllerComponent::FacingDirection::Left ? -1.0f : 1.0f;
+        glm::vec2 center = mechTransform->getPosition() + glm::vec2{facing * 128.0f, 28.0f};
+        constexpr float radius = 92.0f;
+        int destroyedTiles = 0;
+
+        using engine::world::TileData;
+        using engine::world::TileType;
+        const glm::ivec2 tileMin = chunk_manager->worldToTile(center - glm::vec2{radius, radius});
+        const glm::ivec2 tileMax = chunk_manager->worldToTile(center + glm::vec2{radius, radius});
+        std::unordered_set<long long> processedTreeTiles;
+
+        for (int ty = tileMin.y; ty <= tileMax.y; ++ty)
+        {
+            for (int tx = tileMin.x; tx <= tileMax.x; ++tx)
+            {
+                glm::vec2 tileCenter = chunk_manager->tileToWorld({tx, ty}) + glm::vec2{8.0f, 8.0f};
+                if (glm::distance(tileCenter, center) > radius)
+                    continue;
+
+                TileType type = chunk_manager->tileAt(tx, ty).type;
+                if (type == TileType::Air)
+                    continue;
+
+                if (type == TileType::Wood || type == TileType::Leaves)
+                {
+                    long long key = (static_cast<long long>(tx) << 32) ^ static_cast<unsigned int>(ty);
+                    if (!processedTreeTiles.insert(key).second)
+                        continue;
+                    m_treeManager.digTile(tx, ty, *chunk_manager, m_treeManager.getDrops());
+                    ++destroyedTiles;
+                    continue;
+                }
+
+                if (type == TileType::Ore)
+                {
+                    using Cat = game::inventory::ItemCategory;
+                    m_inventory.addItem({"ore", "矿石", 64, Cat::Material}, 1);
+                }
+                else if (type == TileType::Stone || type == TileType::Gravel)
+                {
+                    using Cat = game::inventory::ItemCategory;
+                    m_inventory.addItem({"stone", "石块", 64, Cat::Material}, 1);
+                }
+
+                chunk_manager->setTile(tx, ty, TileData(TileType::Air));
+                ++destroyedTiles;
+            }
+        }
+
+        int crushedMonsters = m_monsterManager ? m_monsterManager->crushMonstersInRadius(center, radius + 32.0f) : 0;
+        glm::vec2 vel = mechPhysics->getVelocity();
+        vel.x += facing * 1.5f;
+        mechPhysics->setVelocity(vel);
+
+        m_mechAttackCooldown = 0.65f;
+        m_mechAttackFlashTimer = 0.16f;
+        m_mechLastAttackHits = destroyedTiles + crushedMonsters;
+        spdlog::info("机甲重击：摧毁 {} 个瓦片，击退 {} 个怪物", destroyedTiles, crushedMonsters);
+    }
+
+    engine::object::GameObject* GameScene::getControlledActor() const
+    {
+        if (m_isPlayerInMech && m_mech)
+            return m_mech;
+        return m_player;
+    }
+
+    glm::vec2 GameScene::getActorWorldPosition(const engine::object::GameObject* actor) const
+    {
+        if (!actor)
+            return {0.0f, 0.0f};
+
+        auto* transform = actor->getComponent<engine::component::TransformComponent>();
+        if (!transform)
+            return {0.0f, 0.0f};
+
+        return transform->getPosition();
+    }
+
+    glm::vec2 GameScene::findSafeDisembarkPosition() const
+    {
+        if (!m_mech)
+            return {0.0f, 0.0f};
+
+        auto* mechTransform = m_mech->getComponent<engine::component::TransformComponent>();
+        auto* mechController = m_mech->getComponent<engine::component::ControllerComponent>();
+        if (!mechTransform || !mechController)
+            return {0.0f, 0.0f};
+
+        glm::vec2 mechPos = mechTransform->getPosition();
+        int primaryDir = mechController->getFacingDirection() == engine::component::ControllerComponent::FacingDirection::Left ? -1 : 1;
+        const int directions[2] = {primaryDir, -primaryDir};
+
+        for (int dir : directions)
+        {
+            for (int dx = 6; dx <= 12; ++dx)
+            {
+                int tileX = static_cast<int>(mechPos.x / 16.0f) + dir * dx;
+                for (int tileY = 6; tileY < 140; ++tileY)
+                {
+                    auto below = chunk_manager->tileAt(tileX, tileY);
+                    auto above = chunk_manager->tileAt(tileX, tileY - 1);
+                    auto above2 = chunk_manager->tileAt(tileX, tileY - 2);
+                    if (engine::world::isSolid(below.type) &&
+                        above.type == engine::world::TileType::Air &&
+                        above2.type == engine::world::TileType::Air)
+                    {
+                        return {tileX * 16.0f + 8.0f, (tileY - 1) * 16.0f};
+                    }
+                }
+            }
+        }
+
+        return mechPos + glm::vec2{primaryDir * 120.0f, -48.0f};
     }
 }

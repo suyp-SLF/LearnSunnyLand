@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <memory>
+#include <string>
 
 namespace engine::object { class GameObject; }
 namespace engine::core { class Context; }
@@ -18,6 +19,7 @@ namespace engine::actor
         void render();
         void handleInput();
         void clear();
+        size_t actorCount() const { return m_actors.size(); }
 
     private:
         engine::core::Context &m_context;

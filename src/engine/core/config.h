@@ -73,7 +73,10 @@ namespace engine::core
             {"attack", {"K", "MouseLeft"}},
             {"pause", {"P", "Escape"}},
             {"open_inventory", {"E"}},
-            {"open_map", {"M"}}};
+            {"open_map", {"M"}},
+            {"evacuate", {"B"}},
+            {"command_mode", {"R"}},
+            {"interact", {"F"}}};
         explicit Config(const std::string &json_path);
         // 删除拷贝和移动
         Config(const Config &) = delete;

@@ -1185,6 +1185,54 @@ src/game/mission/planet_mission_ui.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/mission/planet_mission_ui.cpp.s
 .PHONY : src/game/mission/planet_mission_ui.cpp.s
 
+src/game/monster/monster_ai_component.o: src/game/monster/monster_ai_component.cpp.o
+.PHONY : src/game/monster/monster_ai_component.o
+
+# target to build an object file
+src/game/monster/monster_ai_component.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_ai_component.cpp.o
+.PHONY : src/game/monster/monster_ai_component.cpp.o
+
+src/game/monster/monster_ai_component.i: src/game/monster/monster_ai_component.cpp.i
+.PHONY : src/game/monster/monster_ai_component.i
+
+# target to preprocess a source file
+src/game/monster/monster_ai_component.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_ai_component.cpp.i
+.PHONY : src/game/monster/monster_ai_component.cpp.i
+
+src/game/monster/monster_ai_component.s: src/game/monster/monster_ai_component.cpp.s
+.PHONY : src/game/monster/monster_ai_component.s
+
+# target to generate assembly for a file
+src/game/monster/monster_ai_component.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_ai_component.cpp.s
+.PHONY : src/game/monster/monster_ai_component.cpp.s
+
+src/game/monster/monster_manager.o: src/game/monster/monster_manager.cpp.o
+.PHONY : src/game/monster/monster_manager.o
+
+# target to build an object file
+src/game/monster/monster_manager.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_manager.cpp.o
+.PHONY : src/game/monster/monster_manager.cpp.o
+
+src/game/monster/monster_manager.i: src/game/monster/monster_manager.cpp.i
+.PHONY : src/game/monster/monster_manager.i
+
+# target to preprocess a source file
+src/game/monster/monster_manager.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_manager.cpp.i
+.PHONY : src/game/monster/monster_manager.cpp.i
+
+src/game/monster/monster_manager.s: src/game/monster/monster_manager.cpp.s
+.PHONY : src/game/monster/monster_manager.s
+
+# target to generate assembly for a file
+src/game/monster/monster_manager.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_manager.cpp.s
+.PHONY : src/game/monster/monster_manager.cpp.s
+
 src/game/route/route_data.o: src/game/route/route_data.cpp.o
 .PHONY : src/game/route/route_data.o
 
@@ -1518,6 +1566,12 @@ help:
 	@echo "... src/game/mission/planet_mission_ui.o"
 	@echo "... src/game/mission/planet_mission_ui.i"
 	@echo "... src/game/mission/planet_mission_ui.s"
+	@echo "... src/game/monster/monster_ai_component.o"
+	@echo "... src/game/monster/monster_ai_component.i"
+	@echo "... src/game/monster/monster_ai_component.s"
+	@echo "... src/game/monster/monster_manager.o"
+	@echo "... src/game/monster/monster_manager.i"
+	@echo "... src/game/monster/monster_manager.s"
 	@echo "... src/game/route/route_data.o"
 	@echo "... src/game/route/route_data.i"
 	@echo "... src/game/route/route_data.s"

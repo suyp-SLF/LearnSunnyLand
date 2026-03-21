@@ -28,6 +28,23 @@ namespace engine::component
         ~ControllerComponent() = default;
 
         void setSpeed(float speed) { m_speed = speed; }
+        void setEnabled(bool enabled) { m_enabled = enabled; }
+        void setJumpSpeed(float jumpSpeed) { m_jumpSpeed = jumpSpeed; }
+        void setGroundAcceleration(float accel) { m_groundAccel = accel; }
+        void setAirAcceleration(float accel) { m_airAccel = accel; }
+        void setJumpCutFactor(float factor) { m_jumpCutFactor = factor; }
+        void setCoyoteTime(float coyoteTime) { m_coyoteTime = coyoteTime; }
+        void setGroundedThreshold(float threshold) { m_groundedThreshold = threshold; }
+        void setJetpackEnabled(bool enabled) { m_jetpackEnabled = enabled; }
+        void setJetpackProfile(float fuelMax, float accel, float riseSpeed, float force)
+        {
+            m_jetpackFuelMax = fuelMax;
+            m_jetpackFuel = fuelMax;
+            m_jetpackAccel = accel;
+            m_jetpackRiseSpeed = riseSpeed;
+            m_jetpackForce = force;
+        }
+        bool isEnabled() const { return m_enabled; }
         float getSpeed() const { return m_speed; }
         MovementState getMovementState() const { return m_state; }
         FacingDirection getFacingDirection() const { return m_facing; }
@@ -41,6 +58,7 @@ namespace engine::component
         glm::vec2 m_inputDir{0.0f, 0.0f};
         MovementState m_state = MovementState::Idle;
         FacingDirection m_facing = FacingDirection::Right;
+        bool m_enabled = true;
 
         float m_groundAccel = 90.0f;
         float m_airAccel = 42.0f;
@@ -54,6 +72,7 @@ namespace engine::component
         float m_jetpackFuel = 0.75f;
         float m_jetpackAccel = 20.0f;
         float m_jetpackRiseSpeed = 5.5f;
+        bool m_jetpackEnabled = true;
         bool m_hasReleasedJumpSinceTakeoff = false;
         bool m_jetpackUnlockedThisAir = false;
 

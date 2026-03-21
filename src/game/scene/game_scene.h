@@ -8,10 +8,18 @@
 #include "../../engine/ecs/registry.h"
 #include "../inventory/inventory.h"
 #include "../weapon/weapon.h"
+#include "../monster/monster_manager.h"
 #include "../world/tree_manager.h"
 #include "../weather/weather_system.h"
 #include "../mission/planet_mission_ui.h"
 #include "../route/route_data.h"
+#include <array>
+#include <string>
+
+namespace engine::object
+{
+    class GameObject;
+}
 
 namespace game::scene
 {
@@ -55,6 +63,9 @@ namespace game::scene
         // 武器栏
         game::weapon::WeaponBar m_weaponBar;
 
+        // 怪物系统
+        std::unique_ptr<game::monster::MonsterManager> m_monsterManager;
+
         // 树木系统
         game::world::TreeManager m_treeManager;
 
@@ -81,13 +92,34 @@ namespace game::scene
         void renderDropItems();
         void renderPlayerStateTag();
         void syncPlayerPresentation();
+        void renderCommandTerminal();
+        void renderMechPrompt();
         void renderRouteHUD();    // 左下角路线 HUD
         void renderSettlementUI(); // 撤离结算界面
         void injectOreVeins();    // 在目标格区域注入矿脉
         void initTestItems();
+        void executeCommand();
+        void spawnMechDrop();
+        void tryEnterMech();
+        void exitMech();
+        void performMechAttack();
+        engine::object::GameObject* getControlledActor() const;
+        glm::vec2 getActorWorldPosition(const engine::object::GameObject* actor) const;
+        glm::vec2 findSafeDisembarkPosition() const;
 
         // 撤离结算状态
         bool m_showSettlement = false;
-        std::string m_playerAnimationTexture = "assets/textures/Characters/player.svg";
+        bool m_showCommandInput = false;
+        bool m_focusCommandInput = false;
+        bool m_isPlayerInMech = false;
+        std::array<char, 16> m_commandBuffer{};
+        engine::object::GameObject* m_mech = nullptr;
+        float m_mechAttackCooldown = 0.0f;
+        float m_mechAttackFlashTimer = 0.0f;
+        int m_mechLastAttackHits = 0;
+        std::string m_playerAnimationTexture = "assets/textures/Characters/player_sheet.svg";
+        std::string m_playerAnimationState = "idle";
+        float m_playerAnimationTimer = 0.0f;
+        int m_playerAnimationFrame = 0;
     };
 } // namespace game::scene

@@ -1,6 +1,7 @@
 #include "actor_manager.h"
 #include "../object/game_object.h"
 #include "../core/context.h"
+#include <algorithm>
 
 namespace engine::actor
 {
@@ -25,6 +26,19 @@ namespace engine::actor
         {
             actor->update(delta_time);
         }
+
+        for (auto &actor : m_actors)
+        {
+            if (actor->isNeedRemove())
+                actor->clean();
+        }
+
+        m_actors.erase(
+            std::remove_if(m_actors.begin(), m_actors.end(), [](const auto &actor)
+            {
+                return actor->isNeedRemove();
+            }),
+            m_actors.end());
     }
 
     void ActorManager::render()

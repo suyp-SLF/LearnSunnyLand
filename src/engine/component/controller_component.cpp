@@ -16,8 +16,11 @@ namespace engine::component
 
     void ControllerComponent::handleInput()
     {
-        if (!_context)
+        if (!_context || !m_enabled)
+        {
+            m_inputDir = {0.0f, 0.0f};
             return;
+        }
 
         auto &input = _context->getInputManager();
         m_inputDir = {0.0f, 0.0f};
@@ -104,6 +107,15 @@ namespace engine::component
         if (!physics)
             return;
 
+        if (!_context || !m_enabled)
+        {
+            glm::vec2 vel = physics->getVelocity();
+            vel.x = 0.0f;
+            physics->setVelocity(vel);
+            updateMovementState(vel, isGrounded(*physics), false);
+            return;
+        }
+
         auto& input = _context->getInputManager();
         glm::vec2 vel = physics->getVelocity();
 
@@ -111,7 +123,7 @@ namespace engine::component
         if (groundedNow)
         {
             m_coyoteTimer = m_coyoteTime;
-            m_jetpackFuel = m_jetpackFuelMax;
+            m_jetpackFuel = m_jetpackEnabled ? m_jetpackFuelMax : 0.0f;
             m_hasReleasedJumpSinceTakeoff = false;
             m_jetpackUnlockedThisAir = false;
         }
@@ -143,14 +155,14 @@ namespace engine::component
         if (!groundedNow && input.isActionReleased("jump") && vel.y < 0.0f)
             vel.y *= m_jumpCutFactor;
 
-        if (!groundedNow && !jumpedThisFrame && m_hasReleasedJumpSinceTakeoff &&
+        if (m_jetpackEnabled && !groundedNow && !jumpedThisFrame && m_hasReleasedJumpSinceTakeoff &&
             input.isActionPressed("jump") && m_jetpackFuel > 0.0f)
         {
             m_jetpackUnlockedThisAir = true;
         }
 
         bool jetpacking = false;
-        if (!groundedNow && m_jetpackUnlockedThisAir && input.isActionDown("jump") && m_jetpackFuel > 0.0f)
+        if (m_jetpackEnabled && !groundedNow && m_jetpackUnlockedThisAir && input.isActionDown("jump") && m_jetpackFuel > 0.0f)
         {
             vel.y = std::max(vel.y - (m_jetpackAccel + m_jetpackForce * 0.2f) * delta_time, -m_jetpackRiseSpeed);
             m_jetpackFuel = std::max(0.0f, m_jetpackFuel - delta_time);

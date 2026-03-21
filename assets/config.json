@@ -44,6 +44,12 @@
         ],
         "evacuate": [
             "B"
+        ],
+        "command_mode": [
+            "R"
+        ],
+        "interact": [
+            "F"
         ]
     },
     "performance": {
