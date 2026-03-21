@@ -154,6 +154,7 @@ namespace game::scene
 
         m_mechAttackCooldown = std::max(0.0f, m_mechAttackCooldown - delta_time);
         m_mechAttackFlashTimer = std::max(0.0f, m_mechAttackFlashTimer - delta_time);
+        m_timeOfDaySystem.update(delta_time);
 
         if (m_monsterManager)
             m_monsterManager->update(delta_time);
@@ -237,6 +238,7 @@ namespace game::scene
     void GameScene::render()
     {
         Scene::render();
+        m_timeOfDaySystem.renderBackground(_context);
         chunk_manager->renderAll(_context);
         _context.getParallaxRenderSystem().renderAll(_context);
         _context.getSpriteRenderSystem().renderAll(_context);
@@ -246,6 +248,8 @@ namespace game::scene
         {
             actor_manager->render();
         }
+
+        m_timeOfDaySystem.renderLighting(_context);
 
         if (physics_manager && m_showPhysicsDebug)
         {
@@ -302,6 +306,11 @@ namespace game::scene
 
             ImGui::Separator();
             ImGui::TextUnformatted("天气");
+            ImGui::Text("时间: %02d:%02d  %s",
+                        m_timeOfDaySystem.getHour24(),
+                        m_timeOfDaySystem.getMinute(),
+                        m_timeOfDaySystem.getPhaseName());
+            ImGui::Text("日照: %.0f%%", m_timeOfDaySystem.getDaylightFactor() * 100.0f);
             // 当前天气显示
             ImGui::Text("当前: %s", m_weatherSystem.getCurrentWeatherName());
 

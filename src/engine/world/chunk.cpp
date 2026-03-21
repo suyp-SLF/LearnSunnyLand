@@ -205,7 +205,8 @@ namespace engine::world
         }
 
         for (const auto &bodyId : m_physicsBodies)
-        {            physicsMgr->destroyBody(bodyId);
+        {
+            physicsMgr->destroyBody(bodyId);
         }
         m_physicsBodies.clear();
     }
@@ -222,7 +223,7 @@ namespace engine::world
             int lx = 0;
             while (lx < SIZE)
             {
-                while (lx < SIZE && !isSolid(m_tiles[ly * SIZE + lx].type))
+                while (lx < SIZE && m_tiles[ly * SIZE + lx].type == TileType::Air)
                 {
                     ++lx;
                 }
@@ -231,7 +232,7 @@ namespace engine::world
                     break;
 
                 int runStart = lx;
-                while (lx < SIZE && isSolid(m_tiles[ly * SIZE + lx].type))
+                while (lx < SIZE && m_tiles[ly * SIZE + lx].type != TileType::Air)
                 {
                     ++lx;
                 }

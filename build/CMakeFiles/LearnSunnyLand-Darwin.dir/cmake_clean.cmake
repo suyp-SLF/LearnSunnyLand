@@ -105,6 +105,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/weapon/weapon.cpp.o.d"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/weather/weather_system.cpp.o"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/weather/weather_system.cpp.o.d"
+  "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/time_of_day_system.cpp.o"
+  "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/time_of_day_system.cpp.o.d"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/tree_manager.cpp.o"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/tree_manager.cpp.o.d"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/main.cpp.o"

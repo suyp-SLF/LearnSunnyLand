@@ -1377,6 +1377,30 @@ src/game/weather/weather_system.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/weather/weather_system.cpp.s
 .PHONY : src/game/weather/weather_system.cpp.s
 
+src/game/world/time_of_day_system.o: src/game/world/time_of_day_system.cpp.o
+.PHONY : src/game/world/time_of_day_system.o
+
+# target to build an object file
+src/game/world/time_of_day_system.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/time_of_day_system.cpp.o
+.PHONY : src/game/world/time_of_day_system.cpp.o
+
+src/game/world/time_of_day_system.i: src/game/world/time_of_day_system.cpp.i
+.PHONY : src/game/world/time_of_day_system.i
+
+# target to preprocess a source file
+src/game/world/time_of_day_system.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/time_of_day_system.cpp.i
+.PHONY : src/game/world/time_of_day_system.cpp.i
+
+src/game/world/time_of_day_system.s: src/game/world/time_of_day_system.cpp.s
+.PHONY : src/game/world/time_of_day_system.s
+
+# target to generate assembly for a file
+src/game/world/time_of_day_system.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/time_of_day_system.cpp.s
+.PHONY : src/game/world/time_of_day_system.cpp.s
+
 src/game/world/tree_manager.o: src/game/world/tree_manager.cpp.o
 .PHONY : src/game/world/tree_manager.o
 
@@ -1590,6 +1614,9 @@ help:
 	@echo "... src/game/weather/weather_system.o"
 	@echo "... src/game/weather/weather_system.i"
 	@echo "... src/game/weather/weather_system.s"
+	@echo "... src/game/world/time_of_day_system.o"
+	@echo "... src/game/world/time_of_day_system.i"
+	@echo "... src/game/world/time_of_day_system.s"
 	@echo "... src/game/world/tree_manager.o"
 	@echo "... src/game/world/tree_manager.i"
 	@echo "... src/game/world/tree_manager.s"

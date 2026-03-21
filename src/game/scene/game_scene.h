@@ -10,6 +10,7 @@
 #include "../weapon/weapon.h"
 #include "../monster/monster_manager.h"
 #include "../world/tree_manager.h"
+#include "../world/time_of_day_system.h"
 #include "../weather/weather_system.h"
 #include "../mission/planet_mission_ui.h"
 #include "../route/route_data.h"
@@ -71,6 +72,9 @@ namespace game::scene
 
         // 天气系统
         game::weather::WeatherSystem m_weatherSystem;
+
+        // 昼夜与天空系统
+        game::world::TimeOfDaySystem m_timeOfDaySystem;
 
         // 星球任务规划 UI
         game::mission::PlanetMissionUI m_missionUI;

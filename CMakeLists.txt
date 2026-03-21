@@ -121,6 +121,7 @@ add_executable(
     src/game/weapon/weapon.cpp
 
     src/game/world/tree_manager.cpp
+    src/game/world/time_of_day_system.cpp
 
     src/game/weather/weather_system.cpp
 
