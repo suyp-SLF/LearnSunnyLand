@@ -1,66 +1,135 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<svg version="1.1" width="48" height="72" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
-<rect width="48" height="72" fill="#000000" fill-opacity="0"/>
+<svg version="1.1" width="48" height="56" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+<rect width="48" height="56" fill="#000000" fill-opacity="0"/>
 
-<polygon points="19,3 23,0 24,5 21,7" fill="#c45d8a"/>
-<polygon points="29,3 25,0 24,5 27,7" fill="#c45d8a"/>
-<polygon points="16,8 20,2 21,10 18,12" fill="#e283ac"/>
-<polygon points="32,8 28,2 27,10 30,12" fill="#e283ac"/>
-<rect x="20" y="6" width="8" height="6" fill="#20273b"/>
-<rect x="19" y="8" width="10" height="4" fill="#f2f4ff"/>
-<rect x="20" y="9" width="8" height="2" fill="#89d9ff"/>
-<rect x="21" y="12" width="6" height="2" fill="#7c2f57"/>
+<!-- ===== V字天线 ===== -->
+<!-- 左天线杆 -->
+<rect x="19" y="0" width="2" height="7" fill="#e8e8e0"/>
+<!-- 右天线杆 -->
+<rect x="27" y="0" width="2" height="7" fill="#e8e8e0"/>
+<!-- 天线根部黄色横条（连接两根天线） -->
+<rect x="19" y="5" width="10" height="2" fill="#d8b830"/>
 
-<polygon points="4,14 12,11 17,15 14,24 5,24 2,18" fill="#1e2740"/>
-<polygon points="44,14 36,11 31,15 34,24 43,24 46,18" fill="#1e2740"/>
-<polygon points="6,15 12,13 15,16 13,22 6,22 4,18" fill="#32436b"/>
-<polygon points="42,15 36,13 33,16 35,22 42,22 44,18" fill="#32436b"/>
-<rect x="7" y="17" width="4" height="1" fill="#a8c5ff"/>
-<rect x="37" y="17" width="4" height="1" fill="#a8c5ff"/>
+<!-- ===== 头盔 ===== -->
+<!-- 头盔主体：白色圆形 -->
+<rect x="15" y="7" width="18" height="12" fill="#e0e0d8"/>
+<!-- 头盔顶部高光 -->
+<rect x="15" y="7" width="18" height="2" fill="#f0f0ea"/>
+<!-- 头盔左右深色边 -->
+<rect x="15" y="7" width="1" height="12" fill="#a8a8a0"/>
+<rect x="32" y="7" width="1" height="12" fill="#a8a8a0"/>
+<!-- 全幅红色扫描眼（核心特征） -->
+<rect x="15" y="11" width="18" height="4" fill="#c01010"/>
+<rect x="16" y="11" width="16" height="4" fill="#e02020"/>
+<rect x="16" y="12" width="16" height="2" fill="#f03030"/>
+<!-- 眼睛高光 -->
+<rect x="17" y="12" width="4" height="1" fill="#ff8888"/>
+<!-- 颧骨/面颊白色部分 -->
+<rect x="16" y="15" width="16" height="4" fill="#d8d8d0"/>
+<!-- 脑后下缘深色 -->
+<rect x="15" y="18" width="18" height="1" fill="#888880"/>
 
-<polygon points="15,14 33,14 37,21 34,36 29,44 19,44 14,36 11,21" fill="#1b2235"/>
-<polygon points="17,16 31,16 34,21 32,34 28,40 20,40 16,34 14,21" fill="#314062"/>
-<polygon points="19,18 29,18 31,23 30,31 27,36 21,36 18,31 17,23" fill="#4c628c"/>
-<rect x="21" y="18" width="6" height="12" fill="#d8d8d2"/>
-<polygon points="22,18 26,18 27,30 24,36 21,30" fill="#f0efe9"/>
-<rect x="17" y="23" width="3" height="8" fill="#7f3756"/>
-<rect x="28" y="23" width="3" height="8" fill="#7f3756"/>
-<rect x="21" y="21" width="6" height="2" fill="#6bcdf7"/>
-<rect x="22" y="32" width="4" height="3" fill="#59709a"/>
+<!-- 颈部 -->
+<rect x="20" y="19" width="8" height="2" fill="#606060"/>
 
-<rect x="10" y="23" width="3" height="6" fill="#d7d2ca"/>
-<rect x="35" y="23" width="3" height="6" fill="#d7d2ca"/>
-<rect x="9" y="29" width="4" height="10" fill="#f0ede8"/>
-<rect x="35" y="29" width="4" height="10" fill="#f0ede8"/>
-<rect x="8" y="25" width="1" height="11" fill="#856d55"/>
-<rect x="39" y="25" width="1" height="11" fill="#856d55"/>
-<rect x="9" y="25" width="1" height="11" fill="#c89a5f"/>
-<rect x="38" y="25" width="1" height="11" fill="#c89a5f"/>
-<rect x="7" y="39" width="4" height="8" fill="#1f2940"/>
-<rect x="37" y="39" width="4" height="8" fill="#1f2940"/>
-<rect x="6" y="47" width="4" height="5" fill="#e5acc7"/>
-<rect x="38" y="47" width="4" height="5" fill="#e5acc7"/>
-<rect x="5" y="50" width="1" height="3" fill="#d57ea9"/>
-<rect x="10" y="50" width="1" height="3" fill="#d57ea9"/>
-<rect x="37" y="50" width="1" height="3" fill="#d57ea9"/>
-<rect x="42" y="50" width="1" height="3" fill="#d57ea9"/>
+<!-- 躯干 - 主体 白色装甲 -->
+<rect x="12" y="17" width="24" height="20" fill="#ccccca"/>
+<rect x="13" y="17" width="22" height="20" fill="#e4e4e0"/>
+<!-- ===== 躯干主体 ===== -->
+<!-- 白色躯干底板 -->
+<rect x="13" y="21" width="22" height="14" fill="#d8d8d0"/>
+<rect x="14" y="21" width="20" height="14" fill="#e8e8e2"/>
+<!-- 藏青蓝胸甲（占躯干中央大部分） -->
+<rect x="16" y="21" width="16" height="12" fill="#1a3370"/>
+<rect x="17" y="22" width="14" height="10" fill="#2244a0"/>
+<!-- 胸甲高光条 -->
+<rect x="17" y="22" width="14" height="2" fill="#3355b8"/>
+<!-- 胸甲中央黄色标志 -->
+<rect x="22" y="24" width="4" height="4" fill="#e8c030"/>
+<rect x="23" y="25" width="2" height="2" fill="#ffd840"/>
+<!-- 胸甲腰部深蓝边 -->
+<rect x="16" y="31" width="16" height="2" fill="#102060"/>
+<!-- 躯干两侧白色边甲 -->
+<rect x="13" y="21" width="3" height="12" fill="#e0e0d8"/>
+<rect x="32" y="21" width="3" height="12" fill="#e0e0d8"/>
+<!-- 腰带 -->
+<rect x="14" y="33" width="20" height="3" fill="#909090"/>
 
-<polygon points="18,40 30,40 32,45 28,54 20,54 16,45" fill="#29344c"/>
-<polygon points="19,42 29,42 28,52 20,52" fill="#ecebe5"/>
-<polygon points="16,40 22,40 20,52 15,49" fill="#314062"/>
-<polygon points="32,40 26,40 28,52 33,49" fill="#314062"/>
+<!-- ===== 肩甲 ===== -->
+<!-- 左肩甲 -->
+<rect x="6" y="20" width="9" height="10" fill="#d0d0c8"/>
+<rect x="7" y="20" width="7" height="9" fill="#e8e8e0"/>
+<rect x="6" y="20" width="9" height="2" fill="#f0f0e8"/>
+<rect x="6" y="28" width="9" height="2" fill="#a0a0a0"/>
+<!-- 右肩甲 -->
+<rect x="33" y="20" width="9" height="10" fill="#d0d0c8"/>
+<rect x="34" y="20" width="7" height="9" fill="#e8e8e0"/>
+<rect x="33" y="20" width="9" height="2" fill="#f0f0e8"/>
+<rect x="33" y="28" width="9" height="2" fill="#a0a0a0"/>
 
-<polygon points="16,45 22,46 21,69 15,70 12,58" fill="#f2f0ea"/>
-<polygon points="32,45 26,46 27,69 33,70 36,58" fill="#f2f0ea"/>
-<polygon points="15,52 20,53 19,68 14,69 12,60" fill="#ffffff"/>
-<polygon points="33,52 28,53 29,68 34,69 36,60" fill="#ffffff"/>
-<rect x="15" y="55" width="3" height="1" fill="#39404e"/>
-<rect x="15" y="58" width="3" height="1" fill="#39404e"/>
-<rect x="30" y="56" width="2" height="1" fill="#39404e"/>
-<rect x="30" y="59" width="2" height="1" fill="#39404e"/>
+<!-- ===== 手臂 ===== -->
+<!-- 上臂 左 -->
+<rect x="8" y="30" width="5" height="8" fill="#d8d8d0"/>
+<rect x="9" y="30" width="3" height="8" fill="#e8e8e0"/>
+<!-- 上臂 右 -->
+<rect x="35" y="30" width="5" height="8" fill="#d8d8d0"/>
+<rect x="36" y="30" width="3" height="8" fill="#e8e8e0"/>
+<!-- 肘关节 左 -->
+<rect x="9" y="38" width="4" height="2" fill="#888880"/>
+<!-- 肘关节 右 -->
+<rect x="35" y="38" width="4" height="2" fill="#888880"/>
+<!-- 前臂 左 -->
+<rect x="9" y="40" width="4" height="7" fill="#e0e0d8"/>
+<!-- 前臂 右 -->
+<rect x="35" y="40" width="4" height="7" fill="#e0e0d8"/>
+<!-- 手 左 -->
+<rect x="9" y="47" width="4" height="3" fill="#707068"/>
+<!-- 手 右 -->
+<rect x="35" y="47" width="4" height="3" fill="#707068"/>
 
-<polygon points="12,68 17,67 18,72 10,72 9,70" fill="#f1efea"/>
-<polygon points="36,68 31,67 30,72 38,72 39,70" fill="#f1efea"/>
-<polygon points="9,70 12,68 13,72 8,72" fill="#213049"/>
-<polygon points="39,70 36,68 35,72 40,72" fill="#213049"/>
+<!-- ===== 腰甲 / 裙甲 ===== -->
+<rect x="14" y="36" width="20" height="5" fill="#d0d0c8"/>
+<rect x="15" y="36" width="18" height="5" fill="#e0e0d8"/>
+<!-- 裙甲中缝 -->
+<rect x="23" y="36" width="2" height="5" fill="#a0a0a0"/>
+
+<!-- ===== 大腿 ===== -->
+<!-- 左大腿 -->
+<rect x="14" y="41" width="8" height="8" fill="#d0d0c8"/>
+<rect x="15" y="41" width="6" height="8" fill="#e0e0d8"/>
+<!-- 右大腿 -->
+<rect x="26" y="41" width="8" height="8" fill="#d0d0c8"/>
+<rect x="27" y="41" width="6" height="8" fill="#e0e0d8"/>
+
+<!-- ===== 膝盖 ===== -->
+<!-- 左膝（蓝色） -->
+<rect x="14" y="49" width="8" height="3" fill="#1a3370"/>
+<rect x="15" y="49" width="6" height="2" fill="#2244a0"/>
+<!-- 右膝（蓝色） -->
+<rect x="26" y="49" width="8" height="3" fill="#1a3370"/>
+<rect x="27" y="49" width="6" height="2" fill="#2244a0"/>
+
+<!-- ===== 小腿 ===== -->
+<!-- 左小腿 -->
+<rect x="14" y="52" width="8" height="6" fill="#d8d8d0"/>
+<rect x="15" y="52" width="6" height="6" fill="#e8e8e2"/>
+<!-- 左小腿前甲蓝色 -->
+<rect x="15" y="52" width="6" height="4" fill="#2244a0"/>
+<!-- 右小腿 -->
+<rect x="26" y="52" width="8" height="6" fill="#d8d8d0"/>
+<rect x="27" y="52" width="6" height="6" fill="#e8e8e2"/>
+<!-- 右小腿前甲蓝色 -->
+<rect x="27" y="52" width="6" height="4" fill="#2244a0"/>
+
+<!-- ===== 靴子（特征性橙红色靴尖） ===== -->
+<!-- 左靴底板 -->
+<rect x="13" y="54" width="10" height="2" fill="#b0b0a8"/>
+<!-- 左靴橙红色靴尖 -->
+<rect x="13" y="54" width="5" height="2" fill="#cc4020"/>
+<rect x="13" y="55" width="10" height="1" fill="#cc4020"/>
+<!-- 右靴底板 -->
+<rect x="25" y="54" width="10" height="2" fill="#b0b0a8"/>
+<!-- 右靴橙红色靴尖 -->
+<rect x="25" y="54" width="5" height="2" fill="#cc4020"/>
+<rect x="25" y="55" width="10" height="1" fill="#cc4020"/>
 </svg>

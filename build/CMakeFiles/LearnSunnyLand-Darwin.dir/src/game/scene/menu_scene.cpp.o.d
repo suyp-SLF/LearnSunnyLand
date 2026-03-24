@@ -945,6 +945,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/menu_scene.cpp.o: \
   /opt/homebrew/include/SDL3/SDL_tray.h \
   /opt/homebrew/include/SDL3/SDL_version.h \
   /opt/homebrew/include/SDL3/SDL_oldnames.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/ship_scene.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/route_select_scene.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../route/route_data.h \
   /opt/homebrew/include/glm/glm.hpp \
@@ -1286,6 +1287,9 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/menu_scene.cpp.o: \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../mission/planet_mission_ui.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../mission/../../engine/world/chunk_manager.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../mission/../inventory/inventory.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../skill/star_skill.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../component/attribute_component.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../component/../../engine/component/component.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/core/context.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/scene/scene_manager.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/input/input_manager.h \

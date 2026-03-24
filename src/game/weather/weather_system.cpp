@@ -93,6 +93,20 @@ namespace game::weather
         return 0.0f;
     }
 
+    float WeatherSystem::getSkyVisibility() const
+    {
+        float baseVisibility = 1.0f;
+        switch (m_current)
+        {
+            case WeatherType::Clear:        baseVisibility = 1.0f; break;
+            case WeatherType::LightRain:    baseVisibility = 0.82f; break;
+            case WeatherType::MediumRain:   baseVisibility = 0.62f; break;
+            case WeatherType::HeavyRain:    baseVisibility = 0.42f; break;
+            case WeatherType::Thunderstorm: baseVisibility = 0.28f; break;
+        }
+        return 1.0f - (1.0f - baseVisibility) * m_intensity;
+    }
+
     // ──────────────────────────────────────────────
     // 粒子生成
     // ──────────────────────────────────────────────
@@ -107,7 +121,7 @@ namespace game::weather
         m_particles.push_back(p);
     }
 
-    void WeatherSystem::respawnParticle(RainParticle &p, float displayW, float displayH)
+    void WeatherSystem::respawnParticle(RainParticle &p, float displayW, float /*displayH*/)
     {
         p.x      = randFloat() * (displayW + 120.0f) - 60.0f;
         p.y      = -p.length - randFloat() * 30.0f;
@@ -164,8 +178,12 @@ namespace game::weather
 
         // ── 粒子池管理 ──
         int target = targetParticleCount();
-        while (static_cast<int>(m_particles.size()) < target)
+        int deficit = target - static_cast<int>(m_particles.size());
+        int spawnBudget = std::min(deficit, 36);
+        while (spawnBudget-- > 0)
             spawnParticle(displayW, displayH);
+        if (static_cast<int>(m_particles.size()) > target)
+            m_particles.resize(static_cast<size_t>(target));
 
         // ── 粒子物理 ──
         for (auto &p : m_particles)

@@ -88,8 +88,7 @@ namespace engine::core
             {
                 spdlog::warn("目标帧率必须大于0，使用默认值 60");
                 _target_fps = 60;
-            }
-        }
+            }            _show_fps_overlay = performance_config.value("show_fps", _show_fps_overlay);        }
         if (json.contains("audio"))
         {
             const auto &audio_config = json["audio"];
@@ -122,7 +121,7 @@ namespace engine::core
         return nlohmann::ordered_json{
             {"window", {{"title", _window_title}, {"width", _window_width}, {"height", _window_height}, {"logical_width", _logical_width}, {"logical_height", _logical_height}, {"camera_width", _camera_width}, {"camera_height", _camera_height}, {"resizable", _window_resizable}}},
             {"graphics", {{"vsync", _vsync_enabled}, {"render_type", _render_type}}},
-            {"performance", {{"target_fps", _target_fps}}},
+            {"performance", {{"target_fps", _target_fps}, {"show_fps", _show_fps_overlay}}},
             {"audio", {{"music_volume", _music_volume}, {"sfx_volume", _sfx_volume}}},
             {"input_mapping", _input_mappings}};
     }

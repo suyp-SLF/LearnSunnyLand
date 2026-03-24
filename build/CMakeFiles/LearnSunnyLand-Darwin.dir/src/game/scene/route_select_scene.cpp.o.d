@@ -1285,7 +1285,11 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/route_select_scene.cpp.o: \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../mission/planet_mission_ui.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../mission/../../engine/world/chunk_manager.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../mission/../inventory/inventory.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../skill/star_skill.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../component/attribute_component.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../component/../../engine/component/component.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/menu_scene.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/ship_scene.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/core/context.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/scene/scene_manager.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/render/renderer.h \

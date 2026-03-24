@@ -17,7 +17,7 @@ namespace game::world
         TimeOfDaySystem();
 
         void update(float deltaTime);
-        void renderBackground(engine::core::Context &context) const;
+        void renderBackground(engine::core::Context &context, float skyVisibility = 1.0f) const;
         void renderLighting(engine::core::Context &context) const;
 
         float getTimeOfDay() const { return m_timeOfDay; }
@@ -49,6 +49,7 @@ namespace game::world
         glm::vec4 sampleTopSkyColor() const;
         glm::vec4 sampleBottomSkyColor() const;
         glm::vec4 sampleAmbientOverlayColor() const;
+        float sampleSkyDetailFactor(float skyVisibility) const;
         glm::vec2 sunNormalizedPosition() const;
         glm::vec2 farStarNormalizedPosition() const;
         glm::vec2 celestialWorldPosition(const glm::vec2 &cameraPos,

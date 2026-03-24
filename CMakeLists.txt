@@ -90,6 +90,7 @@ add_executable(
     src/engine/component/tilelayer_component.cpp
     src/engine/component/controller_component.cpp
     src/engine/component/physics_component.cpp
+    src/engine/component/animation_component.cpp
 
     src/engine/world/tile_info.h
     src/engine/world/chunk.cpp
@@ -113,8 +114,11 @@ add_executable(
 
     src/game/scene/game_scene.cpp
     src/game/scene/menu_scene.cpp
+    src/game/scene/ship_scene.cpp
 
     src/game/inventory/inventory.cpp
+
+    src/game/component/attribute_component.cpp
 
     src/game/locale/locale_manager.cpp
 

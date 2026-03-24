@@ -52,6 +52,7 @@ namespace game::weather
         void setWeather(WeatherType type, float transitionSec = 3.0f);
 
         WeatherType getCurrentWeather() const { return m_current; }
+        float getSkyVisibility() const;
 
         /** 返回天气中文名 */
         static const char* getWeatherName(WeatherType t);

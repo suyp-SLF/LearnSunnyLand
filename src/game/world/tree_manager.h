@@ -59,7 +59,8 @@ namespace game::world
          */
         void digTile(int tileX, int tileY,
                      engine::world::ChunkManager &chunkMgr,
-                     std::vector<DropItem> &outDrops);
+                     std::vector<DropItem> &outDrops,
+                     bool rebuildChunks = true);
 
         /**
          * @brief 更新掉落物（物理位移、拾取检测）

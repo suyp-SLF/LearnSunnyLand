@@ -422,10 +422,24 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/physics_component.cpp.
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/physics_component.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/physics_component.cpp -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/physics_component.cpp.s
 
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/animation_component.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/animation_component.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/animation_component.cpp
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/animation_component.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_26) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/animation_component.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/animation_component.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/animation_component.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/animation_component.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/animation_component.cpp
+
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/animation_component.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/animation_component.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/animation_component.cpp > CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/animation_component.cpp.i
+
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/animation_component.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/animation_component.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/component/animation_component.cpp -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/animation_component.cpp.s
+
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/world/chunk.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_26) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_27) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/world/chunk.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk.cpp.i: cmake_force
@@ -439,7 +453,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk.cpp.s: cmake_force
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/perlin_noise_generator.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/perlin_noise_generator.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/world/perlin_noise_generator.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/perlin_noise_generator.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_27) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/perlin_noise_generator.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_28) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/perlin_noise_generator.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/perlin_noise_generator.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/perlin_noise_generator.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/perlin_noise_generator.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/world/perlin_noise_generator.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/perlin_noise_generator.cpp.i: cmake_force
@@ -453,7 +467,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/perlin_noise_generator.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk_manager.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/world/chunk_manager.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_28) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk_manager.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_29) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk_manager.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk_manager.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk_manager.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk_manager.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/world/chunk_manager.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk_manager.cpp.i: cmake_force
@@ -467,7 +481,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk_manager.cpp.s: cmake
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/world_config.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/world_config.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/world/world_config.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/world_config.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_29) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/world_config.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_30) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/world_config.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/world_config.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/world_config.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/world_config.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/world/world_config.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/world_config.cpp.i: cmake_force
@@ -481,7 +495,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/world_config.cpp.s: cmake_
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/terrain_generator.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/terrain_generator.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/world/terrain_generator.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/terrain_generator.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_30) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/terrain_generator.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_31) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/terrain_generator.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/terrain_generator.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/terrain_generator.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/terrain_generator.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/world/terrain_generator.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/terrain_generator.cpp.i: cmake_force
@@ -495,7 +509,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/terrain_generator.cpp.s: c
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/scene/scene.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_31) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_32) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/scene/scene.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene.cpp.i: cmake_force
@@ -509,7 +523,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene.cpp.s: cmake_force
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene_manager.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/scene/scene_manager.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_32) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene_manager.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_33) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene_manager.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene_manager.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene_manager.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene_manager.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/scene/scene_manager.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene_manager.cpp.i: cmake_force
@@ -523,7 +537,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/scene/scene_manager.cpp.s: cmake
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/object/game_object.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/object/game_object.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/object/game_object.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/object/game_object.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_33) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/object/game_object.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_34) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/object/game_object.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/object/game_object.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/object/game_object.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/object/game_object.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/object/game_object.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/object/game_object.cpp.i: cmake_force
@@ -537,7 +551,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/object/game_object.cpp.s: cmake_
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/input/input_manager.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_34) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_35) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/input/input_manager.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.i: cmake_force
@@ -551,7 +565,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/input/input_manager.cpp.s: cmake
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/physics/physics_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/physics/physics_manager.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/physics/physics_manager.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/physics/physics_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_35) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/physics/physics_manager.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_36) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/physics/physics_manager.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/physics/physics_manager.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/physics/physics_manager.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/physics/physics_manager.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/physics/physics_manager.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/physics/physics_manager.cpp.i: cmake_force
@@ -565,7 +579,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/physics/physics_manager.cpp.s: c
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/actor/actor_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/actor/actor_manager.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/actor/actor_manager.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/actor/actor_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_36) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/actor/actor_manager.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_37) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/actor/actor_manager.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/actor/actor_manager.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/actor/actor_manager.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/actor/actor_manager.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/actor/actor_manager.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/actor/actor_manager.cpp.i: cmake_force
@@ -579,7 +593,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/actor/actor_manager.cpp.s: cmake
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/game_scene.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_37) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_38) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/game_scene.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.i: cmake_force
@@ -593,7 +607,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.s: cmake_forc
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/menu_scene.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/menu_scene.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/menu_scene.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/menu_scene.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_38) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/menu_scene.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_39) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/menu_scene.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/menu_scene.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/menu_scene.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/menu_scene.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/menu_scene.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/menu_scene.cpp.i: cmake_force
@@ -604,10 +618,24 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/menu_scene.cpp.s: cmake_forc
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/menu_scene.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/menu_scene.cpp -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/menu_scene.cpp.s
 
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/ship_scene.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/ship_scene.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/ship_scene.cpp
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/ship_scene.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_40) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/ship_scene.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/ship_scene.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/ship_scene.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/ship_scene.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/ship_scene.cpp
+
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/ship_scene.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/ship_scene.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/ship_scene.cpp > CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/ship_scene.cpp.i
+
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/ship_scene.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/ship_scene.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/ship_scene.cpp -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/ship_scene.cpp.s
+
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/inventory/inventory.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/inventory/inventory.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/game/inventory/inventory.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/inventory/inventory.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_39) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/inventory/inventory.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_41) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/inventory/inventory.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/inventory/inventory.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/inventory/inventory.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/inventory/inventory.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/game/inventory/inventory.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/inventory/inventory.cpp.i: cmake_force
@@ -618,10 +646,24 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/inventory/inventory.cpp.s: cmake_f
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/inventory/inventory.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/suyp/C++/Projects/LearnSunnyLand/src/game/inventory/inventory.cpp -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/inventory/inventory.cpp.s
 
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/component/attribute_component.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/component/attribute_component.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/game/component/attribute_component.cpp
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/component/attribute_component.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_42) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/component/attribute_component.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/component/attribute_component.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/component/attribute_component.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/component/attribute_component.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/game/component/attribute_component.cpp
+
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/component/attribute_component.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/component/attribute_component.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/suyp/C++/Projects/LearnSunnyLand/src/game/component/attribute_component.cpp > CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/component/attribute_component.cpp.i
+
+CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/component/attribute_component.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/component/attribute_component.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/suyp/C++/Projects/LearnSunnyLand/src/game/component/attribute_component.cpp -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/component/attribute_component.cpp.s
+
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/locale/locale_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/locale/locale_manager.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/game/locale/locale_manager.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/locale/locale_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_40) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/locale/locale_manager.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_43) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/locale/locale_manager.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/locale/locale_manager.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/locale/locale_manager.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/locale/locale_manager.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/game/locale/locale_manager.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/locale/locale_manager.cpp.i: cmake_force
@@ -635,7 +677,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/locale/locale_manager.cpp.s: cmake
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/weapon/weapon.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/weapon/weapon.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/game/weapon/weapon.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/weapon/weapon.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_41) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/weapon/weapon.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_44) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/weapon/weapon.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/weapon/weapon.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/weapon/weapon.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/weapon/weapon.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/game/weapon/weapon.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/weapon/weapon.cpp.i: cmake_force
@@ -649,7 +691,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/weapon/weapon.cpp.s: cmake_force
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/tree_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/tree_manager.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/game/world/tree_manager.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/tree_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_42) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/tree_manager.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_45) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/tree_manager.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/tree_manager.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/tree_manager.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/tree_manager.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/game/world/tree_manager.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/tree_manager.cpp.i: cmake_force
@@ -663,7 +705,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/tree_manager.cpp.s: cmake_fo
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/time_of_day_system.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/time_of_day_system.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/game/world/time_of_day_system.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/time_of_day_system.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_43) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/time_of_day_system.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_46) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/time_of_day_system.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/time_of_day_system.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/time_of_day_system.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/time_of_day_system.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/game/world/time_of_day_system.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/time_of_day_system.cpp.i: cmake_force
@@ -677,7 +719,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/time_of_day_system.cpp.s: cm
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/weather/weather_system.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/weather/weather_system.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/game/weather/weather_system.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/weather/weather_system.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_44) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/weather/weather_system.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_47) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/weather/weather_system.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/weather/weather_system.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/weather/weather_system.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/weather/weather_system.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/game/weather/weather_system.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/weather/weather_system.cpp.i: cmake_force
@@ -691,7 +733,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/weather/weather_system.cpp.s: cmak
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/mission/planet_mission_ui.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/mission/planet_mission_ui.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/game/mission/planet_mission_ui.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/mission/planet_mission_ui.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_45) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/mission/planet_mission_ui.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_48) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/mission/planet_mission_ui.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/mission/planet_mission_ui.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/mission/planet_mission_ui.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/mission/planet_mission_ui.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/game/mission/planet_mission_ui.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/mission/planet_mission_ui.cpp.i: cmake_force
@@ -705,7 +747,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/mission/planet_mission_ui.cpp.s: c
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_ai_component.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_ai_component.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/game/monster/monster_ai_component.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_ai_component.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_46) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_ai_component.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_49) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_ai_component.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_ai_component.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_ai_component.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_ai_component.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/game/monster/monster_ai_component.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_ai_component.cpp.i: cmake_force
@@ -719,7 +761,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_ai_component.cpp.s
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_manager.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/game/monster/monster_manager.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_manager.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_47) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_manager.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_50) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_manager.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_manager.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_manager.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_manager.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/game/monster/monster_manager.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_manager.cpp.i: cmake_force
@@ -733,7 +775,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_manager.cpp.s: cma
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/route/route_data.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/route/route_data.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/game/route/route_data.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/route/route_data.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_48) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/route/route_data.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_51) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/route/route_data.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/route/route_data.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/route/route_data.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/route/route_data.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/game/route/route_data.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/route/route_data.cpp.i: cmake_force
@@ -747,7 +789,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/route/route_data.cpp.s: cmake_forc
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/route_select_scene.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/route_select_scene.cpp.o: /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/route_select_scene.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/route_select_scene.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_49) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/route_select_scene.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_52) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/route_select_scene.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/route_select_scene.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/route_select_scene.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/route_select_scene.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/route_select_scene.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/route_select_scene.cpp.i: cmake_force
@@ -761,7 +803,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/route_select_scene.cpp.s: cm
 CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui.cpp.o: _deps/imgui-src/imgui.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_50) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_53) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/imgui.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui.cpp.i: cmake_force
@@ -775,7 +817,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui.cpp.s: cmake_force
 CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_draw.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_draw.cpp.o: _deps/imgui-src/imgui_draw.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_draw.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_51) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_draw.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_54) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_draw.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_draw.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_draw.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_draw.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/imgui_draw.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_draw.cpp.i: cmake_force
@@ -789,7 +831,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_draw.cpp.s: cmake_for
 CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_tables.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_tables.cpp.o: _deps/imgui-src/imgui_tables.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_tables.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_52) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_tables.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_55) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_tables.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_tables.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_tables.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_tables.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/imgui_tables.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_tables.cpp.i: cmake_force
@@ -803,7 +845,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_tables.cpp.s: cmake_f
 CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_widgets.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_widgets.cpp.o: _deps/imgui-src/imgui_widgets.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_widgets.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_53) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_widgets.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_56) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_widgets.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_widgets.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_widgets.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_widgets.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/imgui_widgets.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_widgets.cpp.i: cmake_force
@@ -817,7 +859,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_widgets.cpp.s: cmake_
 CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_sdl3.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_sdl3.cpp.o: _deps/imgui-src/backends/imgui_impl_sdl3.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_sdl3.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_54) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_sdl3.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_57) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_sdl3.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_sdl3.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_sdl3.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_sdl3.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/backends/imgui_impl_sdl3.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_sdl3.cpp.i: cmake_force
@@ -831,7 +873,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_sdl3.cp
 CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_opengl3.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/flags.make
 CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_opengl3.cpp.o: _deps/imgui-src/backends/imgui_impl_opengl3.cpp
 CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_opengl3.cpp.o: CMakeFiles/LearnSunnyLand-Darwin.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_55) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_opengl3.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_58) "Building CXX object CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_opengl3.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_opengl3.cpp.o -MF CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_opengl3.cpp.o.d -o CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_opengl3.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/backends/imgui_impl_opengl3.cpp
 
 CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_opengl3.cpp.i: cmake_force
@@ -869,6 +911,7 @@ LearnSunnyLand__Darwin_OBJECTS = \
 "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/tilelayer_component.cpp.o" \
 "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/controller_component.cpp.o" \
 "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/physics_component.cpp.o" \
+"CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/animation_component.cpp.o" \
 "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk.cpp.o" \
 "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/perlin_noise_generator.cpp.o" \
 "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk_manager.cpp.o" \
@@ -882,7 +925,9 @@ LearnSunnyLand__Darwin_OBJECTS = \
 "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/actor/actor_manager.cpp.o" \
 "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.o" \
 "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/menu_scene.cpp.o" \
+"CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/ship_scene.cpp.o" \
 "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/inventory/inventory.cpp.o" \
+"CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/component/attribute_component.cpp.o" \
 "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/locale/locale_manager.cpp.o" \
 "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/weapon/weapon.cpp.o" \
 "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/tree_manager.cpp.o" \
@@ -928,6 +973,7 @@ LearnSunnyLand__Darwin_EXTERNAL_OBJECTS =
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/tilelayer_component.cpp.o
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/controller_component.cpp.o
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/physics_component.cpp.o
+/Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/animation_component.cpp.o
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk.cpp.o
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/perlin_noise_generator.cpp.o
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/chunk_manager.cpp.o
@@ -941,7 +987,9 @@ LearnSunnyLand__Darwin_EXTERNAL_OBJECTS =
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/actor/actor_manager.cpp.o
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.o
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/menu_scene.cpp.o
+/Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/ship_scene.cpp.o
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/inventory/inventory.cpp.o
+/Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/component/attribute_component.cpp.o
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/locale/locale_manager.cpp.o
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/weapon/weapon.cpp.o
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/tree_manager.cpp.o
@@ -970,7 +1018,7 @@ LearnSunnyLand__Darwin_EXTERNAL_OBJECTS =
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: /opt/homebrew/lib/libSDL3.0.dylib
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: /opt/homebrew/lib/libfmt.12.1.0.dylib
 /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin: CMakeFiles/LearnSunnyLand-Darwin.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_56) "Linking CXX executable /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_59) "Linking CXX executable /Users/suyp/C++/Projects/LearnSunnyLand/LearnSunnyLand-Darwin"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/LearnSunnyLand-Darwin.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

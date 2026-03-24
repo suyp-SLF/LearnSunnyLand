@@ -26,5 +26,6 @@ namespace game::scene
         void startGame();
         void renderMainMenu();
         void renderSettings();
+        void renderPerformanceOverlay() const;
     };
 }

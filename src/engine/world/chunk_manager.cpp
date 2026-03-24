@@ -90,6 +90,47 @@ namespace engine::world
         rebuildChunkMesh(*it->second);
     }
 
+    void ChunkManager::setTileSilent(int worldX, int worldY, TileData tile)
+    {
+        int chunkX = worldX / Chunk::SIZE;
+        int chunkY = worldY / Chunk::SIZE;
+        if (worldX < 0)
+            chunkX--;
+        if (worldY < 0)
+            chunkY--;
+
+        uint64_t key = encodeChunkKey(chunkX, chunkY);
+        auto it = m_chunks.find(key);
+        if (it == m_chunks.end())
+        {
+            loadChunk(chunkX, chunkY);
+            it = m_chunks.find(key);
+            if (it == m_chunks.end())
+                return;
+        }
+
+        int localX = worldX - chunkX * Chunk::SIZE;
+        int localY = worldY - chunkY * Chunk::SIZE;
+        TileData &currentTile = it->second->tileAt(localX, localY);
+        if (currentTile.type == tile.type)
+            return;
+
+        currentTile = std::move(tile);
+        it->second->setDirty(); // 只标脏，延迟重建
+    }
+
+    void ChunkManager::rebuildDirtyChunks()
+    {
+        for (auto &[key, chunk] : m_chunks)
+        {
+            if (chunk->isDirty())
+            {
+                chunk->rebuildPhysicsBodies(m_physicsMgr, WorldConfig::PIXELS_PER_METER);
+                rebuildChunkMesh(*chunk);
+            }
+        }
+    }
+
     glm::ivec2 ChunkManager::worldToTile(const glm::vec2 &worldPos) const
     {
         return {

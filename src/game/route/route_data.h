@@ -8,6 +8,14 @@
 
 namespace game::route
 {
+    enum class PlanetType : uint8_t
+    {
+        Verdant = 0,
+        Emberfall = 1,
+        Frostveil = 2,
+        Hollowreach = 3,
+    };
+
     /** @brief 格子地形类型 */
     enum class CellTerrain : uint8_t
     {
@@ -16,6 +24,21 @@ namespace game::route
         Rocky    = 2,  // 岩地 - 石块裸露
         Mountain = 3,  // 矿山 - 含矿石（目标地形）
         Cave     = 4,  // 洞穴 - 地下大量洞穴
+    };
+
+    struct PlanetPreset
+    {
+        PlanetType type;
+        const char* name;
+        const char* summary;
+        uint64_t seedBias;
+        std::array<int, 5> terrainWeights;
+        int seaLevelOffset;
+        float amplitudeScale;
+        int treeMinTrunkHeight;
+        int treeMaxTrunkHeight;
+        int treeSpacing;
+        float dayLengthSeconds;
     };
 
     /**
@@ -40,6 +63,15 @@ namespace game::route
         // 目标地图格在 path 中的索引（-1 = 路线未经过目标格）
         int objectiveZone = -1;
 
+        PlanetType selectedPlanet = PlanetType::Verdant;
+        uint64_t planetSeed = 12345;
+        int planetSeaLevelOffset = 0;
+        float planetAmplitudeScale = 1.0f;
+        int planetTreeMin = 8;
+        int planetTreeMax = 18;
+        int planetTreeSpacing = 5;
+        float dayLengthSeconds = 300.0f;
+
         bool       isValid()   const { return path.size() >= 2; }
         glm::ivec2 startCell() const { return path.empty() ? glm::ivec2{0, 0} : path.front(); }
         glm::ivec2 evacCell()  const { return path.empty() ? glm::ivec2{0, 0} : path.back(); }
@@ -58,6 +90,9 @@ namespace game::route
 
         /** 根据种子生成全地图地形，并随机选定目标格 */
         void generateTerrain(uint64_t seed);
+        void applyPlanetPreset(const PlanetPreset &preset);
+        const PlanetPreset& selectedPlanetPreset() const;
+        static const std::array<PlanetPreset, 4>& planetPresets();
 
         /** 地形对应的 RGBA 底色（用于 UI 渲染）*/
         struct Color4 { uint8_t r, g, b, a; };
@@ -86,6 +121,8 @@ namespace game::route
             }
             return "\u672a\u77e5";
         }
+
+        static const char* planetName(PlanetType type);
     };
 
 } // namespace game::route

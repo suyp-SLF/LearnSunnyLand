@@ -6,10 +6,10 @@
 namespace game::scene
 {
     /**
-     * @brief 路线选择场景
+     * @brief 路线选择场景（两阶段）
      *
-     * 在游戏开始前展示 20×20 格地图，玩家手动选择从出发点
-     * 到撤离点的连续路线，确认后进入 GameScene。
+     * Phase::PlanetSelect — 选择目标星球
+     * Phase::RouteSelect  — 在 20×20 地图上规划路线
      */
     class RouteSelectScene : public engine::scene::Scene
     {
@@ -25,13 +25,20 @@ namespace game::scene
         void clean()       override;
 
     private:
+        enum class Phase { PlanetSelect, RouteSelect };
+
         SDL_GLContext          m_glContext = nullptr;
         game::route::RouteData m_route;
+        int                    m_selectedPlanetIndex = 0;
+        Phase                  m_phase = Phase::PlanetSelect;
 
         bool isAdjacent  (glm::ivec2 a, glm::ivec2 b) const;
         int  pathIndexOf (glm::ivec2 cell)             const;
         void handleCellClick(int cx, int cy, bool rightClick);
         void confirmAndStart();
+        void renderPlanetSelect();
+        void renderRouteSelect();
+        void renderPerformanceOverlay() const;
     };
 
 } // namespace game::scene

@@ -1,4 +1,5 @@
 #include "menu_scene.h"
+#include "ship_scene.h"
 #include "route_select_scene.h"
 #include "game_scene.h"
 #include "../../engine/core/context.h"
@@ -70,6 +71,8 @@ namespace game::scene
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplSDL3_NewFrame();
             ImGui::NewFrame();
+
+            renderPerformanceOverlay();
 
             if (m_showSettings)
                 renderSettings();
@@ -161,8 +164,19 @@ namespace game::scene
 
     void MenuScene::startGame()
     {
-        spdlog::info("开始游戏 → 路线选择场景");
-        auto scene = std::make_unique<RouteSelectScene>("RouteSelectScene", _context, _scene_manager);
+        spdlog::info("开始游戏 → 飞船场景");
+        auto scene = std::make_unique<ShipScene>("ShipScene", _context, _scene_manager);
         _scene_manager.requestReplaceScene(std::move(scene));
+    }
+
+    void MenuScene::renderPerformanceOverlay() const
+    {
+        ImGui::SetNextWindowPos({10.0f, 10.0f}, ImGuiCond_Always);
+        ImGui::SetNextWindowBgAlpha(0.45f);
+        ImGui::Begin("##fps_menu", nullptr,
+            ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
+            ImGuiWindowFlags_NoNav | ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+        ImGui::End();
     }
 }

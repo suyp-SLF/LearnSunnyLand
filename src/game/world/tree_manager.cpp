@@ -90,10 +90,10 @@ namespace game::world
             if (!canPlace)
                 continue;
 
-            // 放置树干
+            // 放置树干（批量模式，不立即重建）
             for (int dy = 0; dy < trunkH; ++dy)
             {
-                chunkMgr.setTile(worldX, surfaceY - 1 - dy, TileData(TileType::Wood));
+                chunkMgr.setTileSilent(worldX, surfaceY - 1 - dy, TileData(TileType::Wood));
             }
 
             // 放置树冠（椭圆形，半径由星球参数控制，中心在树顶上方1格）
@@ -113,28 +113,31 @@ namespace game::world
                     int ly2 = crownTopY + dy;
                     if (chunkMgr.tileAt(lx2, ly2).type == TileType::Air)
                     {
-                        chunkMgr.setTile(lx2, ly2, TileData(TileType::Leaves));
+                        chunkMgr.setTileSilent(lx2, ly2, TileData(TileType::Leaves));
                     }
                 }
             }
 
             m_generatedRoots.insert(root);
             spdlog::trace("TreeManager: 在 ({},{}) 植树，高{}格", worldX, surfaceY, trunkH);
-        }
-    }
+        }        // 所有树种完毕，一次性重建居块网格和物理体
+        chunkMgr.rebuildDirtyChunks();    }
 
     // ──────────────────────────────────────────────
     // 挖掘瓦片 - 触发倒树
     // ──────────────────────────────────────────────
     void TreeManager::digTile(int tileX, int tileY,
                                ChunkManager &chunkMgr,
-                               std::vector<DropItem> &outDrops)
+                               std::vector<DropItem> &outDrops,
+                               bool rebuildChunks)
     {
         TileType t = chunkMgr.tileAt(tileX, tileY).type;
         if (t != TileType::Wood && t != TileType::Leaves)
         {
             // 不是树木瓦片，直接到 Air
-            chunkMgr.setTile(tileX, tileY, TileData(TileType::Air));
+            chunkMgr.setTileSilent(tileX, tileY, TileData(TileType::Air));
+            if (rebuildChunks)
+                chunkMgr.rebuildDirtyChunks();
             return;
         }
 
@@ -143,7 +146,9 @@ namespace game::world
         auto treeTiles = collectTreeTiles(root.x, root.y, chunkMgr);
         if (treeTiles.empty())
         {
-            chunkMgr.setTile(tileX, tileY, TileData(TileType::Air));
+            chunkMgr.setTileSilent(tileX, tileY, TileData(TileType::Air));
+            if (rebuildChunks)
+                chunkMgr.rebuildDirtyChunks();
             return;
         }
 
@@ -152,11 +157,13 @@ namespace game::world
         // 先生成掉落物
         spawnDrops(treeTiles, chunkMgr);
 
-        // 将所有树瓦片清空
+        // 将所有树瓦片清空（批量模式，不立即重建）
         for (auto &tp : treeTiles)
         {
-            chunkMgr.setTile(tp.x, tp.y, TileData(TileType::Air));
+            chunkMgr.setTileSilent(tp.x, tp.y, TileData(TileType::Air));
         }
+        if (rebuildChunks)
+            chunkMgr.rebuildDirtyChunks();
 
         // 如果外部传入的是不同容器，则仅把本次新增掉落同步过去。
         if (&outDrops != &m_drops)

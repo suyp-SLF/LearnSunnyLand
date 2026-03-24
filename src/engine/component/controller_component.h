@@ -61,12 +61,15 @@ namespace engine::component
         bool m_enabled = true;
 
         float m_groundAccel = 90.0f;
-        float m_airAccel = 42.0f;
+        float m_airAccel = 20.0f;          // 空中横向加速（比地面慢，减少飘感）
         float m_jumpSpeed = 8.0f;
         float m_jumpCutFactor = 0.45f;
         float m_coyoteTime = 0.1f;
         float m_coyoteTimer = 0.0f;
         float m_groundedThreshold = 0.12f;
+
+        // 下落重力倍率：当 vel.y > 0（下落）时额外施加向下加速，消除飘浮感
+        float m_fallGravityMultiplier = 2.8f;
 
         float m_jetpackFuelMax = 0.75f;
         float m_jetpackFuel = 0.75f;

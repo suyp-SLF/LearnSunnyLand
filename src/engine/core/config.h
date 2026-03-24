@@ -59,6 +59,7 @@ namespace engine::core
         bool _vsync_enabled = true;
         // 性能设置
         int _target_fps = 60;
+        bool _show_fps_overlay = true; // 是否显示FPS覆盖层
         // 音频设置
         float _music_volume = 0.5f;
         float _sfx_volume = 0.5f;

@@ -77,13 +77,28 @@ namespace game::locale
 
     void LocaleManager::saveSettings() const
     {
+        nlohmann::json j = nlohmann::json::object();
+        {
+            std::ifstream input("assets/settings.json");
+            if (input.is_open())
+            {
+                try
+                {
+                    input >> j;
+                }
+                catch (const std::exception &)
+                {
+                    j = nlohmann::json::object();
+                }
+            }
+        }
+
         std::ofstream file("assets/settings.json");
         if (!file.is_open())
         {
             spdlog::error("LocaleManager: assets/settings.json 写入失败");
             return;
         }
-        nlohmann::json j;
         j["language"] = _current_language;
         file << j.dump(4);
         spdlog::info("LocaleManager: settings.json 已保存 (language={})", _current_language);

@@ -160,12 +160,13 @@ namespace engine::world
                 float u1 = u0 + tile.uv_rect.z * inv_w;
                 float v1 = v0 + tile.uv_rect.w * inv_h;
 
-                vertices.insert(vertices.end(), {x0, y0, u0, v0});
-                vertices.insert(vertices.end(), {x1, y0, u1, v0});
-                vertices.insert(vertices.end(), {x0, y1, u0, v1});
-                vertices.insert(vertices.end(), {x1, y0, u1, v0});
-                vertices.insert(vertices.end(), {x1, y1, u1, v1});
-                vertices.insert(vertices.end(), {x0, y1, u0, v1});
+                // push_back \u6bcf\u4e2a float \u907f\u514d initializer_list \u4e34\u65f6\u5bf9\u8c61\u5f00\u9500
+                vertices.push_back(x0); vertices.push_back(y0); vertices.push_back(u0); vertices.push_back(v0);
+                vertices.push_back(x1); vertices.push_back(y0); vertices.push_back(u1); vertices.push_back(v0);
+                vertices.push_back(x0); vertices.push_back(y1); vertices.push_back(u0); vertices.push_back(v1);
+                vertices.push_back(x1); vertices.push_back(y0); vertices.push_back(u1); vertices.push_back(v0);
+                vertices.push_back(x1); vertices.push_back(y1); vertices.push_back(u1); vertices.push_back(v1);
+                vertices.push_back(x0); vertices.push_back(y1); vertices.push_back(u0); vertices.push_back(v1);
             }
         }
 

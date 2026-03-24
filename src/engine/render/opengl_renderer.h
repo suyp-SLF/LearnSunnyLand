@@ -47,6 +47,11 @@ namespace engine::render
         unsigned int _quadVBO = 0;
         unsigned int _whiteTex = 0;
 
+        // GL 状态缓存 — 避免帧内重复绑定同一 shader
+        unsigned int _boundShader   = 0;
+        unsigned int _boundVAO      = 0;
+        unsigned int _boundTexture  = 0;
+
         // glDrawArrays function pointer (loaded via SDL)
         using PFNGLDRAWARRAYSPROC = void(*)(unsigned int, int, int);
         using PFNGLUNIFORM4FPROC = void(*)(int, float, float, float, float);

@@ -33,7 +33,9 @@ namespace engine::render
         }
 
         SDL_GL_MakeCurrent(_window, _glContext);
-        SDL_GL_SetSwapInterval(1);
+        // -1 = 自适应 VSync：帧时间超标时立即呈现，不锁半刷新率
+        // 避免 macOS Metal PSO 预热期被锁在 30fps
+        SDL_GL_SetSwapInterval(-1);
 
         if (imgl3wInit() != 0)
         {
@@ -59,6 +61,11 @@ namespace engine::render
 
     void OpenGLRenderer::clearScreen()
     {
+        // 每帧开头重置缓存（ImGui 等第三方代码可能改变 GL 状态）
+        _boundShader  = 0;
+        _boundVAO     = 0;
+        _boundTexture = 0;
+
         glClearColor(0.1f, 0.1f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
     }
@@ -220,20 +227,29 @@ void main() {
         glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(worldOffset, 0.0f));
         glm::mat4 mvp = proj * view * model;
 
-        glUseProgram(_tileShader);
+        // 只在 shader 切换时调用 glUseProgram（帧内切换代价极高）
+        if (_boundShader != _tileShader)
+        {
+            glUseProgram(_tileShader);
+            _boundShader = _tileShader;
+        }
         glUniformMatrix4fv(_tileUniformMVP, 1, GL_FALSE, glm::value_ptr(mvp));
         if (_glUniform4f)
             _glUniform4f(_tileUniformColor, 1.0f, 1.0f, 1.0f, 1.0f);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, glTex);
+        if (_boundTexture != glTex)
+        {
+            glBindTexture(GL_TEXTURE_2D, glTex);
+            _boundTexture = glTex;
+        }
 
-        glBindVertexArray(vao);
+        if (_boundVAO != vao)
+        {
+            glBindVertexArray(vao);
+            _boundVAO = vao;
+        }
         if (_glDrawArrays) _glDrawArrays(GL_TRIANGLES, 0, (GLsizei)vertexCount);
-
-        glBindVertexArray(0);
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glUseProgram(0);
+        // 不解绑 — 留给下一个 draw call 覆盖，省去无意义的 driver 刷新
     }
 
     void OpenGLRenderer::drawSprite(const Camera &camera, const Sprite &sprite,
@@ -278,20 +294,28 @@ void main() {
             {0,  h,  u0, v1},
         };
 
-        glUseProgram(_tileShader);
+        if (_boundShader != _tileShader)
+        {
+            glUseProgram(_tileShader);
+            _boundShader = _tileShader;
+        }
         glUniformMatrix4fv(_tileUniformMVP, 1, GL_FALSE, glm::value_ptr(mvp));
         if (_glUniform4f)
             _glUniform4f(_tileUniformColor, color.r, color.g, color.b, color.a);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, glTex);
 
-        glBindVertexArray(_quadVAO);
+        if (_boundTexture != glTex)
+        {
+            glBindTexture(GL_TEXTURE_2D, glTex);
+            _boundTexture = glTex;
+        }
+        if (_boundVAO != _quadVAO)
+        {
+            glBindVertexArray(_quadVAO);
+            _boundVAO = _quadVAO;
+        }
         glBindBuffer(GL_ARRAY_BUFFER, _quadVBO);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(verts), verts);
         if (_glDrawArrays) _glDrawArrays(GL_TRIANGLES, 0, 6);
-        glBindVertexArray(0);
-
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glUseProgram(0);
+        // 不解绑 — 留给下一个 draw call 覆盖
     }
 }

@@ -5,7 +5,7 @@
 
 namespace game::inventory
 {
-    enum class ItemCategory { Misc, Weapon, Consumable, Material };
+    enum class ItemCategory { Misc, Weapon, Consumable, Material, StarSkill };
 
     struct Item
     {

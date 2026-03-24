@@ -1403,4 +1403,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o: \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/../mission/../../engine/world/chunk_manager.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/../mission/../inventory/inventory.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/../route/route_data.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/../skill/star_skill.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/../component/attribute_component.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/../component/../../engine/component/component.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/menu_scene.h

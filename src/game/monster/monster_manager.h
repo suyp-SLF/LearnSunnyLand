@@ -23,6 +23,7 @@ namespace game::monster
 
         void update(float delta_time);
         int crushMonstersInRadius(const glm::vec2 &center, float radius);
+        size_t monsterCount() const { return m_monsters.size(); }
 
     private:
         struct MonsterEntry

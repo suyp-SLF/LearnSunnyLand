@@ -23,6 +23,11 @@ namespace engine::world
         // 设置瓦片并标记对应块为脏
         void setTile(int worldX, int worldY, TileData tile);
 
+        // 批量写入 API：只标脏，不立即重建（适用于树木生成等批量操作）
+        void setTileSilent(int worldX, int worldY, TileData tile);
+        // 重建所有脏块（批量修改完成后调用一次）
+        void rebuildDirtyChunks();
+
         glm::ivec2 worldToTile(const glm::vec2 &worldPos) const;
         glm::vec2 tileToWorld(const glm::ivec2 &tilePos) const;
         const glm::ivec2 &getTileSize() const { return m_tileSize; }
@@ -32,6 +37,9 @@ namespace engine::world
 
         // 渲染所有已加载的块
         void renderAll(engine::core::Context &ctx) const;
+
+        // 获取已加载区块数量
+        size_t loadedChunkCount() const { return m_chunks.size(); }
 
         // 加载/卸载块（内部调用）
         void loadChunk(int chunkX, int chunkY);

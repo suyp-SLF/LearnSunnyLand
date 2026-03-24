@@ -297,6 +297,30 @@ src/engine/actor/actor_manager.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/actor/actor_manager.cpp.s
 .PHONY : src/engine/actor/actor_manager.cpp.s
 
+src/engine/component/animation_component.o: src/engine/component/animation_component.cpp.o
+.PHONY : src/engine/component/animation_component.o
+
+# target to build an object file
+src/engine/component/animation_component.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/animation_component.cpp.o
+.PHONY : src/engine/component/animation_component.cpp.o
+
+src/engine/component/animation_component.i: src/engine/component/animation_component.cpp.i
+.PHONY : src/engine/component/animation_component.i
+
+# target to preprocess a source file
+src/engine/component/animation_component.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/animation_component.cpp.i
+.PHONY : src/engine/component/animation_component.cpp.i
+
+src/engine/component/animation_component.s: src/engine/component/animation_component.cpp.s
+.PHONY : src/engine/component/animation_component.s
+
+# target to generate assembly for a file
+src/engine/component/animation_component.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/component/animation_component.cpp.s
+.PHONY : src/engine/component/animation_component.cpp.s
+
 src/engine/component/controller_component.o: src/engine/component/controller_component.cpp.o
 .PHONY : src/engine/component/controller_component.o
 
@@ -1113,6 +1137,30 @@ src/engine/world/world_config.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/world_config.cpp.s
 .PHONY : src/engine/world/world_config.cpp.s
 
+src/game/component/attribute_component.o: src/game/component/attribute_component.cpp.o
+.PHONY : src/game/component/attribute_component.o
+
+# target to build an object file
+src/game/component/attribute_component.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/component/attribute_component.cpp.o
+.PHONY : src/game/component/attribute_component.cpp.o
+
+src/game/component/attribute_component.i: src/game/component/attribute_component.cpp.i
+.PHONY : src/game/component/attribute_component.i
+
+# target to preprocess a source file
+src/game/component/attribute_component.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/component/attribute_component.cpp.i
+.PHONY : src/game/component/attribute_component.cpp.i
+
+src/game/component/attribute_component.s: src/game/component/attribute_component.cpp.s
+.PHONY : src/game/component/attribute_component.s
+
+# target to generate assembly for a file
+src/game/component/attribute_component.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/component/attribute_component.cpp.s
+.PHONY : src/game/component/attribute_component.cpp.s
+
 src/game/inventory/inventory.o: src/game/inventory/inventory.cpp.o
 .PHONY : src/game/inventory/inventory.o
 
@@ -1329,6 +1377,30 @@ src/game/scene/route_select_scene.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/route_select_scene.cpp.s
 .PHONY : src/game/scene/route_select_scene.cpp.s
 
+src/game/scene/ship_scene.o: src/game/scene/ship_scene.cpp.o
+.PHONY : src/game/scene/ship_scene.o
+
+# target to build an object file
+src/game/scene/ship_scene.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/ship_scene.cpp.o
+.PHONY : src/game/scene/ship_scene.cpp.o
+
+src/game/scene/ship_scene.i: src/game/scene/ship_scene.cpp.i
+.PHONY : src/game/scene/ship_scene.i
+
+# target to preprocess a source file
+src/game/scene/ship_scene.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/ship_scene.cpp.i
+.PHONY : src/game/scene/ship_scene.cpp.i
+
+src/game/scene/ship_scene.s: src/game/scene/ship_scene.cpp.s
+.PHONY : src/game/scene/ship_scene.s
+
+# target to generate assembly for a file
+src/game/scene/ship_scene.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/ship_scene.cpp.s
+.PHONY : src/game/scene/ship_scene.cpp.s
+
 src/game/weapon/weapon.o: src/game/weapon/weapon.cpp.o
 .PHONY : src/game/weapon/weapon.o
 
@@ -1479,6 +1551,9 @@ help:
 	@echo "... src/engine/actor/actor_manager.o"
 	@echo "... src/engine/actor/actor_manager.i"
 	@echo "... src/engine/actor/actor_manager.s"
+	@echo "... src/engine/component/animation_component.o"
+	@echo "... src/engine/component/animation_component.i"
+	@echo "... src/engine/component/animation_component.s"
 	@echo "... src/engine/component/controller_component.o"
 	@echo "... src/engine/component/controller_component.i"
 	@echo "... src/engine/component/controller_component.s"
@@ -1581,6 +1656,9 @@ help:
 	@echo "... src/engine/world/world_config.o"
 	@echo "... src/engine/world/world_config.i"
 	@echo "... src/engine/world/world_config.s"
+	@echo "... src/game/component/attribute_component.o"
+	@echo "... src/game/component/attribute_component.i"
+	@echo "... src/game/component/attribute_component.s"
 	@echo "... src/game/inventory/inventory.o"
 	@echo "... src/game/inventory/inventory.i"
 	@echo "... src/game/inventory/inventory.s"
@@ -1608,6 +1686,9 @@ help:
 	@echo "... src/game/scene/route_select_scene.o"
 	@echo "... src/game/scene/route_select_scene.i"
 	@echo "... src/game/scene/route_select_scene.s"
+	@echo "... src/game/scene/ship_scene.o"
+	@echo "... src/game/scene/ship_scene.i"
+	@echo "... src/game/scene/ship_scene.s"
 	@echo "... src/game/weapon/weapon.o"
 	@echo "... src/game/weapon/weapon.i"
 	@echo "... src/game/weapon/weapon.s"

@@ -169,6 +169,11 @@ namespace engine::component
             jetpacking = true;
         }
 
+        // 下落重力倍率：增大下落加速度，消除漂浮感（标准平台跳跃技术）
+        // gravity = 10 Box2D units/s²；乘以 (multiplier-1) 追加额外下拉力
+        if (!groundedNow && !jetpacking && vel.y > 0.0f)
+            vel.y += 10.0f * (m_fallGravityMultiplier - 1.0f) * delta_time;
+
         physics->setVelocity(vel);
         updateMovementState(vel, groundedNow, jetpacking);
     }

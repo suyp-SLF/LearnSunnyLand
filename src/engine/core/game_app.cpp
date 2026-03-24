@@ -321,7 +321,8 @@ namespace engine::core
             {
                 auto opengl_renderer = std::make_unique<engine::render::OpenGLRenderer>(_window);
                 opengl_renderer->setLogicalSize(glm::vec2(_config->_logical_width, _config->_logical_height));
-                SDL_GL_SetSwapInterval(_config->_vsync_enabled ? 1 : 0);
+                // -1 = 自适应 VSync（帧时间超标时立即呈现，不降至半刷新率）
+                SDL_GL_SetSwapInterval(_config->_vsync_enabled ? -1 : 0);
 
                 // OpenGL 模式：通知 ResourceManager 使用 OpenGL 纹理路径
                 if (_resource_manager)

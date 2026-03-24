@@ -77,12 +77,14 @@ namespace engine::render
     }
     glm::vec2 Camera::worldToScreen(const glm::vec2 &world_pos) const
     {
-        return world_pos - _position;
+        glm::vec2 center = _viewport_size * 0.5f;
+        return center + (world_pos - _position - center) * _zoom;
     }
 
     glm::vec2 Camera::worldToScreenWithParallax(const glm::vec2 &world_pos, const glm::vec2 &parallax_factor) const
     {
-        return world_pos - _position * parallax_factor;
+        glm::vec2 center = _viewport_size * 0.5f;
+        return center + (world_pos - _position * parallax_factor - center) * _zoom;
     }
 
     glm::vec2 Camera::screenToWorld(const glm::vec2 &screen_pos) const
