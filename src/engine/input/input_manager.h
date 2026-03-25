@@ -39,6 +39,16 @@ namespace engine::input
         float _mouse_wheel_delta = 0.0f;  // 本帧鼠标滚轮偏移，每帧重置
 
     public:
+        struct DebugStats
+        {
+            size_t actionBindingCount = 0;
+            size_t inputBindingCount = 0;
+            size_t actionStateCount = 0;
+            bool shouldQuit = false;
+            glm::vec2 mousePosition{0.0f};
+            float mouseWheelDelta = 0.0f;
+        };
+
         InputManager(engine::render::Renderer *_renderer, const engine::core::Config *config);
 
         void update();
@@ -58,6 +68,17 @@ namespace engine::input
 
         // 获取本帧鼠标滚轮偏移（向上为正，向下为负）
         float getMouseWheelDelta() const { return _mouse_wheel_delta; }
+        DebugStats getDebugStats() const
+        {
+            return {
+                _actions_to_keyname_map.size(),
+                _input_to_action_map.size(),
+                _action_states.size(),
+                _should_quit,
+                _mouse_position,
+                _mouse_wheel_delta,
+            };
+        }
 
     private:
         void processEvent(const SDL_Event &event);

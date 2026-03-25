@@ -143,4 +143,24 @@ namespace engine::resource
             storage_buffer_count,
             storage_texture_count);
     }
+
+    ResourceManager::DebugStats ResourceManager::getDebugStats() const
+    {
+        DebugStats stats;
+        stats.hasRenderer = _renderer != nullptr;
+        stats.hasGPUDevice = _gpu_device != nullptr;
+        stats.hasDefaultSampler = _default_sampler != nullptr;
+        if (_texture_manager)
+            stats.textureCount = _texture_manager->_cache.size();
+        if (_audio_manager)
+        {
+            stats.audioCount = _audio_manager->_audios.size();
+            stats.musicCount = _audio_manager->_tracks.size();
+        }
+        if (_font_manager)
+            stats.fontCount = _font_manager->_renderers.size();
+        if (_shader_manager)
+            stats.shaderCount = _shader_manager->shaderCount();
+        return stats;
+    }
 }

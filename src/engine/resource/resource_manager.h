@@ -46,6 +46,18 @@ namespace engine::resource
         std::unique_ptr<ShaderManager> _shader_manager;
 
     public:
+        struct DebugStats
+        {
+            bool hasRenderer = false;
+            bool hasGPUDevice = false;
+            bool hasDefaultSampler = false;
+            size_t textureCount = 0;
+            size_t audioCount = 0;
+            size_t musicCount = 0;
+            size_t fontCount = 0;
+            size_t shaderCount = 0;
+        };
+
         void init(SDL_Renderer *renderer, SDL_GPUDevice *device);
         /**
          * @brief 构造函数
@@ -99,6 +111,7 @@ namespace engine::resource
             uint32_t uniform_buffer_count = 1, // 默认 1
             uint32_t storage_buffer_count = 0,
             uint32_t storage_texture_count = 0);
+        DebugStats getDebugStats() const;
         // --- 通用管理 ---
 
         /** @brief 清空所有已加载的资源 */
