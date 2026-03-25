@@ -50,7 +50,7 @@ namespace game::monster
         glm::vec2 delta = getPlayerDelta();
         float distance = glm::length(delta);
         float dir = delta.x >= 0.0f ? 1.0f : -1.0f;
-        bool chasing = distance < 320.0f;
+        bool chasing = distance < 260.0f;
 
         if (distance > 420.0f)
             dir = m_wanderDir;
@@ -61,10 +61,10 @@ namespace game::monster
 
         if (isGrounded() && m_actionCooldown <= 0.0f)
         {
-            vel.x = (chasing ? 4.5f : 2.5f) * dir;
-            vel.y = -(chasing ? 4.1f : 3.2f);
+            vel.x = (chasing ? 3.3f : 2.0f) * dir;
+            vel.y = -(chasing ? 3.4f : 2.8f);
             physics->setVelocity(vel);
-            m_actionCooldown = chasing ? 0.72f : 1.1f;
+            m_actionCooldown = chasing ? 0.88f : 1.24f;
         }
     }
 
@@ -77,22 +77,22 @@ namespace game::monster
         glm::vec2 delta = getPlayerDelta();
         float distance = glm::length(delta);
         float dir = delta.x >= 0.0f ? 1.0f : -1.0f;
-        bool chasing = distance < 440.0f;
+        bool chasing = distance < 340.0f;
         if (!chasing) dir = m_wanderDir;
 
         sprite->setFlipped(dir < 0.0f);
         auto vel = physics->getVelocity();
-        float targetX = (chasing ? 8.5f : 3.0f) * dir;
-        float step = (chasing ? 18.0f : 8.0f) * dt;
+        float targetX = (chasing ? 5.8f : 2.5f) * dir;
+        float step = (chasing ? 11.0f : 6.0f) * dt;
         if (vel.x < targetX) vel.x = std::min(vel.x + step, targetX);
         else vel.x = std::max(vel.x - step, targetX);
 
         m_actionCooldown = std::max(0.0f, m_actionCooldown - dt);
-        if (chasing && isGrounded() && m_actionCooldown <= 0.0f && distance < 180.0f)
+        if (chasing && isGrounded() && m_actionCooldown <= 0.0f && distance < 150.0f)
         {
-            vel.y = -4.8f;
-            vel.x = dir * 10.5f;
-            m_actionCooldown = 1.05f;
+            vel.y = -3.9f;
+            vel.x = dir * 7.2f;
+            m_actionCooldown = 1.28f;
         }
 
         physics->setVelocity(vel);
@@ -107,7 +107,7 @@ namespace game::monster
         glm::vec2 delta = getPlayerDelta();
         float distance = glm::length(delta);
         float dir = delta.x >= 0.0f ? 1.0f : -1.0f;
-        bool chasing = distance < 560.0f;
+        bool chasing = distance < 420.0f;
         if (!chasing) dir = m_wanderDir;
 
         sprite->setFlipped(dir < 0.0f);
@@ -118,13 +118,13 @@ namespace game::monster
         {
             if (chasing && m_actionCooldown <= 0.0f)
             {
-                vel.x = dir * 12.0f;
-                vel.y = -6.1f;
-                m_actionCooldown = 1.2f;
+                vel.x = dir * 8.4f;
+                vel.y = -5.0f;
+                m_actionCooldown = 1.45f;
             }
             else if (!chasing)
             {
-                vel.x = dir * 2.4f;
+                vel.x = dir * 1.8f;
             }
         }
 

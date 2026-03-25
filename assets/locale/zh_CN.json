@@ -14,5 +14,14 @@
     "game.zoom": "\u7f29\u653e",
     "game.weapon": "\u6b66\u5668",
     "game.weapon_name": "\u6316\u6398\u67aa",
-    "game.dig_hint": "LMB: \u6316\u6398"
+    "game.dig_hint": "LMB: \u6316\u6398",
+    "weapon_bar.title": "\u6b66\u5668",
+    "weapon_bar.scroll_hint": "\u6eda\u8f6e\u5207\u6362\u6b66\u5668",
+    "weapon_bar.drag_hint": "\u62d6\u62fd\u81f3\u6b66\u5668\u680f",
+    "weapon_bar.dblclick_unequip": "\u53cc\u51fb\u5378\u4e0b",
+    "weapon.damage": "\u4f24\u5bb3",
+    "weapon.speed": "\u653b\u901f",
+    "weapon.ammo": "\u5f39\u836f",
+    "weapon.alloy_greatsword": "\u5408\u91d1\u5de8\u5251",
+    "weapon.alloy_greatsword.desc": "\u4e13\u4e3a\u5927\u8303\u56f4\u5288\u780d\u4e0e\u65a9\u6740\u800c\u6253\u9020\u7684\u8d85\u91cd\u91d1\u5c5e\u5de8\u5251"
 }

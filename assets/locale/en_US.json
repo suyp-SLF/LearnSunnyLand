@@ -32,5 +32,7 @@
     "weapon.rocket_launcher": "Rocket Launcher",
     "weapon.grenade_launcher": "Grenade Launcher",
     "weapon.laser_gun": "Laser Gun",
-    "weapon.flamethrower": "Flamethrower"
+    "weapon.flamethrower": "Flamethrower",
+    "weapon.alloy_greatsword": "Alloy Greatsword",
+    "weapon.alloy_greatsword.desc": "A brutal oversized blade built for sweeping executions."
 }

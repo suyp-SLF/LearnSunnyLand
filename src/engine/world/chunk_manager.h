@@ -37,6 +37,7 @@ namespace engine::world
 
         // 渲染所有已加载的块
         void renderAll(engine::core::Context &ctx) const;
+        void renderActiveChunkHighlights(engine::core::Context &ctx) const;
 
         // 获取已加载区块数量
         size_t loadedChunkCount() const { return m_chunks.size(); }

@@ -2,6 +2,7 @@
 #include "terrain_generator.h"
 #include "../core/context.h"
 #include "../render/camera.h"
+#include "../render/renderer.h"
 #include "../resource/resource_manager.h"
 #include "world_config.h"
 #include "tile_info.h"
@@ -237,6 +238,39 @@ namespace engine::world
                 continue;
 
             chunk->draw(ctx);
+        }
+    }
+
+    void ChunkManager::renderActiveChunkHighlights(engine::core::Context &ctx) const
+    {
+        auto &renderer = ctx.getRenderer();
+        const auto &camera = ctx.getCamera();
+        const glm::vec2 chunkWorldSize = glm::vec2(Chunk::SIZE * m_tileSize.x,
+                                                   Chunk::SIZE * m_tileSize.y);
+        constexpr float borderThickness = 3.0f;
+        const glm::vec4 fillColor(0.20f, 0.80f, 1.00f, 0.10f);
+        const glm::vec4 borderColor(1.00f, 0.78f, 0.18f, 0.55f);
+
+        for (const auto &[_, chunk] : m_chunks)
+        {
+            if (!chunk)
+                continue;
+
+            glm::vec2 worldPos = chunk->getWorldPosition(m_tileSize);
+            if (!camera.isBoxInView(worldPos, chunkWorldSize))
+                continue;
+
+            renderer.drawRect(camera, worldPos.x, worldPos.y,
+                              chunkWorldSize.x, chunkWorldSize.y, fillColor);
+
+            renderer.drawRect(camera, worldPos.x, worldPos.y,
+                              chunkWorldSize.x, borderThickness, borderColor);
+            renderer.drawRect(camera, worldPos.x, worldPos.y + chunkWorldSize.y - borderThickness,
+                              chunkWorldSize.x, borderThickness, borderColor);
+            renderer.drawRect(camera, worldPos.x, worldPos.y,
+                              borderThickness, chunkWorldSize.y, borderColor);
+            renderer.drawRect(camera, worldPos.x + chunkWorldSize.x - borderThickness, worldPos.y,
+                              borderThickness, chunkWorldSize.y, borderColor);
         }
     }
 } // namespace engine::world

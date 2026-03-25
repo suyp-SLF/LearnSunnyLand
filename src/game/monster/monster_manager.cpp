@@ -202,4 +202,39 @@ namespace game::monster
 
         return crushed;
     }
+
+    int MonsterManager::slashMonsters(const glm::vec2 &origin,
+                                      float facing,
+                                      float range,
+                                      float halfHeight,
+                                      std::vector<glm::vec2> *defeatPositions)
+    {
+        int slain = 0;
+        const float rangeSq = range * range;
+
+        for (auto &entry : m_monsters)
+        {
+            if (!entry.actor || entry.actor->isNeedRemove())
+                continue;
+
+            auto *transform = entry.actor->getComponent<engine::component::TransformComponent>();
+            if (!transform)
+                continue;
+
+            glm::vec2 delta = transform->getPosition() - origin;
+            if (glm::dot(delta, delta) > rangeSq)
+                continue;
+            if (delta.x * facing < -18.0f)
+                continue;
+            if (std::abs(delta.y) > halfHeight)
+                continue;
+
+            entry.actor->setNeedRemove(true);
+            if (defeatPositions)
+                defeatPositions->push_back(transform->getPosition());
+            ++slain;
+        }
+
+        return slain;
+    }
 }

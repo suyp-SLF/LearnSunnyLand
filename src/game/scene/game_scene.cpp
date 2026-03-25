@@ -192,25 +192,30 @@ static void drawDebugCross(ImDrawList* dl, ImVec2 center, ImU32 color, float siz
     dl->AddCircle(center, size * 0.7f, color, 16, 1.0f);
 }
 
-static bool loadSkillDebugOverlaySetting()
+static bool isProjectileBlockingTile(engine::world::TileType type)
+{
+    return type != engine::world::TileType::Air;
+}
+
+static bool loadBoolSetting(const char* key, bool defaultValue = false)
 {
     std::ifstream file("assets/settings.json");
     if (!file.is_open())
-        return false;
+        return defaultValue;
 
     try
     {
         nlohmann::json j;
         file >> j;
-        return j.value("show_skill_debug_overlay", false);
+        return j.value(key, defaultValue);
     }
     catch (const std::exception&)
     {
-        return false;
+        return defaultValue;
     }
 }
 
-static void saveSkillDebugOverlaySetting(bool enabled)
+static void saveBoolSetting(const char* key, bool enabled)
 {
     nlohmann::json j = nlohmann::json::object();
 
@@ -229,7 +234,7 @@ static void saveSkillDebugOverlaySetting(bool enabled)
         }
     }
 
-    j["show_skill_debug_overlay"] = enabled;
+    j[key] = enabled;
 
     std::ofstream file("assets/settings.json");
     if (!file.is_open())
@@ -272,7 +277,8 @@ static void saveSkillDebugOverlaySetting(bool enabled)
             engine::core::Config gameConfig("assets/config.json");
             m_showFpsOverlay = gameConfig._show_fps_overlay;
         }
-        m_showSkillDebugOverlay = loadSkillDebugOverlaySetting();
+        m_showSkillDebugOverlay = loadBoolSetting("show_skill_debug_overlay");
+        m_showActiveChunkHighlights = loadBoolSetting("show_active_chunk_highlights");
 
         chunk_manager = std::make_unique<engine::world::ChunkManager>(
             "assets/textures/Tiles/tileset.svg",
@@ -385,10 +391,13 @@ static void saveSkillDebugOverlaySetting(bool enabled)
 
         m_mechAttackCooldown = std::max(0.0f, m_mechAttackCooldown - delta_time);
         m_mechAttackFlashTimer = std::max(0.0f, m_mechAttackFlashTimer - delta_time);
+        m_weaponAttackCooldown = std::max(0.0f, m_weaponAttackCooldown - delta_time);
         m_timeOfDaySystem.update(delta_time);
 
         tickStarSkillPassives(delta_time);
         tickSkillVFX(delta_time);
+        tickSkillProjectiles(delta_time);
+        tickCombatEffects(delta_time);
 
         if (m_monsterManager)
             m_monsterManager->update(delta_time);
@@ -486,6 +495,11 @@ static void saveSkillDebugOverlaySetting(bool enabled)
         }
 
         m_timeOfDaySystem.renderLighting(_context);
+
+        if (chunk_manager && m_showActiveChunkHighlights)
+        {
+            chunk_manager->renderActiveChunkHighlights(_context);
+        }
 
         if (physics_manager && m_showPhysicsDebug)
         {
@@ -611,6 +625,8 @@ static void saveSkillDebugOverlaySetting(bool enabled)
             }
 
             // 技能特效（前景层，覆盖在所有 ImGui 窗口之上）
+            renderCombatEffects();
+            renderSkillProjectiles();
             renderSkillVFX();
             if (m_showSkillDebugOverlay)
                 renderSkillDebugOverlay();
@@ -657,30 +673,41 @@ static void saveSkillDebugOverlaySetting(bool enabled)
                 performMechAttack();
             else
             {
-                using engine::world::TileType;
-                TileType t = chunk_manager->tileAt(m_hoveredTile.x, m_hoveredTile.y).type;
-                if (t == TileType::Wood || t == TileType::Leaves)
+                const auto &activeSlot = m_weaponBar.getActiveSlot();
+                const auto *weaponDef = (!activeSlot.isEmpty() && activeSlot.item)
+                    ? game::weapon::getWeaponDef(activeSlot.item->id)
+                    : nullptr;
+
+                if (weaponDef && weaponDef->attack_type == game::weapon::AttackType::Melee)
                 {
-                    m_treeManager.digTile(m_hoveredTile.x, m_hoveredTile.y,
-                                          *chunk_manager, m_treeManager.getDrops());
-                }
-                else if (t == TileType::Ore)
-                {
-                    chunk_manager->setTileSilent(m_hoveredTile.x, m_hoveredTile.y,
-                                                 engine::world::TileData(TileType::Air));
-                    chunk_manager->rebuildDirtyChunks();
-                    using Cat = game::inventory::ItemCategory;
-                    m_inventory.addItem({"ore", "矿石", 64, Cat::Material}, 1);
+                    performMeleeAttack(hoveredTileCenter);
                 }
                 else
                 {
-                    chunk_manager->setTileSilent(m_hoveredTile.x, m_hoveredTile.y,
-                                                 engine::world::TileData(TileType::Air));
-                    chunk_manager->rebuildDirtyChunks();
-                }
+                    using engine::world::TileType;
+                    TileType t = chunk_manager->tileAt(m_hoveredTile.x, m_hoveredTile.y).type;
+                    if (t == TileType::Wood || t == TileType::Leaves)
+                    {
+                        m_treeManager.digTile(m_hoveredTile.x, m_hoveredTile.y,
+                                              *chunk_manager, m_treeManager.getDrops());
+                    }
+                    else if (t == TileType::Ore)
+                    {
+                        chunk_manager->setTileSilent(m_hoveredTile.x, m_hoveredTile.y,
+                                                     engine::world::TileData(TileType::Air));
+                        chunk_manager->rebuildDirtyChunks();
+                        using Cat = game::inventory::ItemCategory;
+                        m_inventory.addItem({"ore", "矿石", 64, Cat::Material}, 1);
+                    }
+                    else
+                    {
+                        chunk_manager->setTileSilent(m_hoveredTile.x, m_hoveredTile.y,
+                                                     engine::world::TileData(TileType::Air));
+                        chunk_manager->rebuildDirtyChunks();
+                    }
 
-                // 星技：烎焰驱动型（在普通挖焰基础上额外触发）
-                triggerAttackStarSkills(hoveredTileCenter);
+                    triggerAttackStarSkills(hoveredTileCenter);
+                }
             }
         }
 
@@ -1107,7 +1134,11 @@ static void saveSkillDebugOverlaySetting(bool enabled)
         }
         if (ImGui::Checkbox("显示技能调试", &m_showSkillDebugOverlay))
         {
-            saveSkillDebugOverlaySetting(m_showSkillDebugOverlay);
+            saveBoolSetting("show_skill_debug_overlay", m_showSkillDebugOverlay);
+        }
+        if (ImGui::Checkbox("高亮活跃地形块", &m_showActiveChunkHighlights))
+        {
+            saveBoolSetting("show_active_chunk_highlights", m_showActiveChunkHighlights);
         }
 
         ImGui::End();
@@ -1378,18 +1409,11 @@ static void saveSkillDebugOverlaySetting(bool enabled)
         using namespace game::inventory;
         using Cat = ItemCategory;
 
-        // 武器类物品（可拖入武器栏）
-        m_inventory.addItem({"dig_gun",          "挖掘枪",     1, Cat::Weapon}, 1);
-        m_inventory.addItem({"iron_sword",        "铁剑",       1, Cat::Weapon}, 1);
-        m_inventory.addItem({"knife",             "匕首",       1, Cat::Weapon}, 1);
-        m_inventory.addItem({"war_axe",           "战斧",       1, Cat::Weapon}, 1);
-        m_inventory.addItem({"pistol",            "手枪",       1, Cat::Weapon}, 1);
-        m_inventory.addItem({"shotgun",           "霰弹枪",     1, Cat::Weapon}, 1);
-        m_inventory.addItem({"sniper",            "狙击枪",     1, Cat::Weapon}, 1);
-        m_inventory.addItem({"rocket_launcher",   "火箭筒",     1, Cat::Weapon}, 1);
-        m_inventory.addItem({"grenade_launcher",  "榴弹发射器", 1, Cat::Weapon}, 1);
-        m_inventory.addItem({"laser_gun",         "激光枪",     1, Cat::Weapon}, 1);
-        m_inventory.addItem({"flamethrower",      "火焰喷射器", 1, Cat::Weapon}, 1);
+        m_inventory.addItem({"alloy_greatsword",  "合金巨剑",   1, Cat::Weapon}, 1);
+        auto &slot0 = m_weaponBar.getSlot(0);
+        slot0.item = Item{"alloy_greatsword", "合金巨剑", 1, Cat::Weapon};
+        slot0.count = 1;
+        m_weaponBar.setActiveIndex(0);
 
         // 普通物品
         m_inventory.addItem({"gold_coin", "金币",   99, Cat::Misc},     42);
@@ -2132,6 +2156,96 @@ static void saveSkillDebugOverlaySetting(bool enabled)
         spdlog::info("驾驶员已离开机甲");
     }
 
+    void GameScene::performMeleeAttack(glm::vec2 targetPos)
+    {
+        if (!m_player || m_weaponAttackCooldown > 0.0f)
+            return;
+
+        const auto &activeSlot = m_weaponBar.getActiveSlot();
+        if (activeSlot.isEmpty() || !activeSlot.item)
+            return;
+
+        const auto *weaponDef = game::weapon::getWeaponDef(activeSlot.item->id);
+        if (!weaponDef || weaponDef->attack_type != game::weapon::AttackType::Melee)
+            return;
+
+        auto *ctrl = m_player->getComponent<engine::component::ControllerComponent>();
+        if (!ctrl)
+            return;
+
+        float facing = ctrl->getFacingDirection() == engine::component::ControllerComponent::FacingDirection::Left
+            ? -1.0f : 1.0f;
+        glm::vec2 playerPos = getActorWorldPosition(m_player);
+        glm::vec2 slashCenter = playerPos + glm::vec2(44.0f * facing, -8.0f);
+
+        using engine::world::TileType;
+        bool changedTiles = false;
+        int destroyedTiles = 0;
+        const glm::ivec2 tileMin = chunk_manager->worldToTile(slashCenter - glm::vec2{weaponDef->range, 56.0f});
+        const glm::ivec2 tileMax = chunk_manager->worldToTile(slashCenter + glm::vec2{weaponDef->range, 56.0f});
+        for (int ty = tileMin.y; ty <= tileMax.y; ++ty)
+        {
+            for (int tx = tileMin.x; tx <= tileMax.x; ++tx)
+            {
+                glm::vec2 tileCenter = chunk_manager->tileToWorld({tx, ty}) + glm::vec2{8.0f, 8.0f};
+                glm::vec2 delta = tileCenter - playerPos;
+                if (glm::length(delta) > weaponDef->range)
+                    continue;
+                if (delta.x * facing < -8.0f || std::abs(delta.y) > 54.0f)
+                    continue;
+
+                TileType type = chunk_manager->tileAt(tx, ty).type;
+                if (type == TileType::Air)
+                    continue;
+
+                if (type == TileType::Wood || type == TileType::Leaves)
+                {
+                    m_treeManager.digTile(tx, ty, *chunk_manager, m_treeManager.getDrops(), false);
+                    changedTiles = true;
+                    ++destroyedTiles;
+                }
+                else if (type == TileType::Ore)
+                {
+                    chunk_manager->setTileSilent(tx, ty, engine::world::TileData(TileType::Air));
+                    changedTiles = true;
+                    ++destroyedTiles;
+                    using Cat = game::inventory::ItemCategory;
+                    m_inventory.addItem({"ore", "矿石", 64, Cat::Material}, 1);
+                }
+            }
+        }
+        if (changedTiles)
+            chunk_manager->rebuildDirtyChunks();
+
+        std::vector<glm::vec2> defeatPositions;
+        int slain = m_monsterManager
+            ? m_monsterManager->slashMonsters(playerPos, facing, weaponDef->range + 20.0f, 72.0f, &defeatPositions)
+            : 0;
+
+        m_slashVfxList.push_back({slashCenter, facing, 0.0f, 0.20f, weaponDef->range});
+        for (const glm::vec2 &pos : defeatPositions)
+        {
+            for (int i = 0; i < 14; ++i)
+            {
+                float spread = (-0.9f + 1.8f * (static_cast<float>(i) / 13.0f));
+                glm::vec2 dir = glm::normalize(glm::vec2(facing * (1.5f + std::abs(spread) * 1.8f), spread * 1.2f - 0.35f));
+                float speed = 240.0f + 26.0f * static_cast<float>(i);
+                m_combatFragments.push_back({
+                    pos,
+                    dir * speed,
+                    0.0f,
+                    0.55f + 0.02f * static_cast<float>(i % 4),
+                    4.0f + static_cast<float>(i % 3)
+                });
+            }
+        }
+
+        triggerAttackStarSkills(targetPos);
+        m_weaponAttackCooldown = std::max(1.0f / weaponDef->attack_speed, 0.08f);
+        spdlog::debug("合金巨剑：劈砍 @({:.0f},{:.0f})  斩杀={} 破坏瓦片={}",
+                      slashCenter.x, slashCenter.y, slain, destroyedTiles);
+    }
+
     void GameScene::performMechAttack()
     {
         if (!m_isPlayerInMech || !m_mech || m_mechAttackCooldown > 0.0f)
@@ -2296,13 +2410,10 @@ static void saveSkillDebugOverlaySetting(bool enabled)
 
     // ──────────────────────────────────────────────────────────────────────────
     //  攻击触发型星技（左键/K攻击时调用）
-    //    - 炎焰：在攻击落点爆炸，范围破坏瓦片 + 击杀怪物
+    //    - 炎焰：从人物手中发射火球，碰撞或抵达目标后爆炸
     // ──────────────────────────────────────────────────────────────────────────
     void GameScene::triggerAttackStarSkills(glm::vec2 attackPos)
     {
-        using engine::world::TileData;
-        using engine::world::TileType;
-
         m_lastAttackSkillTarget = attackPos;
         m_hasLastAttackSkillTarget = true;
 
@@ -2314,59 +2425,100 @@ static void saveSkillDebugOverlaySetting(bool enabled)
             const auto* def = game::skill::getStarSkillDef(m_starSockets[i].item->id);
             if (!def || def->effect != game::skill::SkillEffect::FireBlast) continue;
 
-            const float r = def->range;
-            const glm::ivec2 tileMin = chunk_manager->worldToTile(attackPos - glm::vec2{r, r});
-            const glm::ivec2 tileMax = chunk_manager->worldToTile(attackPos + glm::vec2{r, r});
-
-            int destroyedTiles = 0;
-            bool hasBatchedTileChanges = false;
-            for (int ty = tileMin.y; ty <= tileMax.y; ++ty)
-            {
-                for (int tx = tileMin.x; tx <= tileMax.x; ++tx)
-                {
-                    glm::vec2 tileCenter = chunk_manager->tileToWorld({tx, ty}) + glm::vec2{8.0f, 8.0f};
-                    if (glm::distance(tileCenter, attackPos) > r) continue;
-                    TileType t = chunk_manager->tileAt(tx, ty).type;
-                    if (t == TileType::Air) continue;
-
-                    // 树木特殊处理
-                    if (t == TileType::Wood || t == TileType::Leaves)
-                    {
-                        m_treeManager.digTile(tx, ty, *chunk_manager, m_treeManager.getDrops(), false);
-                        hasBatchedTileChanges = true;
-                    }
-                    else if (t == TileType::Ore)
-                    {
-                        using Cat = game::inventory::ItemCategory;
-                        m_inventory.addItem({"ore", "矿石", 64, Cat::Material}, 1);
-                        chunk_manager->setTileSilent(tx, ty, TileData(TileType::Air));
-                        hasBatchedTileChanges = true;
-                    }
-                    else
-                    {
-                        chunk_manager->setTileSilent(tx, ty, TileData(TileType::Air));
-                        hasBatchedTileChanges = true;
-                    }
-                    ++destroyedTiles;
-                }
-            }
-
-            if (hasBatchedTileChanges)
-                chunk_manager->rebuildDirtyChunks();
-
-            int crushed = m_monsterManager
-                ? m_monsterManager->crushMonstersInRadius(attackPos, r + 16.0f)
-                : 0;
-
             // 消耗星能（炎焰：15 SE/次）
             if (auto* attr = m_player->getComponent<game::component::AttributeComponent>())
-                attr->consumeStarEnergy(15.0f);
+            {
+                if (!attr->consumeStarEnergy(15.0f))
+                    continue;
+            }
+
+            glm::vec2 origin = getPlayerCastOrigin(attackPos);
+            glm::vec2 delta = attackPos - origin;
+            float distance = glm::length(delta);
+            if (distance < 1.0f)
+            {
+                delta = {1.0f, 0.0f};
+                distance = 1.0f;
+            }
+            else
+            {
+                delta /= distance;
+            }
+
+            constexpr float kFireProjectileSpeed = 520.0f;
+            float flightTime = std::max(distance / kFireProjectileSpeed, 0.12f);
+            m_skillProjectiles.push_back({
+                game::skill::SkillEffect::FireBlast,
+                origin,
+                origin,
+                origin,
+                attackPos,
+                delta * kFireProjectileSpeed,
+                0.0f,
+                std::min(flightTime + 0.18f, 1.4f),
+                def->range
+            });
+            m_skillVfxList.push_back({game::skill::SkillEffect::FireBlast, origin, 0.0f, 0.18f, -1.0f});
 
             m_skillCooldowns[i] = def->cooldown;
-            m_skillVfxList.push_back({game::skill::SkillEffect::FireBlast, attackPos, 0.0f, 0.65f, 0.0f});
-            spdlog::debug("炎焰星技：爆炸 @({:.0f},{:.0f})  瓦片={} 怪物={}",
-                          attackPos.x, attackPos.y, destroyedTiles, crushed);
+            spdlog::debug("炎焰星技：投射物发射 ({:.0f},{:.0f}) -> ({:.0f},{:.0f})",
+                          origin.x, origin.y, attackPos.x, attackPos.y);
         }
+    }
+
+    void GameScene::explodeFireBlast(glm::vec2 attackPos, float radius)
+    {
+        using engine::world::TileData;
+        using engine::world::TileType;
+
+        const glm::ivec2 tileMin = chunk_manager->worldToTile(attackPos - glm::vec2{radius, radius});
+        const glm::ivec2 tileMax = chunk_manager->worldToTile(attackPos + glm::vec2{radius, radius});
+
+        int destroyedTiles = 0;
+        bool hasBatchedTileChanges = false;
+        for (int ty = tileMin.y; ty <= tileMax.y; ++ty)
+        {
+            for (int tx = tileMin.x; tx <= tileMax.x; ++tx)
+            {
+                glm::vec2 tileCenter = chunk_manager->tileToWorld({tx, ty}) + glm::vec2{8.0f, 8.0f};
+                if (glm::distance(tileCenter, attackPos) > radius) continue;
+
+                TileType t = chunk_manager->tileAt(tx, ty).type;
+                if (t == TileType::Air) continue;
+
+                if (t == TileType::Wood || t == TileType::Leaves)
+                {
+                    m_treeManager.digTile(tx, ty, *chunk_manager, m_treeManager.getDrops(), false);
+                    hasBatchedTileChanges = true;
+                }
+                else if (t == TileType::Ore)
+                {
+                    using Cat = game::inventory::ItemCategory;
+                    m_inventory.addItem({"ore", "矿石", 64, Cat::Material}, 1);
+                    chunk_manager->setTileSilent(tx, ty, TileData(TileType::Air));
+                    hasBatchedTileChanges = true;
+                }
+                else
+                {
+                    chunk_manager->setTileSilent(tx, ty, TileData(TileType::Air));
+                    hasBatchedTileChanges = true;
+                }
+                ++destroyedTiles;
+            }
+        }
+
+        if (hasBatchedTileChanges)
+            chunk_manager->rebuildDirtyChunks();
+
+        int crushed = m_monsterManager
+            ? m_monsterManager->crushMonstersInRadius(attackPos, radius + 18.0f)
+            : 0;
+
+        m_lastAttackSkillTarget = attackPos;
+        m_hasLastAttackSkillTarget = true;
+        m_skillVfxList.push_back({game::skill::SkillEffect::FireBlast, attackPos, 0.0f, 0.72f, radius});
+        spdlog::debug("炎焰星技：爆炸 @({:.0f},{:.0f})  瓦片={} 怪物={}",
+                      attackPos.x, attackPos.y, destroyedTiles, crushed);
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -2434,7 +2586,7 @@ static void saveSkillDebugOverlaySetting(bool enabled)
         const float winH = ICON_SIZE + 28.0f;  // 图标 + 底部文字
 
         ImVec2 disp = ImGui::GetIO().DisplaySize;
-        ImGui::SetNextWindowPos({ (disp.x - winW) * 0.5f, disp.y - winH - 12.0f }, ImGuiCond_Always);
+        ImGui::SetNextWindowPos({ (disp.x - winW) * 0.5f, disp.y - winH - 58.0f }, ImGuiCond_Always);
         ImGui::SetNextWindowSize({ winW, winH }, ImGuiCond_Always);
         ImGui::SetNextWindowBgAlpha(0.55f);
 
@@ -2526,7 +2678,7 @@ static void saveSkillDebugOverlaySetting(bool enabled)
     }
 
     // ──────────────────────────────────────────────────────────────────────────
-    //  角色状态 HUD（左上角）：血量、星能、主要属性一览
+    //  角色状态 HUD：血量位于屏幕正下方，属性位于右下角纵向排列
     // ──────────────────────────────────────────────────────────────────────────
     void GameScene::renderPlayerStatusHUD()
     {
@@ -2535,16 +2687,20 @@ static void saveSkillDebugOverlaySetting(bool enabled)
             : nullptr;
         if (!attr) return;
 
-        constexpr float WIN_W  = 180.0f;
-        constexpr float WIN_H  = 86.0f;
-        constexpr float BAR_H  = 12.0f;
-        constexpr float BAR_W  = 144.0f;   // 可用区域宽度
+        constexpr float HP_WIN_W = 360.0f;
+        constexpr float HP_WIN_H = 34.0f;
+        constexpr float HP_BAR_W = 320.0f;
+        constexpr float HP_BAR_H = 16.0f;
+        constexpr float PANEL_W = 190.0f;
+        constexpr float PANEL_H = 166.0f;
 
-        ImGui::SetNextWindowPos({10.0f, 10.0f}, ImGuiCond_Always);
-        ImGui::SetNextWindowSize({WIN_W, WIN_H}, ImGuiCond_Always);
+        ImVec2 disp = ImGui::GetIO().DisplaySize;
+
+        ImGui::SetNextWindowPos({(disp.x - HP_WIN_W) * 0.5f, disp.y - HP_WIN_H - 10.0f}, ImGuiCond_Always);
+        ImGui::SetNextWindowSize({HP_WIN_W, HP_WIN_H}, ImGuiCond_Always);
         ImGui::SetNextWindowBgAlpha(0.60f);
 
-        ImGui::Begin("##status_hud", nullptr,
+        ImGui::Begin("##status_hp_hud", nullptr,
             ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
             ImGuiWindowFlags_NoInputs     | ImGuiWindowFlags_NoNav  |
             ImGuiWindowFlags_NoSavedSettings);
@@ -2552,25 +2708,22 @@ static void saveSkillDebugOverlaySetting(bool enabled)
         auto* dl = ImGui::GetWindowDrawList();
         ImVec2 p  = ImGui::GetCursorScreenPos();
 
-        auto drawBar = [&](float y, ImU32 bgCol, ImU32 fillCol, float ratio,
+        auto drawBottomBar = [&](float y, ImU32 fillCol, float ratio,
                            const char* label, float current, float max)
         {
-            // 背景
-            dl->AddRectFilled({p.x, y}, {p.x + BAR_W, y + BAR_H},
-                              IM_COL32(30, 30, 40, 200), 3.0f);
-            // 填充
-            float fillW = BAR_W * std::clamp(ratio, 0.0f, 1.0f);
+            float x = p.x + (HP_WIN_W - HP_BAR_W) * 0.5f;
+            dl->AddRectFilled({x, y}, {x + HP_BAR_W, y + HP_BAR_H},
+                              IM_COL32(22, 24, 30, 210), 5.0f);
+            float fillW = HP_BAR_W * std::clamp(ratio, 0.0f, 1.0f);
             if (fillW > 0.5f)
-                dl->AddRectFilled({p.x, y}, {p.x + fillW, y + BAR_H}, fillCol, 3.0f);
-            // 边框
-            dl->AddRect({p.x, y}, {p.x + BAR_W, y + BAR_H},
-                        IM_COL32(80, 80, 100, 180), 3.0f, 0, 1.0f);
-            // 文本标签
+                dl->AddRectFilled({x, y}, {x + fillW, y + HP_BAR_H}, fillCol, 5.0f);
+            dl->AddRect({x, y}, {x + HP_BAR_W, y + HP_BAR_H},
+                        IM_COL32(110, 120, 140, 220), 5.0f, 0, 1.3f);
             char buf[32];
             snprintf(buf, sizeof(buf), "%s %.0f/%.0f", label, current, max);
             ImVec2 ts = ImGui::CalcTextSize(buf);
-            dl->AddText({p.x + (BAR_W - ts.x) * 0.5f, y + (BAR_H - ts.y) * 0.5f},
-                        IM_COL32(230, 230, 230, 220), buf);
+            dl->AddText({x + (HP_BAR_W - ts.x) * 0.5f, y + (HP_BAR_H - ts.y) * 0.5f - 1.0f},
+                        IM_COL32(245, 245, 245, 230), buf);
         };
 
         float hpRatio = attr->getHpRatio();
@@ -2578,38 +2731,44 @@ static void saveSkillDebugOverlaySetting(bool enabled)
         float maxHp   = attr->get(game::component::StatType::MaxHp);
         float maxSe   = attr->get(game::component::StatType::MaxStarEnergy);
 
-        drawBar(p.y,        IM_COL32(60,10,10,200),  IM_COL32(200,50,50,230),  hpRatio, "HP", attr->getHp(), maxHp);
-        drawBar(p.y + 16.0f, IM_COL32(10,10,60,200), IM_COL32(60,100,220,230), seRatio, "★", attr->getStarEnergy(), maxSe);
+        drawBottomBar(p.y + 6.0f, IM_COL32(215, 58, 58, 235), hpRatio, "HP", attr->getHp(), maxHp);
+        ImGui::End();
 
-        // 属性文字（第三行）
         float atk   = attr->get(game::component::StatType::Attack);
         float def   = attr->get(game::component::StatType::Defense);
         float spd   = attr->get(game::component::StatType::Speed);
         float crit  = attr->get(game::component::StatType::CritRate) * 100.0f;
 
-        char statBuf[64];
-        snprintf(statBuf, sizeof(statBuf), "ATK %.0f  DEF %.0f  SPD %.2fx  暴%.0f%%",
-                 atk, def, spd, crit);
-        ImGui::SetCursorScreenPos({p.x, p.y + 35.0f});
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.70f, 0.80f, 1.0f, 0.90f));
-        ImGui::TextUnformatted(statBuf);
-        ImGui::PopStyleColor();
+        ImGui::SetNextWindowPos({disp.x - PANEL_W - 14.0f, disp.y - PANEL_H - 14.0f}, ImGuiCond_Always);
+        ImGui::SetNextWindowSize({PANEL_W, PANEL_H}, ImGuiCond_Always);
+        ImGui::SetNextWindowBgAlpha(0.58f);
 
-        // 低血量警告
+        ImGui::Begin("##status_attr_hud", nullptr,
+            ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
+            ImGuiWindowFlags_NoInputs     | ImGuiWindowFlags_NoNav  |
+            ImGuiWindowFlags_NoSavedSettings);
+
+        ImGui::TextColored({0.78f, 0.86f, 1.0f, 0.96f}, "人物属性");
+        ImGui::Separator();
+        ImGui::Text("星能 %.0f / %.0f", attr->getStarEnergy(), maxSe);
+        ImGui::ProgressBar(seRatio, { -1.0f, 10.0f }, "");
+        ImGui::Spacing();
+        ImGui::Text("攻击  %.0f", atk);
+        ImGui::Text("防御  %.0f", def);
+        ImGui::Text("速度  %.2fx", spd);
+        ImGui::Text("暴击  %.0f%%", crit);
+
         if (hpRatio < 0.25f)
         {
             static float blinkTimer = 0.0f;
             blinkTimer += ImGui::GetIO().DeltaTime;
             float alpha = 0.4f + 0.4f * std::sin(blinkTimer * 6.0f);
-            ImGui::SetCursorScreenPos({p.x, p.y + 52.0f});
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.25f, 0.25f, alpha));
             ImGui::TextUnformatted("⚠ 生命值危急");
             ImGui::PopStyleColor();
         }
-        // 星能不足提示
         else if (seRatio < 0.15f)
         {
-            ImGui::SetCursorScreenPos({p.x, p.y + 52.0f});
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.6f, 1.0f, 0.75f));
             ImGui::TextUnformatted("★ 星能不足");
             ImGui::PopStyleColor();
@@ -2629,6 +2788,76 @@ static void saveSkillDebugOverlaySetting(bool enabled)
             std::remove_if(m_skillVfxList.begin(), m_skillVfxList.end(),
                            [](const SkillVFX& v){ return v.age >= v.maxAge; }),
             m_skillVfxList.end());
+    }
+
+    void GameScene::tickSkillProjectiles(float dt)
+    {
+        if (m_skillProjectiles.empty() || !chunk_manager)
+            return;
+
+        for (auto &proj : m_skillProjectiles)
+        {
+            proj.age += dt;
+            proj.lastWorldPos = proj.worldPos;
+            proj.worldPos += proj.velocity * dt;
+
+            bool explode = false;
+            glm::vec2 impactPos = proj.worldPos;
+            if (proj.age > 0.04f)
+            {
+                glm::ivec2 tile = chunk_manager->worldToTile(proj.worldPos);
+                if (isProjectileBlockingTile(chunk_manager->tileAt(tile.x, tile.y).type))
+                    explode = true;
+            }
+
+            glm::vec2 travel = proj.targetPos - proj.originPos;
+            float travelLenSq = glm::dot(travel, travel);
+            if (!explode && travelLenSq > 1.0f)
+            {
+                glm::vec2 progressed = proj.worldPos - proj.originPos;
+                if (glm::dot(progressed, travel) >= travelLenSq)
+                {
+                    explode = true;
+                    impactPos = proj.targetPos;
+                }
+            }
+
+            if (!explode && proj.age >= proj.maxAge)
+                explode = true;
+
+            if (explode)
+            {
+                explodeFireBlast(impactPos, proj.radius);
+                proj.age = proj.maxAge;
+            }
+        }
+
+        m_skillProjectiles.erase(
+            std::remove_if(m_skillProjectiles.begin(), m_skillProjectiles.end(),
+                           [](const SkillProjectile &proj) { return proj.age >= proj.maxAge; }),
+            m_skillProjectiles.end());
+    }
+
+    void GameScene::tickCombatEffects(float dt)
+    {
+        for (auto &slash : m_slashVfxList)
+            slash.age += dt;
+        m_slashVfxList.erase(
+            std::remove_if(m_slashVfxList.begin(), m_slashVfxList.end(),
+                           [](const SlashVFX &slash) { return slash.age >= slash.maxAge; }),
+            m_slashVfxList.end());
+
+        for (auto &fragment : m_combatFragments)
+        {
+            fragment.age += dt;
+            fragment.velocity *= std::max(0.0f, 1.0f - dt * 1.6f);
+            fragment.velocity.y += 520.0f * dt;
+            fragment.worldPos += fragment.velocity * dt;
+        }
+        m_combatFragments.erase(
+            std::remove_if(m_combatFragments.begin(), m_combatFragments.end(),
+                           [](const CombatFragment &fragment) { return fragment.age >= fragment.maxAge; }),
+            m_combatFragments.end());
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -2656,39 +2885,65 @@ static void saveSkillDebugOverlaySetting(bool enabled)
             // ── 炎焰：向外扩散的橙红色环 + 中心闪光 + 火星粒子 ──────────
             case game::skill::SkillEffect::FireBlast:
             {
-                // 两圈扩散环
-                for (int ring = 0; ring < 3; ++ring)
+                if (vfx.param < 0.0f)
                 {
-                    float delay = ring * 0.12f;
+                    float castPulse = 1.0f - t;
+                    float flareR = (10.0f + 18.0f * t) * m_zoomSliderValue;
+                    dl->AddCircleFilled(center, flareR,
+                        IM_COL32(255, 170, 70, static_cast<int>(castPulse * 150.0f)));
+                    for (int ray = 0; ray < 6; ++ray)
+                    {
+                        float ang = ray * (3.14159f / 3.0f) + t * 1.5f;
+                        ImVec2 tip = { center.x + cosf(ang) * flareR * 1.6f,
+                                       center.y + sinf(ang) * flareR * 1.6f };
+                        dl->AddLine(center, tip,
+                            IM_COL32(255, 220, 120, static_cast<int>(castPulse * 220.0f)), 2.0f);
+                    }
+                    break;
+                }
+
+                float blastScale = (vfx.param > 1.0f ? vfx.param / 80.0f : 1.0f);
+                // 两圈扩散环
+                for (int ring = 0; ring < 4; ++ring)
+                {
+                    float delay = ring * 0.08f;
                     float rt    = std::clamp((vfx.age - delay) / (vfx.maxAge - delay), 0.0f, 1.0f);
                     if (rt <= 0.0f) continue;
-                    float rad   = (30.0f + ring * 20.0f) * rt * m_zoomSliderValue;
+                    float rad   = (36.0f + ring * 24.0f) * rt * m_zoomSliderValue * blastScale;
                     int   a2    = static_cast<int>((1.0f - rt) * 200.0f);
-                    ImU32 col   = ring == 0
-                        ? IM_COL32(255, 120,  20, a2)
-                        : IM_COL32(255,  60,   5, a2 * 3 / 4);
-                    dl->AddCircle(center, rad, col, 32, 2.5f);
+                    ImU32 col   = ring < 2
+                        ? IM_COL32(255, 140, 25, a2)
+                        : IM_COL32(255, 70, 8, a2 * 3 / 4);
+                    dl->AddCircle(center, rad, col, 40, 2.8f);
                 }
-                // 中心爆闪（前 30%）
-                if (t < 0.30f)
+                if (t < 0.38f)
                 {
-                    float fr = t / 0.30f;
+                    float fr = t / 0.38f;
                     float fr2 = 1.0f - fr;
-                    float inner = 10.0f * fr2 * m_zoomSliderValue;
+                    float inner = 22.0f * fr2 * m_zoomSliderValue * blastScale;
                     dl->AddCircleFilled(center, inner,
-                        IM_COL32(255,200,80, static_cast<int>(fr2 * 240)));
+                        IM_COL32(255,220,120, static_cast<int>(fr2 * 220)));
                 }
-                // 8个火星粒子
-                for (int p = 0; p < 8; ++p)
+                for (int ray = 0; ray < 10; ++ray)
                 {
-                    float ang = p * (3.14159f * 2.0f / 8.0f);
-                    float dist = 40.0f * t * m_zoomSliderValue;
-                    ImVec2 ppos = { center.x + cosf(ang)*dist,
-                                    center.y + sinf(ang)*dist };
-                    float pSize = (1.0f - t) * 3.5f * m_zoomSliderValue;
+                    float ang = ray * (3.14159f * 2.0f / 10.0f) + t * 0.45f;
+                    float len = (22.0f + 42.0f * ease) * m_zoomSliderValue * blastScale;
+                    ImVec2 tip = { center.x + cosf(ang) * len,
+                                   center.y + sinf(ang) * len };
+                    dl->AddLine(center, tip, IM_COL32(255, 200, 90, alpha), 1.8f);
+                }
+                for (int p = 0; p < 16; ++p)
+                {
+                    float ang = p * (3.14159f * 2.0f / 16.0f) + t * 2.0f;
+                    float dist = (30.0f + 34.0f * (p % 3)) * t * m_zoomSliderValue * blastScale;
+                    ImVec2 ppos = { center.x + cosf(ang) * dist,
+                                    center.y + sinf(ang) * dist };
+                    float pSize = (1.4f + (p % 4)) * (1.0f - t) * m_zoomSliderValue;
                     dl->AddCircleFilled(ppos, pSize,
                         IM_COL32(255, 140, 0, alpha));
                 }
+                dl->AddCircle(center, 18.0f * ease * m_zoomSliderValue,
+                              IM_COL32(255, 255, 255, alpha / 2), 32, 1.3f);
                 break;
             }
 
@@ -2764,6 +3019,99 @@ static void saveSkillDebugOverlaySetting(bool enabled)
         }
     }
 
+    void GameScene::renderSkillProjectiles()
+    {
+        if (m_skillProjectiles.empty()) return;
+
+        auto *dl = ImGui::GetForegroundDrawList();
+        const auto &cam = _context.getCamera();
+
+        for (const auto &proj : m_skillProjectiles)
+        {
+            glm::vec2 curLogical = cam.worldToScreen(proj.worldPos);
+            glm::vec2 prevLogical = cam.worldToScreen(proj.lastWorldPos);
+            ImVec2 center = logicalToImGuiScreen(_context, curLogical);
+            ImVec2 prev = logicalToImGuiScreen(_context, prevLogical);
+
+            float pulse = 0.72f + 0.28f * std::sin(proj.age * 28.0f);
+            dl->AddLine(prev, center, IM_COL32(255, 120, 20, 220), 5.0f * pulse);
+            dl->AddLine(prev, center, IM_COL32(255, 220, 120, 180), 2.0f * pulse);
+            dl->AddCircleFilled(center, 7.5f * pulse, IM_COL32(255, 150, 30, 230));
+            dl->AddCircle(center, 12.0f * pulse, IM_COL32(255, 215, 120, 170), 24, 2.0f);
+
+            glm::vec2 dir = proj.velocity;
+            float len = glm::length(dir);
+            if (len > 0.001f)
+                dir /= len;
+            else
+                dir = {1.0f, 0.0f};
+
+            glm::vec2 side(-dir.y, dir.x);
+            for (int i = 0; i < 3; ++i)
+            {
+                float back = 10.0f + 8.0f * static_cast<float>(i);
+                glm::vec2 emberWorld = proj.worldPos - dir * back + side * ((i - 1) * 4.0f);
+                ImVec2 ember = logicalToImGuiScreen(_context, cam.worldToScreen(emberWorld));
+                dl->AddCircleFilled(ember, 2.0f + i, IM_COL32(255, 180, 70, 160 - i * 40));
+            }
+        }
+    }
+
+    void GameScene::renderCombatEffects()
+    {
+        if (m_slashVfxList.empty() && m_combatFragments.empty())
+            return;
+
+        auto *dl = ImGui::GetForegroundDrawList();
+        const auto &cam = _context.getCamera();
+
+        for (const auto &slash : m_slashVfxList)
+        {
+            float t = slash.age / slash.maxAge;
+            float fade = 1.0f - t;
+            glm::vec2 screenLogical = cam.worldToScreen(slash.worldPos);
+            ImVec2 center = logicalToImGuiScreen(_context, screenLogical);
+            float radius = (32.0f + slash.radius * 0.56f * t) * m_zoomSliderValue;
+            float width = (20.0f + 18.0f * fade) * m_zoomSliderValue;
+            ImVec2 dir = {slash.facing, -0.15f};
+            ImVec2 normal = {-dir.y, dir.x};
+            ImVec2 p0 = {center.x - dir.x * width - normal.x * width * 0.55f,
+                         center.y - dir.y * width - normal.y * width * 0.55f};
+            ImVec2 p1 = {center.x + dir.x * radius - normal.x * radius * 0.18f,
+                         center.y + dir.y * radius - normal.y * radius * 0.18f};
+            ImVec2 p2 = {center.x + dir.x * (radius + 18.0f * fade) + normal.x * width,
+                         center.y + dir.y * (radius + 18.0f * fade) + normal.y * width};
+            ImVec2 p3 = {center.x - dir.x * width + normal.x * width * 0.7f,
+                         center.y - dir.y * width + normal.y * width * 0.7f};
+
+            dl->AddQuadFilled(p0, p1, p2, p3,
+                              IM_COL32(255, 250, 235, static_cast<int>(160.0f * fade)));
+            dl->AddQuad(p0, p1, p2, p3,
+                        IM_COL32(130, 220, 255, static_cast<int>(220.0f * fade)), 2.0f);
+            dl->AddCircle(center, radius * 0.72f,
+                          IM_COL32(255, 255, 255, static_cast<int>(90.0f * fade)), 32, 1.2f);
+        }
+
+        for (const auto &fragment : m_combatFragments)
+        {
+            float fade = 1.0f - fragment.age / fragment.maxAge;
+            glm::vec2 screenLogical = cam.worldToScreen(fragment.worldPos);
+            ImVec2 center = logicalToImGuiScreen(_context, screenLogical);
+            glm::vec2 dir = fragment.velocity;
+            float len = glm::length(dir);
+            if (len > 0.001f)
+                dir /= len;
+            else
+                dir = {1.0f, 0.0f};
+            ImVec2 tail = {center.x - dir.x * fragment.size * 2.8f,
+                           center.y - dir.y * fragment.size * 2.8f};
+            dl->AddLine(tail, center,
+                        IM_COL32(255, 180, 140, static_cast<int>(210.0f * fade)), fragment.size);
+            dl->AddCircleFilled(center, fragment.size * 0.8f,
+                                IM_COL32(255, 245, 225, static_cast<int>(235.0f * fade)));
+        }
+    }
+
     void GameScene::renderSkillDebugOverlay()
     {
         if (!m_hasHoveredTile) return;
@@ -2793,6 +3141,13 @@ static void saveSkillDebugOverlaySetting(bool enabled)
             drawDebugCross(dl, vfxImGui, IM_COL32(120, 255, 120, 220), 6.0f);
         }
 
+        for (const auto& proj : m_skillProjectiles)
+        {
+            ImVec2 projImGui = logicalToImGuiScreen(
+                _context, _context.getCamera().worldToScreen(proj.worldPos));
+            drawDebugCross(dl, projImGui, IM_COL32(255, 150, 40, 220), 7.0f);
+        }
+
         ImGui::SetNextWindowPos({ImGui::GetIO().DisplaySize.x - 330.0f, 12.0f}, ImGuiCond_Always);
         ImGui::SetNextWindowSize({318.0f, 126.0f}, ImGuiCond_Always);
         ImGui::SetNextWindowBgAlpha(0.72f);
@@ -2809,7 +3164,8 @@ static void saveSkillDebugOverlaySetting(bool enabled)
         else
             ImGui::TextUnformatted("技能中心: <尚未触发>");
         ImGui::Text("活动特效: %d", static_cast<int>(m_skillVfxList.size()));
-        ImGui::TextColored({0.85f, 0.85f, 0.85f, 1.0f}, "白=鼠标屏幕 蓝=鼠标世界 黄=格中心 红=技能 绿=特效");
+        ImGui::Text("飞行投射物: %d", static_cast<int>(m_skillProjectiles.size()));
+        ImGui::TextColored({0.85f, 0.85f, 0.85f, 1.0f}, "白=鼠标屏幕 蓝=鼠标世界 黄=格中心 红=技能 绿=特效 橙=投射物");
         ImGui::End();
     }
 
@@ -2830,6 +3186,23 @@ static void saveSkillDebugOverlaySetting(bool enabled)
             return {0.0f, 0.0f};
 
         return transform->getPosition();
+    }
+
+    glm::vec2 GameScene::getPlayerCastOrigin(glm::vec2 targetPos) const
+    {
+        glm::vec2 base = getActorWorldPosition(m_player);
+        float facing = 1.0f;
+        if (auto *ctrl = m_player ? m_player->getComponent<engine::component::ControllerComponent>() : nullptr)
+        {
+            facing = ctrl->getFacingDirection() == engine::component::ControllerComponent::FacingDirection::Left
+                ? -1.0f : 1.0f;
+        }
+        else if (targetPos.x < base.x)
+        {
+            facing = -1.0f;
+        }
+
+        return base + glm::vec2(12.0f * facing, -10.0f);
     }
 
     glm::vec2 GameScene::findSafeDisembarkPosition() const

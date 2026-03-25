@@ -23,6 +23,11 @@ namespace game::monster
 
         void update(float delta_time);
         int crushMonstersInRadius(const glm::vec2 &center, float radius);
+        int slashMonsters(const glm::vec2 &origin,
+                  float facing,
+                  float range,
+                  float halfHeight,
+                  std::vector<glm::vec2> *defeatPositions = nullptr);
         size_t monsterCount() const { return m_monsters.size(); }
 
     private:

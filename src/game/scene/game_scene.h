@@ -63,6 +63,7 @@ namespace game::scene
         glm::ivec2 m_hoveredTile = {0, 0};
         bool m_hasHoveredTile = false;
         bool m_hasLastAttackSkillTarget = false;
+        bool m_showActiveChunkHighlights = false;
         bool m_showSkillDebugOverlay = false;
         bool m_showPhysicsDebug = false;
         bool m_showFpsOverlay = true;   // 由 config.json performance.show_fps 控制
@@ -90,8 +91,43 @@ namespace game::scene
         };
         std::vector<SkillVFX> m_skillVfxList;
 
+        struct SkillProjectile
+        {
+            game::skill::SkillEffect type;
+            glm::vec2 originPos;
+            glm::vec2 worldPos;
+            glm::vec2 lastWorldPos;
+            glm::vec2 targetPos;
+            glm::vec2 velocity;
+            float age = 0.0f;
+            float maxAge = 0.0f;
+            float radius = 0.0f;
+        };
+        std::vector<SkillProjectile> m_skillProjectiles;
+
+        struct SlashVFX
+        {
+            glm::vec2 worldPos;
+            float facing = 1.0f;
+            float age = 0.0f;
+            float maxAge = 0.18f;
+            float radius = 0.0f;
+        };
+        std::vector<SlashVFX> m_slashVfxList;
+
+        struct CombatFragment
+        {
+            glm::vec2 worldPos;
+            glm::vec2 velocity;
+            float age = 0.0f;
+            float maxAge = 0.0f;
+            float size = 0.0f;
+        };
+        std::vector<CombatFragment> m_combatFragments;
+
         // 武器栏
         game::weapon::WeaponBar m_weaponBar;
+        float m_weaponAttackCooldown = 0.0f;
 
         // 怪物系统
         std::unique_ptr<game::monster::MonsterManager> m_monsterManager;
@@ -125,7 +161,11 @@ namespace game::scene
         void renderSkillHUD();           // 屏幕底部技能冷却 HUD
         void renderPlayerStatusHUD();    // 左上角 HP / 星能 / 属性面板
         void tickSkillVFX(float dt);     // 推进技能特效寿命
+        void tickSkillProjectiles(float dt);
+        void tickCombatEffects(float dt);
         void renderSkillVFX();           // 渲染技能特效（前景层）
+        void renderSkillProjectiles();
+        void renderCombatEffects();
         void renderSkillDebugOverlay();  // 临时调试：技能目标与特效对齐
         void renderWeaponBar();
         void renderDropItems();
@@ -143,12 +183,15 @@ namespace game::scene
         void spawnMechDrop();
         void tryEnterMech();
         void exitMech();
+        void performMeleeAttack(glm::vec2 targetPos);
         void performMechAttack();
         void tickStarSkillPassives(float dt);          // 被动星技每帧更新
         void triggerAttackStarSkills(glm::vec2 pos);  // 攻击触发型星技
         void triggerActiveStarSkills();               // 主动技能（Q键）
+        void explodeFireBlast(glm::vec2 pos, float radius);
         engine::object::GameObject* getControlledActor() const;
         glm::vec2 getActorWorldPosition(const engine::object::GameObject* actor) const;
+        glm::vec2 getPlayerCastOrigin(glm::vec2 targetPos) const;
         glm::vec2 findSafeDisembarkPosition() const;
 
         // 撤离结算状态
