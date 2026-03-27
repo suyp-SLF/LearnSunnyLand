@@ -28,6 +28,19 @@ namespace game::weather
     };
 
     // ──────────────────────────────────────────────
+    // 雨水落地水花/涟漪粒子
+    // ──────────────────────────────────────────────
+    struct RainSplash
+    {
+        float x, y;        // 屏幕坐标
+        float radius;      // 当前半径
+        float maxRadius;   // 最大半径
+        float age;         // 已存活时间
+        float maxAge;      // 最大寿命
+        float alpha;       // 当前透明度
+    };
+
+    // ──────────────────────────────────────────────
     // 天气系统
     //   update()  — 每帧调用（粒子物理、闪电计时等）
     //   render()  — 在 ImGui::NewFrame() 之后调用
@@ -58,6 +71,17 @@ namespace game::weather
         static const char* getWeatherName(WeatherType t);
         const char* getCurrentWeatherName() const { return getWeatherName(m_current); }
 
+        /** 设置地面在屏幕上的范围（ImGui 显示坐标，像素）
+         *  minY = 走廊远端（背景侧），maxY = 走廊前沿（屏幕下方）
+         *  雨水涟漪将在整个地面走廊范围内出现 */
+        void setGroundScreenBand(float minY, float maxY)
+        {
+            m_groundMinScreenY = minY;
+            m_groundScreenY    = maxY;
+        }
+        /** 向后兼容：仅设置前沿 Y（等同于只更新 maxY） */
+        void setGroundScreenY(float y) { m_groundScreenY = y; }
+
         /** 自动天气切换周期（秒）；设为 0 则禁用自动切换 */
         float autoChangePeriod = 50.0f;
 
@@ -71,6 +95,8 @@ namespace game::weather
         bool  m_isTransitioning  = false;
 
         std::vector<RainParticle> m_particles;
+        std::vector<RainSplash>   m_splashes;    // 地面水花涟漪
+        float                     m_fogTime = 0.0f; // 雾气动画累计时间
         uint64_t m_rng;
 
         // 雷电
@@ -82,7 +108,8 @@ namespace game::weather
 
         // 雨斜度（水平移动 / 垂直移动 比值，负值向左倾斜）
         static constexpr float WIND_DX = -0.22f;
-
+        float m_groundScreenY    = -1.0f;  // 地面走廊前沿屏幕 Y（最大 Y，靠近玩家）
+        float m_groundMinScreenY = -1.0f;  // 地面走廊远端屏幕 Y（最小 Y，靠近背景）
         // ── 内部查询 ──
         int   targetParticleCount() const;
         float particleSpeed()  const;

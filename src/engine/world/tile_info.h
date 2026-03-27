@@ -15,10 +15,12 @@ namespace engine::world
         Stone = 1,
         Dirt = 2,
         Grass = 3,
-        Wood = 4,   // 树木木头
-        Leaves = 5, // 树叶
-        Ore = 6,    // 矿石
-        Gravel = 7, // 砾石（岩地生物群系表面）
+        Wood = 4,      // 树木木头
+        Leaves = 5,    // 树叶
+        Ore = 6,       // 矿石
+        Gravel = 7,    // 砾石（岩地生物群系表面）
+        GroundDecor = 8, // 2.5D地板装饰瓦片：渲染为地面颜色，但无物理碰撞体
+        WallDecor   = 9, // 2.5D后背景墙装饰：平面渲染、无物理、展示为狱墅颜色
     };
 
     /**
@@ -70,6 +72,14 @@ namespace engine::world
                 break;
             case TileType::Gravel:
                 uv_rect = glm::vec4(96.0f, 0.0f, 16.0f, 16.0f);
+                break;
+            case TileType::GroundDecor:
+                // 使用与 Grass 相同的 UV（渲染由 faceTint 决定颜色）
+                uv_rect = glm::vec4(32.0f, 0.0f, 16.0f, 16.0f);
+                break;
+            case TileType::WallDecor:
+                // 同 Stone UV，但平面渲染为远景墙狱
+                uv_rect = glm::vec4(0.0f, 0.0f, 16.0f, 16.0f);
                 break;
             default:
                 uv_rect = glm::vec4(0.0f, 0.0f, 16.0f, 16.0f);

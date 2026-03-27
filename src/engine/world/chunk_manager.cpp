@@ -7,6 +7,8 @@
 #include "world_config.h"
 #include "tile_info.h"
 #include <algorithm>
+#include <set>
+#include <spdlog/spdlog.h>
 
 namespace engine::world
 {
@@ -42,46 +44,32 @@ namespace engine::world
 
     TileData &ChunkManager::tileAt(int worldX, int worldY)
     {
-        int chunkX = worldX / Chunk::SIZE;
-        int chunkY = worldY / Chunk::SIZE;
-        if (worldX < 0)
-            chunkX--;
-        if (worldY < 0)
-            chunkY--;
-
-        auto it = m_chunks.find(encodeChunkKey(chunkX, chunkY));
+        int cx, cy, lx, ly;
+        worldToChunkCoords(worldX, worldY, cx, cy, lx, ly);
+        auto it = m_chunks.find(encodeChunkKey(cx, cy));
         if (it == m_chunks.end())
         {
             static TileData air(TileType::Air);
             return air;
         }
-        int localX = worldX - chunkX * Chunk::SIZE;
-        int localY = worldY - chunkY * Chunk::SIZE;
-        return it->second->tileAt(localX, localY);
+        return it->second->tileAt(lx, ly);
     }
 
     void ChunkManager::setTile(int worldX, int worldY, TileData tile)
     {
-        int chunkX = worldX / Chunk::SIZE;
-        int chunkY = worldY / Chunk::SIZE;
-        if (worldX < 0)
-            chunkX--;
-        if (worldY < 0)
-            chunkY--;
-
-        uint64_t key = encodeChunkKey(chunkX, chunkY);
+        int cx, cy, lx, ly;
+        worldToChunkCoords(worldX, worldY, cx, cy, lx, ly);
+        uint64_t key = encodeChunkKey(cx, cy);
         auto it = m_chunks.find(key);
         if (it == m_chunks.end())
         {
-            loadChunk(chunkX, chunkY);
+            loadChunk(cx, cy);
             it = m_chunks.find(key);
             if (it == m_chunks.end())
                 return;
         }
 
-        int localX = worldX - chunkX * Chunk::SIZE;
-        int localY = worldY - chunkY * Chunk::SIZE;
-        TileData &currentTile = it->second->tileAt(localX, localY);
+        TileData &currentTile = it->second->tileAt(lx, ly);
         if (currentTile.type == tile.type)
             return;
 
@@ -93,26 +81,19 @@ namespace engine::world
 
     void ChunkManager::setTileSilent(int worldX, int worldY, TileData tile)
     {
-        int chunkX = worldX / Chunk::SIZE;
-        int chunkY = worldY / Chunk::SIZE;
-        if (worldX < 0)
-            chunkX--;
-        if (worldY < 0)
-            chunkY--;
-
-        uint64_t key = encodeChunkKey(chunkX, chunkY);
+        int cx, cy, lx, ly;
+        worldToChunkCoords(worldX, worldY, cx, cy, lx, ly);
+        uint64_t key = encodeChunkKey(cx, cy);
         auto it = m_chunks.find(key);
         if (it == m_chunks.end())
         {
-            loadChunk(chunkX, chunkY);
+            loadChunk(cx, cy);
             it = m_chunks.find(key);
             if (it == m_chunks.end())
                 return;
         }
 
-        int localX = worldX - chunkX * Chunk::SIZE;
-        int localY = worldY - chunkY * Chunk::SIZE;
-        TileData &currentTile = it->second->tileAt(localX, localY);
+        TileData &currentTile = it->second->tileAt(lx, ly);
         if (currentTile.type == tile.type)
             return;
 
@@ -146,10 +127,25 @@ namespace engine::world
             tilePos.y * static_cast<float>(m_tileSize.y)};
     }
 
-    void ChunkManager::updateVisibleChunks(const glm::vec2 &cameraPos, int viewDistanceInChunks)
+    void ChunkManager::setHorizontalOnly(bool enable, float fixedWorldY)
     {
+        m_horizontalOnly = enable;
+        if (enable)
+            m_fixedChunkRowY = static_cast<int>(std::floor(fixedWorldY / (Chunk::SIZE * m_tileSize.y)));
+    }
+
+    void ChunkManager::updateVisibleChunks(const glm::vec2 &cameraPos, int viewDistanceInChunks,
+                                            int viewDistanceYOverride)
+    {
+        const int vdX = viewDistanceInChunks;
+        // 横向单行模式：垂直视距=0，chunk row Y 锁定；否则使用 override 参数
+        const int vdY = m_horizontalOnly ? 0
+                      : (viewDistanceYOverride >= 0) ? viewDistanceYOverride
+                      : viewDistanceInChunks;
+
         int camChunkX = static_cast<int>(std::floor(cameraPos.x / (Chunk::SIZE * m_tileSize.x)));
-        int camChunkY = static_cast<int>(std::floor(cameraPos.y / (Chunk::SIZE * m_tileSize.y)));
+        int camChunkY = m_horizontalOnly ? m_fixedChunkRowY
+                      : static_cast<int>(std::floor(cameraPos.y / (Chunk::SIZE * m_tileSize.y)));
 
         std::vector<uint64_t> toUnload;
         for (const auto &[key, chunk] : m_chunks)
@@ -158,7 +154,7 @@ namespace engine::world
             int cy = static_cast<int>(key & 0xFFFFFFFF);
             int distX = std::abs(cx - camChunkX);
             int distY = std::abs(cy - camChunkY);
-            if (distX > viewDistanceInChunks || distY > viewDistanceInChunks)
+            if (distX > vdX || distY > vdY)
             {
                 toUnload.push_back(key);
             }
@@ -170,9 +166,9 @@ namespace engine::world
             unloadChunk(cx, cy);
         }
 
-        for (int dx = -viewDistanceInChunks; dx <= viewDistanceInChunks; ++dx)
+        for (int dx = -vdX; dx <= vdX; ++dx)
         {
-            for (int dy = -viewDistanceInChunks; dy <= viewDistanceInChunks; ++dy)
+            for (int dy = -vdY; dy <= vdY; ++dy)
             {
                 int cx = camChunkX + dx;
                 int cy = camChunkY + dy;
@@ -183,10 +179,30 @@ namespace engine::world
                 }
             }
         }
+
+        // 仅在区块集合发生变化时打印（避免每帧日志）
+        if (m_horizontalOnly && m_chunks.size() != m_prevChunkCount)
+        {
+            m_prevChunkCount = m_chunks.size();
+            std::set<int> rows;
+            for (const auto &[key, _] : m_chunks)
+                rows.insert(static_cast<int>(static_cast<uint32_t>(key & 0xFFFFFFFFu)));
+            std::string rowStr;
+            for (int r : rows) rowStr += std::to_string(r) + " ";
+            spdlog::info("[ChunkManager] loaded chunk rows: [{}] total={}", rowStr, m_chunks.size());
+        }
     }
 
     void ChunkManager::loadChunk(int chunkX, int chunkY)
     {
+        // 横向单行模式：拒绝加载非指定 chunk 行，防止 setTile/ore/tree 绕过约束
+        if (m_horizontalOnly && chunkY != m_fixedChunkRowY)
+        {
+            spdlog::warn("[ChunkManager] BLOCKED load chunk ({},{}) fixedRow={}", chunkX, chunkY, m_fixedChunkRowY);
+            return;
+        }
+        spdlog::debug("[ChunkManager] load chunk ({},{}) fixedRow={} horizontalOnly={}", chunkX, chunkY, m_fixedChunkRowY, m_horizontalOnly);
+
         auto chunk = std::make_unique<Chunk>(chunkX, chunkY);
 
         // 使用地形生成器生成瓦片
@@ -239,6 +255,22 @@ namespace engine::world
 
             chunk->draw(ctx);
         }
+    }
+
+    std::vector<std::pair<glm::vec2, glm::vec2>> ChunkManager::getLoadedChunkBounds() const
+    {
+        std::vector<std::pair<glm::vec2, glm::vec2>> result;
+        result.reserve(m_chunks.size());
+        const glm::vec2 chunkSize{
+            static_cast<float>(Chunk::SIZE * m_tileSize.x),
+            static_cast<float>(Chunk::SIZE * m_tileSize.y)
+        };
+        for (const auto &[_, chunk] : m_chunks)
+        {
+            if (chunk)
+                result.push_back({chunk->getWorldPosition(m_tileSize), chunkSize});
+        }
+        return result;
     }
 
     void ChunkManager::renderActiveChunkHighlights(engine::core::Context &ctx) const

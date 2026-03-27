@@ -21,6 +21,8 @@ namespace engine::render
         if (_follow_target)
         {
             glm::vec2 target_pos = *_follow_target - _viewport_size * 0.5f;
+            if (_lock_y)
+                target_pos.y = _locked_y;  // DNF：Y 轴锁定
             _position = glm::mix(_position, target_pos, _follow_smoothness * delta_timer);
             clampPosition();
         }
@@ -30,6 +32,13 @@ namespace engine::render
     {
         _follow_target = const_cast<glm::vec2*>(target);
         _follow_smoothness = smoothness;
+    }
+
+    void Camera::setLockY(bool lock, float worldY)
+    {
+        _lock_y = lock;
+        // worldY 是希望居中的世界 Y；转成相机左上角 Y
+        _locked_y = worldY - _viewport_size.y * 0.5f;
     }
 
     void Camera::move(const glm::vec2 &offset)
@@ -144,7 +153,12 @@ namespace engine::render
 
     void Camera::setZoom(float zoom)
     {
-        _zoom = glm::clamp(zoom, 0.5f, 3.0f);
+        _zoom = glm::clamp(zoom, 0.5f, 16.0f);
+    }
+
+    void Camera::setPseudo3DVerticalScale(float scale)
+    {
+        _pseudo3d_vertical_scale = glm::clamp(scale, 0.1f, 1.0f);
     }
 
     void Camera::setPseudo3DEnabled(bool enabled)

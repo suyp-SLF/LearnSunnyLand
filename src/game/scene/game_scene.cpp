@@ -21,6 +21,7 @@
 #include "../../engine/core/config.h"
 #include "../../engine/world/perlin_noise_generator.h"
 #include "../../engine/world/chunk_manager.h"
+#include "dnf_terrain_generator.h"
 #include "../../engine/render/renderer.h"
 #include "../../engine/ecs/components.h"
 #include "../locale/locale_manager.h"
@@ -281,7 +282,8 @@ static void saveBoolSetting(const char* key, bool enabled)
         Scene::init(); // 设置 _is_initialized = true
 
         physics_manager = std::make_unique<engine::physics::PhysicsManager>();
-        physics_manager->init({0.0f, 10.0f});
+        // DNF 2.5D: Y轴为深度方向，由控制器软边界管理，不需要 Box2D 重力
+        physics_manager->init({0.0f, 0.0f});
 
         engine::world::WorldConfig config;
         config.loadFromFile("assets/world_config.json");
@@ -308,7 +310,7 @@ static void saveBoolSetting(const char* key, bool enabled)
             &_context.getResourceManager(),
             physics_manager.get());
 
-        auto generator = std::make_unique<engine::world::PerlinNoiseGenerator>(config);
+        auto generator = std::make_unique<game::scene::DnfTerrainGenerator>(config);
 
         // 绑定生物群系查询：根据世界 X 坐标查询当前路线格子的地形类型
         if (m_routeData.isValid())
@@ -397,9 +399,13 @@ static void saveBoolSetting(const char* key, bool enabled)
         }
 
         // 在初始可见区域生成树木（先 updateVisibleChunks 确保区块已加载）
-        chunk_manager->updateVisibleChunks({0.0f, 0.0f}, 3);
+        // DNF: 横向单行模式，worldY=80 = tile Y=5（地板表面 pixel 80..95），chunk row 0
+        // 固定在 chunk row 0，确保地面走廊行（tile Y 0-7）始终被加载
+        constexpr float DNF_ROW_Y = 80.0f;
+        chunk_manager->setHorizontalOnly(true, DNF_ROW_Y);
+        chunk_manager->updateVisibleChunks({0.0f, DNF_ROW_Y}, 3);
         for (int cx = -3; cx <= 3; ++cx)
-            for (int cy = -3; cy <= 3; ++cy)
+            for (int cy = 0; cy <= 0; ++cy)  // DNF: 只生成 chunk row 0
                 m_treeManager.generateTreesForChunk(cx, cy, *chunk_manager, m_worldConfig);
         spdlog::info("TreeManager: 初始区域树木生成完毕（min height={}, max height={}, spacing={})",
             m_worldConfig.treeMinTrunkHeight, m_worldConfig.treeMaxTrunkHeight, m_worldConfig.treeSpacing);
@@ -415,6 +421,53 @@ static void saveBoolSetting(const char* key, bool enabled)
         m_mechAttackFlashTimer = std::max(0.0f, m_mechAttackFlashTimer - delta_time);
         m_weaponAttackCooldown = std::max(0.0f, m_weaponAttackCooldown - delta_time);
         m_timeOfDaySystem.update(delta_time);
+
+        // ── DNF 连击窗口递减 ──────────────────────────────────────────
+        if (m_comboResetTimer > 0.0f)
+        {
+            m_comboResetTimer -= delta_time;
+            if (m_comboResetTimer <= 0.0f)
+                m_comboCount = 0;
+        }
+
+        // ── DNF 双击跑步：窗口计时器递减 ──────────────────────────────
+        m_doubleTapTimer = std::max(0.0f, m_doubleTapTimer - delta_time);
+
+        // ── DNF 冲刺：施加速度 + 推进计时器 ─────────────────────────
+        m_dashCooldown = std::max(0.0f, m_dashCooldown - delta_time);
+        if (m_isDashing && m_player)
+        {
+            auto* physics = m_player->getComponent<engine::component::PhysicsComponent>();
+            if (physics)
+            {
+                // 冲刺期间：强制水平速度为 dash 速度，垂直保持原值（不飞）
+                glm::vec2 vel = physics->getVelocity();
+                vel.x = m_dashFacing * 320.0f;  // 冲刺速度 320 px/s （约 20m/s）
+                vel.y *= 0.5f;                  // 减弱垂直分量，突出水平推力
+                physics->setVelocity(vel);
+
+                // 暂时禁用 Controller，使其不干扰冲刺速度
+                if (auto* ctrl = m_player->getComponent<engine::component::ControllerComponent>())
+                    ctrl->setEnabled(false);
+            }
+
+            m_dashTimer -= delta_time;
+            if (m_dashTimer <= 0.0f)
+            {
+                m_isDashing = false;
+                // 恢复 Controller
+                if (auto* ctrl = m_player->getComponent<engine::component::ControllerComponent>())
+                    ctrl->setEnabled(true);
+                // 缓和残余速度，避免冲刺结束后水平暴冲
+                if (auto* physics = m_player->getComponent<engine::component::PhysicsComponent>())
+                {
+                    glm::vec2 vel = physics->getVelocity();
+                    vel.x *= 0.4f;
+                    physics->setVelocity(vel);
+                }
+            }
+        }
+
 
         tickStarSkillPassives(delta_time);
         tickSkillVFX(delta_time);
@@ -497,7 +550,8 @@ static void saveBoolSetting(const char* key, bool enabled)
         constexpr float CHUNK_UPDATE_THRESHOLD = engine::world::Chunk::SIZE * 16.0f * 0.5f;
         if (glm::distance(playerPos, m_lastChunkUpdatePos) > CHUNK_UPDATE_THRESHOLD)
         {
-            chunk_manager->updateVisibleChunks(playerPos, 3);
+            // DNF 横向单行模式：只传 X，manager 内部自动锁定 chunk row Y
+            chunk_manager->updateVisibleChunks({playerPos.x, 0.0f}, 3);
             m_lastChunkUpdatePos = playerPos;
         }
     }
@@ -533,8 +587,9 @@ static void saveBoolSetting(const char* key, bool enabled)
         {
             glm::vec2 tileWorldPos = chunk_manager->tileToWorld(m_hoveredTile);
             const auto &tileSize = chunk_manager->getTileSize();
+            // 极淡底色，ImGui 前景层负责主要效果
             _context.getRenderer().drawRect(_context.getCamera(), tileWorldPos.x, tileWorldPos.y, tileSize.x, tileSize.y,
-                                            glm::vec4(1.0f, 0.9f, 0.2f, 0.35f));
+                                            glm::vec4(1.0f, 0.88f, 0.2f, 0.07f));
         }
 
         // 渲染UI文字
@@ -573,46 +628,96 @@ static void saveBoolSetting(const char* key, bool enabled)
             float displayW = ImGui::GetIO().DisplaySize.x;
             float displayH = ImGui::GetIO().DisplaySize.y;
 
+            // ── DNF 洞穴深度背景（ImGui背景层，在天气之前绘制）──
+            {
+                auto* bgDl = ImGui::GetBackgroundDrawList();
+                const float t = static_cast<float>(ImGui::GetTime());
+
+                // 最远景：顶部/底部岩壁厚重暗影
+                bgDl->AddRectFilled(ImVec2(0, 0),
+                    ImVec2(displayW, displayH * 0.095f), IM_COL32(4, 7, 18, 230));
+                bgDl->AddRectFilled(ImVec2(0, 0),
+                    ImVec2(displayW, displayH * 0.055f), IM_COL32(2, 4, 12, 245));
+                bgDl->AddRectFilled(ImVec2(0, displayH * 0.83f),
+                    ImVec2(displayW, displayH), IM_COL32(4, 7, 18, 180));
+                bgDl->AddRectFilled(ImVec2(0, displayH * 0.91f),
+                    ImVec2(displayW, displayH), IM_COL32(2, 4, 12, 210));
+
+                // 中远景：不规则岩壁轮廓（模拟钟乳石轮廓剪影）
+                for (int i = 0; i < 10; ++i)
+                {
+                    float frac = static_cast<float>(i) / 10.0f;
+                    float x    = displayW * frac;
+                    float segW = displayW * 0.12f;
+                    // 顶部岩壁起伏
+                    float hTop = displayH * (0.055f
+                        + std::sin(frac * 8.6f + 1.3f) * 0.022f
+                        + std::cos(frac * 4.5f + 2.1f) * 0.012f);
+                    bgDl->AddRectFilled(ImVec2(x, 0), ImVec2(x + segW + 1.0f, hTop),
+                        IM_COL32(10, 16, 34, 180));
+                    // 底部岩壁起伏
+                    float hBot = displayH * (0.905f
+                        - std::sin(frac * 6.2f + 0.7f) * 0.018f
+                        - std::cos(frac * 3.9f + 1.5f) * 0.010f);
+                    bgDl->AddRectFilled(ImVec2(x, hBot), ImVec2(x + segW + 1.0f, displayH),
+                        IM_COL32(10, 16, 34, 150));
+                }
+
+                // 左右边缘渐变暗影（增加空间纵深感）
+                bgDl->AddRectFilled(ImVec2(0, displayH * 0.10f),
+                    ImVec2(displayW * 0.045f, displayH * 0.88f), IM_COL32(6, 10, 24, 70));
+                bgDl->AddRectFilled(ImVec2(displayW * 0.955f, displayH * 0.10f),
+                    ImVec2(displayW, displayH * 0.88f), IM_COL32(6, 10, 24, 70));
+
+                // 远景墙面微弱矿石光点（紫水晶/蓝水晶，DNF 特色）
+                struct GlowSpot { float nx, ny, r; uint8_t rC, gC, bC; float phase; };
+                static constexpr GlowSpot kSpots[] = {
+                    {0.11f, 0.075f, 3.2f, 130, 70, 210, 0.0f},
+                    {0.34f, 0.062f, 2.5f, 100, 55, 190, 1.8f},
+                    {0.58f, 0.080f, 4.0f, 150, 80, 220, 3.5f},
+                    {0.76f, 0.068f, 2.8f, 110, 60, 200, 1.2f},
+                    {0.91f, 0.072f, 3.5f, 140, 78, 215, 2.7f},
+                    {0.22f, 0.920f, 2.8f, 100, 60, 185, 0.9f},
+                    {0.65f, 0.930f, 3.0f, 120, 65, 200, 2.2f},
+                };
+                for (const auto& sp : kSpots)
+                {
+                    float pulse     = 0.5f + 0.5f * std::sin(t * 1.1f + sp.phase);
+                    float innerR    = sp.r * (0.65f + 0.35f * pulse);
+                    int   glowA     = static_cast<int>(20 + 22 * pulse);
+                    int   coreA     = static_cast<int>(55 + 60 * pulse);
+                    // 外发光晕
+                    bgDl->AddCircleFilled(ImVec2(displayW * sp.nx, displayH * sp.ny),
+                        sp.r * 3.2f, IM_COL32(sp.rC, sp.gC, sp.bC, glowA));
+                    // 核心光点
+                    bgDl->AddCircleFilled(ImVec2(displayW * sp.nx, displayH * sp.ny),
+                        innerR, IM_COL32(sp.rC + 50, sp.gC + 30, sp.bC + 30, coreA));
+                }
+            }
+
+            // 告知天气系统地面屏幕 Y 波段（整个 GroundDecor 走廊范围）
+            {
+                glm::vec2 logMin = _context.getCamera().worldToScreen({0.0f, 16.0f});  // wy=1 顶边
+                glm::vec2 logMax = _context.getCamera().worldToScreen({0.0f, 96.0f});  // wy=5 底边
+                ImVec2 dispMin   = logicalToImGuiScreen(_context, logMin);
+                ImVec2 dispMax   = logicalToImGuiScreen(_context, logMax);
+                m_weatherSystem.setGroundScreenBand(dispMin.y, dispMax.y);
+            }
+
             // ── 天气效果（背景层，位于所有ImGui窗口之下）──
             m_weatherSystem.render(displayW, displayH);
 
-            // 相机缩放 + 天气控制
-            ImGui::SetNextWindowPos(ImVec2(displayW - 260, 20), ImGuiCond_Always);
-            ImGui::Begin("设置", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
-            if (ImGui::SliderFloat(locale::T("game.zoom").c_str(), &m_zoomSliderValue, 0.5f, 3.0f))
-                _context.getCamera().setZoom(m_zoomSliderValue);
-
-            ImGui::Separator();
-            ImGui::TextUnformatted("天气");
-            ImGui::Text("星球: %s", game::route::RouteData::planetName(m_routeData.selectedPlanet));
-            ImGui::Text("时间: %02d:%02d  %s",
+            // 天气 / 时间 HUD（右上角常驻，按 ESC 或 ` 打开完整设置）
+            ImGui::SetNextWindowPos(ImVec2(displayW - 230, 20), ImGuiCond_Always);
+            ImGui::Begin("##weather_hud", nullptr,
+                ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse |
+                ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
+            ImGui::Text("%02d:%02d %s  %s",
                         m_timeOfDaySystem.getHour24(),
                         m_timeOfDaySystem.getMinute(),
-                        m_timeOfDaySystem.getPhaseName());
-            ImGui::Text("日照: %.0f%%", m_timeOfDaySystem.getDaylightFactor() * 100.0f);
-            ImGui::Text("天体可见度: %.0f%%", m_weatherSystem.getSkyVisibility() * 100.0f);
-            // 当前天气显示
-            ImGui::Text("当前: %s", m_weatherSystem.getCurrentWeatherName());
-
-            // 天气切换按钮
-            using game::weather::WeatherType;
-            const struct { WeatherType type; const char* label; } kWeathers[] = {
-                { WeatherType::Clear,        "晴天" },
-                { WeatherType::LightRain,    "小雨" },
-                { WeatherType::MediumRain,   "中雨" },
-                { WeatherType::HeavyRain,    "大雨" },
-                { WeatherType::Thunderstorm, "雷雨" },
-            };
-            for (auto &w : kWeathers)
-            {
-                bool selected = (m_weatherSystem.getCurrentWeather() == w.type);
-                if (selected) ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.6f, 1.0f, 1.0f));
-                if (ImGui::Button(w.label))
-                    m_weatherSystem.setWeather(w.type, 3.0f);
-                if (selected) ImGui::PopStyleColor();
-                ImGui::SameLine();
-            }
-            ImGui::NewLine();
+                        m_timeOfDaySystem.getPhaseName(),
+                        m_weatherSystem.getCurrentWeatherName());
+            ImGui::TextDisabled("ESC / ` 设置");
             ImGui::End();
 
             // 左侧武器栏（常显示）
@@ -654,6 +759,87 @@ static void saveBoolSetting(const char* key, bool enabled)
             if (m_showSkillDebugOverlay)
                 renderSkillDebugOverlay();
 
+            // ── Chunk 调试红线边框 ──────────────────────────────────────────────
+            if (chunk_manager)
+            {
+                auto* fg = ImGui::GetForegroundDrawList();
+                const auto &cam = _context.getCamera();
+                for (const auto &[worldPos, worldSize] : chunk_manager->getLoadedChunkBounds())
+                {
+                    glm::vec2 tlL = cam.worldToScreen(worldPos);
+                    glm::vec2 brL = cam.worldToScreen(worldPos + worldSize);
+                    ImVec2 sTL    = logicalToImGuiScreen(_context, tlL);
+                    ImVec2 sBR    = logicalToImGuiScreen(_context, brL);
+                    fg->AddRect(sTL, sBR, IM_COL32(255, 50, 50, 200), 0.0f, 0, 1.8f);
+                    // 左上角显示 chunk 坐标
+                    char label[24];
+                    int cx = static_cast<int>(worldPos.x / worldSize.x);
+                    int cy = static_cast<int>(worldPos.y / worldSize.y);
+                    snprintf(label, sizeof(label), "C%d,%d", cx, cy);
+                    fg->AddText(ImVec2(sTL.x + 3.0f, sTL.y + 3.0f),
+                                IM_COL32(255, 120, 120, 220), label);
+                }
+            }
+
+            // ── DNF 瓦片悬停魔法光圈（脉动金色 L 形角标 + 外发光）──
+            if (m_hasHoveredTile && chunk_manager)
+            {
+                auto* fg = ImGui::GetForegroundDrawList();
+                const auto& cam  = _context.getCamera();
+                const auto& ts   = chunk_manager->getTileSize();
+                glm::vec2 twp    = chunk_manager->tileToWorld(m_hoveredTile);
+                glm::vec2 tlL    = cam.worldToScreen(twp);
+                glm::vec2 brL    = cam.worldToScreen(twp + glm::vec2(ts.x, ts.y));
+                ImVec2 sTL       = logicalToImGuiScreen(_context, tlL);
+                ImVec2 sBR       = logicalToImGuiScreen(_context, brL);
+
+                const float T    = static_cast<float>(ImGui::GetTime());
+                const float pulse = 0.5f + 0.5f * std::sin(T * 5.0f);
+                const float w_px = sBR.x - sTL.x;
+                const float h_px = sBR.y - sTL.y;
+                const float cLen = std::min(w_px, h_px) * 0.38f;  // L 形角标长度
+
+                // 外发光圆角矩形（两层，产生晕染感）
+                fg->AddRect(ImVec2(sTL.x - 4, sTL.y - 4), ImVec2(sBR.x + 4, sBR.y + 4),
+                    IM_COL32(255, 200, 60, static_cast<int>(35 + 28 * pulse)), 3.0f, 0, 4.0f);
+                fg->AddRect(ImVec2(sTL.x - 2, sTL.y - 2), ImVec2(sBR.x + 2, sBR.y + 2),
+                    IM_COL32(255, 220, 100, static_cast<int>(55 + 45 * pulse)), 2.0f, 0, 2.5f);
+
+                // 主边框
+                fg->AddRect(sTL, sBR,
+                    IM_COL32(255, 235, 80, static_cast<int>(130 + 100 * pulse)), 0.0f, 0, 1.5f);
+
+                // 四角 L 形标记（DNF 选框特色）
+                const float lw = 2.2f;
+                const ImU32 cc = IM_COL32(255, 248, 140, static_cast<int>(190 + 65 * pulse));
+                // 左上
+                fg->AddLine({sTL.x, sTL.y}, {sTL.x + cLen, sTL.y}, cc, lw);
+                fg->AddLine({sTL.x, sTL.y}, {sTL.x, sTL.y + cLen}, cc, lw);
+                // 右上
+                fg->AddLine({sBR.x, sTL.y}, {sBR.x - cLen, sTL.y}, cc, lw);
+                fg->AddLine({sBR.x, sTL.y}, {sBR.x, sTL.y + cLen}, cc, lw);
+                // 左下
+                fg->AddLine({sTL.x, sBR.y}, {sTL.x + cLen, sBR.y}, cc, lw);
+                fg->AddLine({sTL.x, sBR.y}, {sTL.x, sBR.y - cLen}, cc, lw);
+                // 右下
+                fg->AddLine({sBR.x, sBR.y}, {sBR.x - cLen, sBR.y}, cc, lw);
+                fg->AddLine({sBR.x, sBR.y}, {sBR.x, sBR.y - cLen}, cc, lw);
+
+                // 中心旋转菱形指示器
+                const float cx   = (sTL.x + sBR.x) * 0.5f;
+                const float cy   = (sTL.y + sBR.y) * 0.5f;
+                const float dmR  = std::min(w_px, h_px) * 0.16f;
+                const float ang  = T * 1.6f;
+                ImVec2 dm[4];
+                for (int di = 0; di < 4; ++di)
+                {
+                    float a = ang + di * 1.5707963f;
+                    dm[di]  = {cx + dmR * std::cos(a), cy + dmR * std::sin(a)};
+                }
+                fg->AddQuad(dm[0], dm[1], dm[2], dm[3],
+                    IM_COL32(255, 240, 100, static_cast<int>(100 + 80 * pulse)), 1.2f);
+            }
+
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         }
@@ -665,19 +851,23 @@ static void saveBoolSetting(const char* key, bool enabled)
         if (shadowActor)
         {
             auto *transform = shadowActor->getComponent<engine::component::TransformComponent>();
-            auto *physics = shadowActor->getComponent<engine::component::PhysicsComponent>();
+            auto *ctrl      = shadowActor->getComponent<engine::component::ControllerComponent>();
             if (transform)
             {
-                glm::vec2 size = m_isPlayerInMech ? glm::vec2(38.0f, 11.0f) : glm::vec2(24.0f, 7.0f);
-                float alpha = m_isPlayerInMech ? 0.20f : 0.17f;
-                if (physics)
-                {
-                    float airFactor = std::min(std::abs(physics->getVelocity().y) / 8.0f, 1.0f);
-                    alpha *= 1.0f - airFactor * 0.35f;
-                    size *= 1.0f - airFactor * 0.20f;
-                }
+                float posZ = ctrl ? ctrl->getPosZ() : 0.0f;
 
-                glm::vec2 shadowCenter = transform->getPosition()
+                // 阴影始终落在地面（还原 Z 偏移得到真实地面 Y）
+                glm::vec2 groundPos = transform->getPosition() + glm::vec2(0.0f, posZ);
+
+                // 阴影大小和透明度随离地高度衰减（DNF 动态阴影）
+                glm::vec2 baseSize = m_isPlayerInMech ? glm::vec2(38.0f, 11.0f) : glm::vec2(24.0f, 7.0f);
+                float baseAlpha    = m_isPlayerInMech ? 0.20f : 0.17f;
+
+                float zFactor = 1.0f / (1.0f + posZ * 0.007f);  // 越高越小越透
+                glm::vec2 size  = baseSize  * zFactor;
+                float     alpha = baseAlpha * zFactor;
+
+                glm::vec2 shadowCenter = groundPos
                     + glm::vec2(0.0f, m_isPlayerInMech ? 20.0f : 14.0f);
                 drawWorldShadow(_context, shadowCenter, size, alpha);
             }
@@ -707,6 +897,41 @@ static void saveBoolSetting(const char* key, bool enabled)
         if (actor_manager)
             actor_manager->handleInput();
 
+        // ── DNF 双击跑步检测（200ms 窗口内同向二次按键 → 跑步模式）──────
+        {
+            auto* ctrl = m_player
+                ? m_player->getComponent<engine::component::ControllerComponent>()
+                : nullptr;
+            if (ctrl)
+            {
+                bool leftPressed  = input.isActionPressed("move_left");
+                bool rightPressed = input.isActionPressed("move_right");
+                bool leftDown     = input.isActionDown("move_left");
+                bool rightDown    = input.isActionDown("move_right");
+
+                // 任意方向键松开时退出跑步模式
+                if (!leftDown && !rightDown)
+                    ctrl->setRunMode(false);
+
+                // 新按键事件：检测双击
+                if (leftPressed || rightPressed)
+                {
+                    int pressDir = rightPressed ? 1 : -1;
+                    if (m_doubleTapTimer > 0.0f && m_doubleTapLastDir == pressDir)
+                    {
+                        ctrl->setRunMode(true);   // 双击同向 → 跑步
+                        m_doubleTapTimer = 0.0f;  // 消耗窗口
+                    }
+                    else
+                    {
+                        // 首次按键：开启 200ms 等待窗口
+                        m_doubleTapTimer   = 0.20f;
+                        m_doubleTapLastDir = pressDir;
+                    }
+                }
+            }
+        }
+
         glm::vec2 mousePos = input.getLogicalMousePosition();
         glm::vec2 worldPos = _context.getCamera().screenToWorld(mousePos);
         m_lastMouseLogicalPos = mousePos;
@@ -717,11 +942,13 @@ static void saveBoolSetting(const char* key, bool enabled)
             + glm::vec2(chunk_manager->getTileSize()) * 0.5f;
         m_lastHoveredTileCenter = hoveredTileCenter;
 
-        // 鼠标左键点击摧毁瓦片（树木会触发倒树逻辑）
+        // ── DNF 卷轴战斗：K 键近战攻击（方向由角色朝向决定，不依赖鼠标）──
         if (input.isActionPressed("attack"))
         {
             if (m_isPlayerInMech)
+            {
                 performMechAttack();
+            }
             else
             {
                 const auto &activeSlot = m_weaponBar.getActiveSlot();
@@ -731,36 +958,72 @@ static void saveBoolSetting(const char* key, bool enabled)
 
                 if (weaponDef && weaponDef->attack_type == game::weapon::AttackType::Melee)
                 {
-                    performMeleeAttack(hoveredTileCenter);
-                }
-                else
-                {
-                    using engine::world::TileType;
-                    TileType t = chunk_manager->tileAt(m_hoveredTile.x, m_hoveredTile.y).type;
-                    if (t == TileType::Wood || t == TileType::Leaves)
-                    {
-                        m_treeManager.digTile(m_hoveredTile.x, m_hoveredTile.y,
-                                              *chunk_manager, m_treeManager.getDrops());
-                    }
-                    else if (t == TileType::Ore)
-                    {
-                        chunk_manager->setTileSilent(m_hoveredTile.x, m_hoveredTile.y,
-                                                     engine::world::TileData(TileType::Air));
-                        chunk_manager->rebuildDirtyChunks();
-                        using Cat = game::inventory::ItemCategory;
-                        m_inventory.addItem({"ore", "矿石", 64, Cat::Material}, 1);
-                    }
-                    else
-                    {
-                        chunk_manager->setTileSilent(m_hoveredTile.x, m_hoveredTile.y,
-                                                     engine::world::TileData(TileType::Air));
-                        chunk_manager->rebuildDirtyChunks();
-                    }
+                    // DNF：攻击目标 = 玩家位置沿朝向偏移（非鼠标坐标）
+                    glm::vec2 playerPos = getActorWorldPosition(m_player);
+                    auto* ctrl = m_player
+                        ? m_player->getComponent<engine::component::ControllerComponent>()
+                        : nullptr;
+                    float facing = (!ctrl || ctrl->getFacingDirection() ==
+                        engine::component::ControllerComponent::FacingDirection::Right)
+                        ? 1.0f : -1.0f;
+                    glm::vec2 attackTarget = playerPos + glm::vec2(40.0f * facing, -8.0f);
 
-                    triggerAttackStarSkills(hoveredTileCenter);
+                    // 连击计数：在窗口内连续按键递进段数
+                    if (m_comboResetTimer > 0.0f)
+                        m_comboCount = std::min(m_comboCount + 1, 2);
+                    else
+                        m_comboCount = 0;
+                    m_comboResetTimer = 0.40f;   // 0.4s 连击窗口
+
+                    performMeleeAttack(attackTarget);
+
+                    // ── 攻击位移冲量：攻击瞬间沿朝向滑行（DNF 攻击手感）──
+                    if (m_player)
+                    {
+                        auto* physics = m_player->getComponent<engine::component::PhysicsComponent>();
+                        if (physics)
+                        {
+                            glm::vec2 avel = physics->getVelocity();
+                            // 冲量大小随连击段数递增（首段=5, 二段=7, 三段=4 收力）
+                            float impulse = (m_comboCount == 0) ? 5.0f
+                                          : (m_comboCount == 1) ? 7.0f : 4.0f;
+                            avel.x = facing * impulse;
+                            physics->setVelocity(avel);
+                        }
+                    }
                 }
             }
         }
+
+        // ── DNF 冲刺：Shift 键触发（冲刺方向 = 当前移动方向或朝向）──────
+        {
+            const bool* keys = SDL_GetKeyboardState(nullptr);
+            bool shiftNow = (keys[SDL_SCANCODE_LSHIFT] || keys[SDL_SCANCODE_RSHIFT]) != 0;
+            if (shiftNow && !m_dashKeyWas && m_dashCooldown <= 0.0f && !m_isDashing)
+            {
+                // 确定冲刺方向：A/D 键决定；都没按则用角色朝向
+                bool leftDown  = (keys[SDL_SCANCODE_A] || keys[SDL_SCANCODE_LEFT])  != 0;
+                bool rightDown = (keys[SDL_SCANCODE_D] || keys[SDL_SCANCODE_RIGHT]) != 0;
+                if (rightDown)
+                    m_dashFacing = 1.0f;
+                else if (leftDown)
+                    m_dashFacing = -1.0f;
+                else
+                {
+                    auto* ctrl = m_player
+                        ? m_player->getComponent<engine::component::ControllerComponent>()
+                        : nullptr;
+                    m_dashFacing = (!ctrl || ctrl->getFacingDirection() ==
+                        engine::component::ControllerComponent::FacingDirection::Right)
+                        ? 1.0f : -1.0f;
+                }
+                m_isDashing  = true;
+                m_dashTimer  = 0.18f;     // 冲刺持续 0.18s
+                m_dashCooldown = 0.65f;   // 冷却 0.65s
+            }
+            m_dashKeyWas = shiftNow;
+        }
+
 
         // E键切换背包
         if (input.isActionPressed("open_inventory"))
@@ -768,6 +1031,10 @@ static void saveBoolSetting(const char* key, bool enabled)
 
         // ~键切换设置页面
         if (input.isActionPressed("open_settings"))
+            m_showSettings = !m_showSettings;
+
+        // ESC / P键切换设置页面
+        if (input.isActionPressed("pause"))
             m_showSettings = !m_showSettings;
 
         // M键切换星球任务规划
@@ -1006,6 +1273,27 @@ static void saveBoolSetting(const char* key, bool enabled)
         if (auto* anim = m_player->getComponent<engine::component::AnimationComponent>())
             anim->play(animKey);
 
+        // ── DNF Z轴视觉偏移：将精灵沿屏幕 Y 上移 posZ 像素 ──
+        auto* transform = m_player->getComponent<engine::component::TransformComponent>();
+        if (transform)
+        {
+            float posZ = controller->getPosZ();
+            glm::vec2 pos = transform->getPosition();
+            // 每帧先把上帧 Z 偏移还原（物理系统已将 Y 重置回地面），再施加当前 Z
+            // 注意：PhysicsComponent::update() 在 actor_manager->update() 同帧已将 Y 设为 Box2D 值
+            if (posZ > 0.0f)
+                pos.y -= posZ;
+            transform->setPosition(pos);
+
+            // ── Y轴透视缩放：走廊深度越深→角色越大（视差感）──
+            // 以走廊中心 Y=56 为基准：Y<56 (场景后方) 角色偏小，Y>56(场景前方) 角色偏大
+            constexpr float kBaseY   = 56.0f;
+            constexpr float kFactor  = 0.0008f;
+            float perspScale = 1.0f + (pos.y - kBaseY) * kFactor;
+            perspScale = std::clamp(perspScale, 0.92f, 1.08f);
+            transform->setScale({perspScale, perspScale});
+        }
+
         if (m_mech)
         {
             auto* mechController = m_mech->getComponent<engine::component::ControllerComponent>();
@@ -1068,7 +1356,7 @@ static void saveBoolSetting(const char* key, bool enabled)
         {
             if (auto* ctrl = m_player->getComponent<engine::component::ControllerComponent>())
             {
-                constexpr float BASE_SPEED = 25.0f;
+                constexpr float BASE_SPEED = 12.0f;
                 constexpr float BASE_JUMP  = 8.0f;
                 ctrl->setSpeed(BASE_SPEED * attr->get(game::component::StatType::Speed));
                 ctrl->setJumpSpeed(BASE_JUMP * attr->get(game::component::StatType::JumpPower));
@@ -1179,6 +1467,17 @@ static void saveBoolSetting(const char* key, bool enabled)
         ImGui::TextDisabled("* 模块内存为估算值，总 RSS 为实际物理内存占用。");
 
         ImGui::SeparatorText("图形设置");
+
+        // 相机缩放控制
+        if (ImGui::SliderFloat("相机缩放", &m_zoomSliderValue, 0.5f, 8.0f))
+            _context.getCamera().setZoom(m_zoomSliderValue);
+        ImGui::SameLine();
+        if (ImGui::Button("重置"))
+        {
+            m_zoomSliderValue = 2.5f;
+            _context.getCamera().setZoom(2.5f);
+        }
+
         if (ImGui::Checkbox("显示帧率", &m_showFpsOverlay))
         {
             // 实时生效，无需额外操作
@@ -1191,6 +1490,34 @@ static void saveBoolSetting(const char* key, bool enabled)
         {
             saveBoolSetting("show_active_chunk_highlights", m_showActiveChunkHighlights);
         }
+
+        ImGui::SeparatorText("天气控制");
+        ImGui::Text("星球: %s  %02d:%02d %s  日照: %.0f%%",
+            game::route::RouteData::planetName(m_routeData.selectedPlanet),
+            m_timeOfDaySystem.getHour24(), m_timeOfDaySystem.getMinute(),
+            m_timeOfDaySystem.getPhaseName(),
+            m_timeOfDaySystem.getDaylightFactor() * 100.0f);
+        ImGui::Text("当前天气: %s  天体可见度: %.0f%%",
+            m_weatherSystem.getCurrentWeatherName(),
+            m_weatherSystem.getSkyVisibility() * 100.0f);
+        using game::weather::WeatherType;
+        const struct { WeatherType type; const char* label; } kWeathers[] = {
+            { WeatherType::Clear,        "晴天" },
+            { WeatherType::LightRain,    "小雨" },
+            { WeatherType::MediumRain,   "中雨" },
+            { WeatherType::HeavyRain,    "大雨" },
+            { WeatherType::Thunderstorm, "雷雨" },
+        };
+        for (auto &w : kWeathers)
+        {
+            bool selected = (m_weatherSystem.getCurrentWeather() == w.type);
+            if (selected) ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.6f, 1.0f, 1.0f));
+            if (ImGui::Button(w.label))
+                m_weatherSystem.setWeather(w.type, 3.0f);
+            if (selected) ImGui::PopStyleColor();
+            ImGui::SameLine();
+        }
+        ImGui::NewLine();
 
         ImGui::End();
     }
@@ -1299,110 +1626,145 @@ static void saveBoolSetting(const char* key, bool enabled)
         using namespace game::route;
         using R = RouteData;
 
-        const float CELL_PX  = 6.0f;
-        const float CELL_TOT = CELL_PX + 1.0f;      // 7px/格
+        // DNF 风格小地图：每格放大为 8px，加 1px 间距
+        const float CELL_PX  = 8.0f;
+        const float CELL_TOT = CELL_PX + 1.0f;
         const float MAP_W    = R::MAP_SIZE * CELL_TOT;
         const float MAP_H    = R::MAP_SIZE * CELL_TOT;
-        const float WIN_W    = MAP_W + 14.0f;
-        const float WIN_H    = MAP_H + 46.0f;
+        const float WIN_W    = MAP_W + 18.0f;
+        const float WIN_H    = MAP_H + 48.0f;
 
         float dh = ImGui::GetIO().DisplaySize.y;
-        ImGui::SetNextWindowPos({10.0f, dh - WIN_H - 10.0f}, ImGuiCond_Always);
+        ImGui::SetNextWindowPos({8.0f, dh - WIN_H - 8.0f}, ImGuiCond_Always);
         ImGui::SetNextWindowSize({WIN_W, WIN_H}, ImGuiCond_Always);
-        ImGui::SetNextWindowBgAlpha(0.82f);
-        ImGui::Begin("##routehud", nullptr,
+        ImGui::SetNextWindowBgAlpha(0.0f);
+        ImGui::Begin("##dnf_routehud", nullptr,
             ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
             ImGuiWindowFlags_NoNav         | ImGuiWindowFlags_NoInputs |
-            ImGuiWindowFlags_NoBringToFrontOnFocus);
+            ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoSavedSettings);
 
-        // 标题
-        ImGui::TextColored({0.5f, 0.9f, 1.0f, 1.0f}, "路线进度");
-        ImGui::SameLine(WIN_W - 40.0f);
-        ImGui::TextDisabled("%d步", static_cast<int>(m_routeData.path.size()));
+        auto* dl     = ImGui::GetWindowDrawList();
+        ImVec2 wp    = ImGui::GetWindowPos();
 
-        ImDrawList *dl    = ImGui::GetWindowDrawList();
-        ImVec2      origin = ImGui::GetCursorScreenPos();
-        origin.x += 4.0f;
+        // ── 面板背景（深色仿旧皮革）────────────────────────────────────────
+        dl->AddRectFilled({wp.x, wp.y}, {wp.x + WIN_W, wp.y + WIN_H},
+            IM_COL32(14, 10, 6, 215), 5.0f);
+        dl->AddRect({wp.x, wp.y}, {wp.x + WIN_W, wp.y + WIN_H},
+            IM_COL32(150, 118, 45, 180), 5.0f, 0, 1.2f);
+        dl->AddRect({wp.x + 2, wp.y + 2}, {wp.x + WIN_W - 2, wp.y + WIN_H - 2},
+            IM_COL32(80, 62, 22, 120), 4.0f, 0, 0.8f);
 
-        int psize = static_cast<int>(m_routeData.path.size());
-
-        // 绘制微型 20×20 地图
-        for (int ry = 0; ry < R::MAP_SIZE; ++ry)
+        // 四角铆钉
+        for (int cx = 0; cx < 2; ++cx) for (int cy = 0; cy < 2; ++cy)
         {
-            for (int cx = 0; cx < R::MAP_SIZE; ++cx)
+            float rx = wp.x + (cx ? WIN_W - 6 : 6);
+            float ry = wp.y + (cy ? WIN_H - 6 : 6);
+            dl->AddCircleFilled({rx, ry}, 3.5f, IM_COL32(150, 118, 45, 200));
+            dl->AddCircleFilled({rx, ry}, 1.8f, IM_COL32(220, 185, 85, 240));
+        }
+
+        // ── 标题 ────────────────────────────────────────────────────────
+        const char* titleStr = "地下城地图";
+        ImVec2 titleSz = ImGui::CalcTextSize(titleStr);
+        float  titleX  = wp.x + (WIN_W - titleSz.x) * 0.5f;
+        dl->AddText({titleX + 1, wp.y + 5 + 1}, IM_COL32(0, 0, 0, 180), titleStr);
+        dl->AddText({titleX, wp.y + 5},  IM_COL32(220, 185, 85, 255), titleStr);
+        // 标题下分割线
+        dl->AddLine({wp.x + 8, wp.y + 19}, {wp.x + WIN_W - 8, wp.y + 19},
+            IM_COL32(150, 118, 45, 140), 0.8f);
+
+        ImVec2 origin = {wp.x + 8.0f, wp.y + 24.0f};
+        int psize = static_cast<int>(m_routeData.path.size());
+        const float T = static_cast<float>(ImGui::GetTime());
+
+        // ── 绘制格子 ─────────────────────────────────────────────────────
+        for (int ry2 = 0; ry2 < R::MAP_SIZE; ++ry2)
+        {
+            for (int cx2 = 0; cx2 < R::MAP_SIZE; ++cx2)
             {
-                float px = origin.x + cx * CELL_TOT;
-                float py = origin.y + ry * CELL_TOT;
+                float px = origin.x + cx2 * CELL_TOT;
+                float py = origin.y + ry2 * CELL_TOT;
                 ImVec2 p0{px, py}, p1{px + CELL_PX, py + CELL_PX};
 
-                glm::ivec2 cell{cx, ry};
+                glm::ivec2 cell{cx2, ry2};
                 int pidx = -1;
-                for (int i = 0; i < psize; ++i)
-                    if (m_routeData.path[i] == cell) { pidx = i; break; }
+                for (int k = 0; k < psize; ++k)
+                    if (m_routeData.path[k] == cell) { pidx = k; break; }
 
                 bool isObjective = (cell == m_routeData.objectiveCell);
 
                 ImU32 fill;
                 if (pidx == 0)
-                    fill = IM_COL32(40, 200, 80, 255);   // 出发
+                    fill = IM_COL32(50, 200, 90, 255);     // 出发（绿）
                 else if (pidx == psize - 1)
-                    fill = IM_COL32(220, 70, 70, 255);   // 撤离
+                    fill = IM_COL32(220, 65, 65, 255);     // 撤离（红）
                 else if (pidx == m_currentZone)
-                    fill = IM_COL32(255, 220, 50, 255);  // 当前区域
-                else if (pidx >= 0)
                 {
-                    auto tc = game::route::RouteData::terrainColor(m_routeData.terrain[ry][cx]);
-                    fill = IM_COL32(tc.r/3*2, tc.g/3*2+30, tc.b/3*2+60, 210);  // 路线（地形色调）
+                    // 当前房间：金色脉冲
+                    float pulse = 0.5f + 0.5f * std::sin(T * 4.0f);
+                    fill = IM_COL32(
+                        static_cast<int>(200 + 55 * pulse),
+                        static_cast<int>(170 + 40 * pulse),
+                        30, 255);
                 }
+                else if (pidx >= 0 && pidx < m_currentZone)
+                    fill = IM_COL32(60, 80, 55, 220);      // 已过（暗绿）
+                else if (pidx > m_currentZone)
+                    fill = IM_COL32(45, 40, 28, 200);      // 未到（深褐）
                 else
-                {
-                    auto tc = game::route::RouteData::terrainColor(m_routeData.terrain[ry][cx]);
-                    fill = IM_COL32(tc.r/3, tc.g/3, tc.b/3, 160);  // 空格（暗淡地形）
-                }
+                    fill = IM_COL32(20, 16, 10, 160);      // 非路径（极暗）
 
+                // 格子填充
                 dl->AddRectFilled(p0, p1, fill, 1.0f);
 
-                // 目标格金色边框
-                if (isObjective)
-                    dl->AddRect(p0, p1, IM_COL32(255, 210, 50, 220), 1.0f, 0, 1.5f);
+                // 路径格子加微弱内边框
+                if (pidx >= 0)
+                    dl->AddRect(p0, p1, IM_COL32(120, 95, 35, 100), 1.0f, 0, 0.7f);
 
-                // 当前区域加白色边框
+                // 目标格：金色边框
+                if (isObjective)
+                    dl->AddRect(p0, p1, IM_COL32(255, 210, 50, 220), 0.0f, 0, 1.5f);
+                // 当前区域：白色边框
                 else if (pidx == m_currentZone)
-                    dl->AddRect(p0, p1, IM_COL32(255, 255, 255, 220), 1.0f, 0, 1.5f);
+                    dl->AddRect(p0, p1, IM_COL32(255, 255, 255, 200), 0.0f, 0, 1.5f);
             }
         }
 
-        // 路线连线
-        for (int i = 0; i + 1 < psize; ++i)
+        // ── 路径连线（黄色虚线风格）──────────────────────────────────────
+        for (int k = 0; k + 1 < psize; ++k)
         {
-            const auto &a = m_routeData.path[i];
-            const auto &b = m_routeData.path[i + 1];
+            const auto &a = m_routeData.path[k];
+            const auto &b = m_routeData.path[k + 1];
             ImVec2 pa{origin.x + a.x * CELL_TOT + CELL_PX * 0.5f,
                       origin.y + a.y * CELL_TOT + CELL_PX * 0.5f};
             ImVec2 pb{origin.x + b.x * CELL_TOT + CELL_PX * 0.5f,
                       origin.y + b.y * CELL_TOT + CELL_PX * 0.5f};
-            ImU32 lcol = (i < m_currentZone)
-                ? IM_COL32(100, 180, 120, 120)  // 已过
-                : IM_COL32(255, 230, 80, 160);  // 未过
-            dl->AddLine(pa, pb, lcol, 1.5f);
+            ImU32 lc = (k < m_currentZone)
+                ? IM_COL32(80, 120, 70, 150)         // 已过：暗绿
+                : IM_COL32(220, 180, 55, 190);       // 未过：金色
+            dl->AddLine(pa, pb, lc, 1.5f);
         }
 
-        // 占位，让光标移到文字行
-        ImGui::Dummy({MAP_W, MAP_H});
+        // ── 底部状态文字 ──────────────────────────────────────────────────
+        float textY = wp.y + WIN_H - 22.0f;
+        dl->AddLine({wp.x + 8, textY - 3}, {wp.x + WIN_W - 8, textY - 3},
+            IM_COL32(100, 78, 28, 120), 0.8f);
 
-        // 当前位置文字
         if (m_currentZone < psize)
         {
             const auto &curCell = m_routeData.path[m_currentZone];
             bool isLast = (m_currentZone == psize - 1);
-            ImGui::TextColored(
-                isLast ? ImVec4{0.3f, 1.0f, 0.4f, 1.0f} : ImVec4{1.0f, 0.9f, 0.4f, 1.0f},
-                "%s第%d/%d步 %s%s",
-                isLast ? "[" : "",
-                m_currentZone + 1,
-                psize,
-                RouteData::cellLabel(curCell).c_str(),
-                isLast ? "] 撤离点" : "");
+            const char* label = RouteData::cellLabel(curCell).c_str();
+            char stepBuf[64];
+            snprintf(stepBuf, sizeof(stepBuf), "%d/%d  %s%s",
+                m_currentZone + 1, psize, label, isLast ? " [撤]" : "");
+            ImVec2 stSz = ImGui::CalcTextSize(stepBuf);
+            ImU32  stCol = isLast
+                ? IM_COL32(80, 220, 100, 255)
+                : IM_COL32(220, 185, 85, 240);
+            dl->AddText({wp.x + (WIN_W - stSz.x) * 0.5f, textY},
+                IM_COL32(0, 0, 0, 160), stepBuf);
+            dl->AddText({wp.x + (WIN_W - stSz.x) * 0.5f + 0, textY + 0}, stCol, stepBuf);
         }
 
         ImGui::End();
@@ -1484,50 +1846,128 @@ static void saveBoolSetting(const char* key, bool enabled)
     // ------------------------------------------------------------------
     void GameScene::renderWeaponBar()
     {
-        constexpr float SLOT_H  = 58.0f;
-        constexpr float SLOT_W  = 70.0f;
-        constexpr float GAP     = 3.0f;
+        constexpr float SLOT_H  = 60.0f;
+        constexpr float SLOT_W  = 60.0f;
+        constexpr float GAP     = 4.0f;
         constexpr int   SLOTS   = game::weapon::WeaponBar::SLOTS;
 
-        const float WIN_H = SLOTS * SLOT_H + (SLOTS - 1) * GAP + 46.0f;
-        ImGui::SetNextWindowPos({10.0f, 180.0f}, ImGuiCond_Always);
-        ImGui::SetNextWindowSize({SLOT_W + 16.0f, WIN_H}, ImGuiCond_Always);
+        const float WIN_H = SLOTS * SLOT_H + (SLOTS - 1) * GAP + 20.0f;
+        const float WIN_W = SLOT_W + 18.0f;
+
+        ImGui::SetNextWindowPos({8.0f, 178.0f}, ImGuiCond_Always);
+        ImGui::SetNextWindowSize({WIN_W, WIN_H}, ImGuiCond_Always);
+        ImGui::SetNextWindowBgAlpha(0.0f);   // 全透明，完全用 DrawList 绘制
 
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {GAP, GAP});
-        ImGui::Begin(locale::T("weapon_bar.title").c_str(), nullptr,
-            ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {8.0f, 8.0f});
+        ImGui::Begin("##dnf_weapon_bar", nullptr,
+            ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+            ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoTitleBar |
+            ImGuiWindowFlags_NoSavedSettings);
+
+        auto* dl  = ImGui::GetWindowDrawList();
+        ImVec2 wp = ImGui::GetWindowPos();
+
+        // 面板底层：暗钢色背景
+        dl->AddRectFilled({wp.x, wp.y}, {wp.x + WIN_W, wp.y + WIN_H},
+            IM_COL32(15, 12, 8, 200), 5.0f);
+        dl->AddRect({wp.x, wp.y}, {wp.x + WIN_W, wp.y + WIN_H},
+            IM_COL32(160, 130, 50, 160), 5.0f, 0, 1.2f);
 
         for (int i = 0; i < SLOTS; ++i)
         {
-            const auto &slot = m_weaponBar.getSlot(i);
-            bool is_active   = (i == m_weaponBar.getActiveIndex());
+            const auto &slot     = m_weaponBar.getSlot(i);
+            const bool is_active = (i == m_weaponBar.getActiveIndex());
 
-            // 激活槽用黄色高亮边框
+            float sy = wp.y + 8.0f + i * (SLOT_H + GAP);
+            float sx = wp.x + 9.0f;
+
+            // ── 槽背景色 ──────────────────────────────────────────────
+            ImU32 slotBg  = is_active
+                ? IM_COL32(60, 48, 10, 240)
+                : IM_COL32(22, 18, 12, 220);
+            dl->AddRectFilled({sx, sy}, {sx + SLOT_W, sy + SLOT_H}, slotBg, 4.0f);
+
+            // ── 金属内纹（斜纹增加质感）──
+            for (int li = 0; li < static_cast<int>(SLOT_H); li += 3)
+                dl->AddLine({sx + 1, sy + li}, {sx + SLOT_W - 1, sy + li},
+                    IM_COL32(40, 32, 15, 40), 0.7f);
+
+            // ── 槽内容 ──────────────────────────────────────────────
+            float cx = sx + SLOT_W * 0.5f;
+            float cy = sy + SLOT_H * 0.5f;
+
+            if (slot.isEmpty())
+            {
+                // 空槽：中央编号 + 细十字引导线
+                dl->AddLine({cx - 8, cy}, {cx + 8, cy}, IM_COL32(80, 65, 30, 120), 0.8f);
+                dl->AddLine({cx, cy - 8}, {cx, cy + 8}, IM_COL32(80, 65, 30, 120), 0.8f);
+                char n[4]; snprintf(n, sizeof(n), "%d", i + 1);
+                ImVec2 ns = ImGui::CalcTextSize(n);
+                dl->AddText({cx - ns.x * 0.5f, sy + 4}, IM_COL32(100, 80, 30, 160), n);
+            }
+            else
+            {
+                const auto* def = game::weapon::getWeaponDef(slot.item->id);
+                // 武器图标：用几何图形表示（巨剑/斧/矛等）
+                float iR = SLOT_W * 0.30f;
+                // 剑身
+                dl->AddLine({cx, sy + 6}, {cx, sy + SLOT_H - 8},
+                    IM_COL32(210, 185, 100, 240), 3.5f);
+                // 护手
+                dl->AddLine({cx - iR * 0.7f, cy - 2}, {cx + iR * 0.7f, cy - 2},
+                    IM_COL32(190, 160, 70, 220), 2.5f);
+                // 剑尖高光
+                dl->AddTriangleFilled(
+                    {cx - 3, sy + 7}, {cx + 3, sy + 7}, {cx, sy + 2},
+                    IM_COL32(255, 235, 140, 200));
+                // 剑柄
+                dl->AddRectFilled({cx - 3, sy + SLOT_H - 14},
+                    {cx + 3, sy + SLOT_H - 7}, IM_COL32(140, 100, 40, 200), 1.5f);
+
+                // 右下角武器名（缩写）
+                if (def)
+                {
+                    const char* lbl = def->icon_label.empty() ? "?" : def->icon_label.c_str();
+                    ImVec2 ls = ImGui::CalcTextSize(lbl);
+                    dl->AddText({sx + SLOT_W - ls.x - 3, sy + SLOT_H - ls.y - 3},
+                        IM_COL32(220, 195, 100, 200), lbl);
+                }
+            }
+
+            // ── 主边框（双层 DNF 金属感）──────────────────────────────
             if (is_active)
             {
-                ImGui::PushStyleColor(ImGuiCol_Button,        {0.55f, 0.45f, 0.05f, 1.0f});
-                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, {0.70f, 0.58f, 0.10f, 1.0f});
+                // 激活槽：金色发光边框
+                dl->AddRect({sx - 2, sy - 2}, {sx + SLOT_W + 2, sy + SLOT_H + 2},
+                    IM_COL32(255, 200, 50, 100), 5.0f, 0, 3.5f);
+                dl->AddRect({sx, sy}, {sx + SLOT_W, sy + SLOT_H},
+                    IM_COL32(255, 220, 80, 230), 4.0f, 0, 1.8f);
+                // 左上三角激活标记
+                dl->AddTriangleFilled(
+                    {sx, sy}, {sx + 10, sy}, {sx, sy + 10},
+                    IM_COL32(255, 220, 80, 220));
             }
             else
             {
-                ImGui::PushStyleColor(ImGuiCol_Button,        {0.18f, 0.18f, 0.28f, 1.0f});
-                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, {0.30f, 0.30f, 0.50f, 1.0f});
+                dl->AddRect({sx, sy}, {sx + SLOT_W, sy + SLOT_H},
+                    IM_COL32(140, 110, 40, 160), 4.0f, 0, 1.2f);
             }
 
-            char label[64];
-            if (slot.isEmpty())
-                snprintf(label, sizeof(label), "%d##wb%d", i + 1, i);
-            else
+            // 四角铆钉
+            for (int cx2 = 0; cx2 < 2; ++cx2) for (int cy2 = 0; cy2 < 2; ++cy2)
             {
-                const auto *def = game::weapon::getWeaponDef(slot.item->id);
-                snprintf(label, sizeof(label), "%s\n%s##wb%d",
-                    def ? def->icon_label.c_str() : "?",
-                    slot.item->name.c_str(), i);
+                float rx = sx + (cx2 ? SLOT_W - 5 : 5);
+                float ry = sy + (cy2 ? SLOT_H - 5 : 5);
+                dl->AddCircleFilled({rx, ry}, 2.8f, IM_COL32(160, 130, 50, 200));
+                dl->AddCircleFilled({rx, ry}, 1.5f, IM_COL32(220, 190, 90, 240));
             }
 
-            ImGui::Button(label, {SLOT_W, SLOT_H});
+            // ── InvisibleButton 用于拖放交互 ──────────────────────────
+            ImGui::SetCursorScreenPos({sx, sy});
+            char btnId[16]; snprintf(btnId, sizeof(btnId), "##wslot%d", i);
+            ImGui::InvisibleButton(btnId, {SLOT_W, SLOT_H});
 
-            // 武器栏格子作为拖放目标（接受背包物品）
             if (ImGui::BeginDragDropTarget())
             {
                 if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("INV_SLOT"))
@@ -1537,12 +1977,9 @@ static void saveBoolSetting(const char* key, bool enabled)
                 }
                 ImGui::EndDragDropTarget();
             }
-
-            // 双击卸装回背包
             if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
                 m_weaponBar.unequipToInventory(i, m_inventory);
 
-            // Tooltip
             if (!slot.isEmpty() && ImGui::IsItemHovered())
             {
                 const auto *def = game::weapon::getWeaponDef(slot.item->id);
@@ -1553,22 +1990,19 @@ static void saveBoolSetting(const char* key, bool enabled)
                     ImGui::Separator();
                     ImGui::TextDisabled("%s: %d", locale::T("weapon.damage").c_str(), def->damage);
                     ImGui::TextDisabled("%s: %.1f/s", locale::T("weapon.speed").c_str(), def->attack_speed);
-                    if (def->ammo_capacity > 0)
-                        ImGui::TextDisabled("%s: %d", locale::T("weapon.ammo").c_str(), def->ammo_capacity);
                 }
                 ImGui::TextDisabled("%s", locale::T("weapon_bar.dblclick_unequip").c_str());
                 ImGui::EndTooltip();
             }
-
-            ImGui::PopStyleColor(2);
         }
 
-        // 底部提示
-        ImGui::Separator();
-        ImGui::TextDisabled("%s", locale::T("weapon_bar.scroll_hint").c_str());
+        // 底部切换提示（小字）
+        ImVec2 hintSz = ImGui::CalcTextSize("↕");
+        dl->AddText({wp.x + (WIN_W - hintSz.x) * 0.5f, wp.y + WIN_H - hintSz.y - 3},
+            IM_COL32(140, 115, 50, 160), "↕");
 
         ImGui::End();
-        ImGui::PopStyleVar();
+        ImGui::PopStyleVar(2);
     }
 
     // ------------------------------------------------------------------
@@ -2032,15 +2466,27 @@ static void saveBoolSetting(const char* key, bool enabled)
     {
         m_player = actor_manager->createActor("player");
 
-        // 玩家初始位置（从天空下落）
-        glm::vec2 startPos = {0.0f, 0.0f};
+        // 2.5D 地板平面布局（chunk row 0, tile Y [0..7] = pixel [0..127]）:
+        //   wy=0(px 0-15): Stone 后背景墙  wy=1-5(px 16-95): GroundDecor 地板走廊
+        // 玩家可移动深度 posY ∈ [32, 80]（地板中部到前缘）
+        //   posY=32 → 身体 px 16..48 = 靠近背景层，body top=16px 正好在 wy=0 之下
+        //   posY=56 → 身体 px 40..72 = 走廊中央（外观最佳起始点）
+        //   posY=80 → 身体 px 64..96 = 靠近屏幕前缘
+        glm::vec2 startPos = {0.0f, 56.0f};
 
         auto* transform = m_player->addComponent<engine::component::TransformComponent>(startPos);
         m_player->addComponent<engine::component::SpriteComponent>(
             "assets/textures/Characters/player_sheet.svg",
             engine::utils::Alignment::CENTER,
             engine::utils::FRect{{0.0f, 0.0f}, {32.0f, 32.0f}});
-        m_player->addComponent<engine::component::ControllerComponent>(25.0f, 30.0f);
+        auto* ctrl = m_player->addComponent<engine::component::ControllerComponent>(25.0f, 30.0f);
+        // DNF 手感调整：加大地面加速度（更快起步停步），减少空中阻力
+        ctrl->setGroundAcceleration(90.0f);   // DNF 地面加速度
+        ctrl->setAirAcceleration(15.0f);      // 空中控制感稍弱，DNF 风格
+        // DNF 2.5D 地面深度带（像素坐标）：
+        //   Y=32 ← 背景远端（wy=1 行，身体顶边=16px 正好在 Stone back wall 下方）
+        //   Y=80 ← 屏幕前缘（wy=5 行，足够空间展示走廊深度感）
+        ctrl->setGroundBand(32.0f, 80.0f);
 
         // 动画管理组件：新精灵表 256×256，8×8 网格，每帧 32×32 像素
         // 行布局：0=待机  1=跑动  2=喷气背包  3=(备用)  4-5=(备用)  6=跳跃  7=下落
@@ -2052,15 +2498,40 @@ static void saveBoolSetting(const char* key, bool enabled)
         anim->addClip("fall",    engine::component::AnimationClip{7, 0, 4, 0.12f, false});
         anim->play("idle");
 
-        // 创建物理体并添加 PhysicsComponent（32×32 像素 ≈ 1×1 米）
-        b2BodyId bodyId = physics_manager->createDynamicBody({startPos.x, startPos.y}, {0.5f, 0.5f}, m_player);
+        // 创建物理体并添加 PhysicsComponent
+        // 碰撞体积 = 脚下阴影脚印（24px 宽 × 7px 深），不包含人物空中高度
+        // halfSize 单位为米（Box2D），startPos 为像素坐标，需除以 PPM
+        constexpr float PPM = engine::world::WorldConfig::PIXELS_PER_METER;
+        // 阴影基础尺寸：glm::vec2(24.0f, 7.0f)（见 drawWorldShadow baseSize）
+        constexpr float kShadowHalfW = 24.0f * 0.5f / PPM;  // 12px / 32 = 0.375 m
+        constexpr float kShadowHalfD = 7.0f  * 0.5f / PPM;  // 3.5px / 32 ≈ 0.109 m
+        b2BodyId bodyId = physics_manager->createDynamicBody(
+            {startPos.x / PPM, startPos.y / PPM}, {kShadowHalfW, kShadowHalfD}, m_player);
         m_player->addComponent<engine::component::PhysicsComponent>(bodyId, physics_manager.get());
 
         // 属性组件（血量、星能、速度倍率等）
         m_player->addComponent<game::component::AttributeComponent>();
 
-        // 相机跟随玩家
+        // 相机跟随玩家；DNF 模式锁定 Y 轴，仅水平滚轴
         _context.getCamera().setFollowTarget(&transform->getPosition(), 5.0f);
+        // 2.5D 透视走廊相机设置：
+        //   zoom=2.5 → 可视高度 720/2.5=288px
+        //   lockY=40 → 后背景墙(wy=0,px 0-15) 在屏幕 36-41%
+        //              地板走廊(wy=1-5,px 16-95) 在屏幕 42-69%
+        //              角色 startPos=56 → 屏幕55%
+        //              角色 groundBand(16,96) → 屏幕41-69%
+        m_zoomSliderValue = 2.5f;
+        _context.getCamera().setZoom(2.5f);
+        _context.getCamera().setPseudo3DVerticalScale(1.0f);
+        _context.getCamera().setLockY(true, 40.0f);
+        // 立即将相机居中到走廊，避免启动时从 (0,0) 平滑到锁定位置导致一瞬间显示错误区域
+        {
+            const glm::vec2& vp = _context.getCamera().getViewportSize();
+            _context.getCamera().setPosition({
+                transform->getPosition().x - vp.x * 0.5f,
+                40.0f - vp.y * 0.5f  // camera top = 40 - half_viewport
+            });
+        }
     }
 
     void GameScene::executeCommand()
@@ -2672,6 +3143,7 @@ static void saveBoolSetting(const char* key, bool enabled)
             case game::skill::SkillEffect::IceAura:    keyHint = "[被动]"; break;
             case game::skill::SkillEffect::WindBoost:  keyHint = "[被动]"; break;
             case game::skill::SkillEffect::LightDash:  keyHint = "[Q]";    break;
+            case game::skill::SkillEffect::StarJump:   keyHint = "[Q]";    break;
             }
 
             char btnId[32];
@@ -2729,7 +3201,7 @@ static void saveBoolSetting(const char* key, bool enabled)
     }
 
     // ──────────────────────────────────────────────────────────────────────────
-    //  角色状态 HUD：血量位于屏幕正下方，属性位于右下角纵向排列
+    //  角色状态 HUD（DNF 风格）：华丽金属血条 + 羊皮纸属性面板
     // ──────────────────────────────────────────────────────────────────────────
     void GameScene::renderPlayerStatusHUD()
     {
@@ -2738,91 +3210,212 @@ static void saveBoolSetting(const char* key, bool enabled)
             : nullptr;
         if (!attr) return;
 
-        constexpr float HP_WIN_W = 360.0f;
-        constexpr float HP_WIN_H = 34.0f;
-        constexpr float HP_BAR_W = 320.0f;
-        constexpr float HP_BAR_H = 16.0f;
-        constexpr float PANEL_W = 190.0f;
-        constexpr float PANEL_H = 166.0f;
+        const ImVec2 disp   = ImGui::GetIO().DisplaySize;
+        const float  T      = static_cast<float>(ImGui::GetTime());
+        const float  hpRatio = std::clamp(attr->getHpRatio(), 0.0f, 1.0f);
+        const float  seRatio = std::clamp(attr->getStarEnergyRatio(), 0.0f, 1.0f);
+        const float  maxHp   = attr->get(game::component::StatType::MaxHp);
+        const float  maxSe   = attr->get(game::component::StatType::MaxStarEnergy);
 
-        ImVec2 disp = ImGui::GetIO().DisplaySize;
-
-        ImGui::SetNextWindowPos({(disp.x - HP_WIN_W) * 0.5f, disp.y - HP_WIN_H - 10.0f}, ImGuiCond_Always);
-        ImGui::SetNextWindowSize({HP_WIN_W, HP_WIN_H}, ImGuiCond_Always);
-        ImGui::SetNextWindowBgAlpha(0.60f);
-
-        ImGui::Begin("##status_hp_hud", nullptr,
+        // ── 血条窗口（屏幕底部居中）────────────────────────────────────────
+        constexpr float BAR_W  = 340.0f;
+        constexpr float BAR_H  = 20.0f;
+        constexpr float WIN_W  = BAR_W + 24.0f;   // 含左右金属端帽
+        constexpr float WIN_H  = 56.0f;
+        ImGui::SetNextWindowPos({(disp.x - WIN_W) * 0.5f, disp.y - WIN_H - 8.0f}, ImGuiCond_Always);
+        ImGui::SetNextWindowSize({WIN_W, WIN_H}, ImGuiCond_Always);
+        ImGui::SetNextWindowBgAlpha(0.0f);   // 全透明，完全用 DrawList 绘制
+        ImGui::Begin("##dnf_hp_hud", nullptr,
             ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
             ImGuiWindowFlags_NoInputs     | ImGuiWindowFlags_NoNav  |
             ImGuiWindowFlags_NoSavedSettings);
 
-        auto* dl = ImGui::GetWindowDrawList();
-        ImVec2 p  = ImGui::GetCursorScreenPos();
+        auto* dl  = ImGui::GetWindowDrawList();
+        ImVec2 wp = ImGui::GetWindowPos();
 
-        auto drawBottomBar = [&](float y, ImU32 fillCol, float ratio,
-                           const char* label, float current, float max)
+        // ── 辅助 lambda: 绘制单条 DNF 风格进度条 ──────────────────────────
+        auto drawDnfBar = [&](float px, float py, float bw, float bh,
+                              ImU32 fillA, ImU32 fillB, float ratio,
+                              const char* label, float cur, float max,
+                              bool pulseLow)
         {
-            float x = p.x + (HP_WIN_W - HP_BAR_W) * 0.5f;
-            dl->AddRectFilled({x, y}, {x + HP_BAR_W, y + HP_BAR_H},
-                              IM_COL32(22, 24, 30, 210), 5.0f);
-            float fillW = HP_BAR_W * std::clamp(ratio, 0.0f, 1.0f);
-            if (fillW > 0.5f)
-                dl->AddRectFilled({x, y}, {x + fillW, y + HP_BAR_H}, fillCol, 5.0f);
-            dl->AddRect({x, y}, {x + HP_BAR_W, y + HP_BAR_H},
-                        IM_COL32(110, 120, 140, 220), 5.0f, 0, 1.3f);
-            char buf[32];
-            snprintf(buf, sizeof(buf), "%s %.0f/%.0f", label, current, max);
+            // 1. 外层阴影
+            dl->AddRectFilled({px - 3, py - 3}, {px + bw + 3, py + bh + 3},
+                IM_COL32(0, 0, 0, 160), 4.0f);
+
+            // 2. 槽底（暗钢色）
+            dl->AddRectFilled({px, py}, {px + bw, py + bh},
+                IM_COL32(18, 20, 28, 245), 3.5f);
+
+            // 3. 槽底内纹（细横纹增加金属质感）
+            for (int i = 0; i < static_cast<int>(bh); i += 2)
+                dl->AddLine({px + 1, py + i + 0.5f}, {px + bw - 1, py + i + 0.5f},
+                    IM_COL32(30, 32, 42, 80), 0.8f);
+
+            // 4. 填充渐变（左亮右暗模拟液体感）
+            float fw = bw * ratio;
+            if (fw > 0.5f)
+            {
+                dl->AddRectFilled({px, py}, {px + fw, py + bh}, fillA, 3.5f);
+                // 高光中线
+                dl->AddLine({px + 2, py + bh * 0.32f}, {px + fw - 2, py + bh * 0.32f},
+                    IM_COL32(255, 255, 255, 35), bh * 0.28f);
+                // 末端渐暗（遮罩）
+                if (fw > 20.0f)
+                    dl->AddRectFilled({px + fw - 12, py}, {px + fw, py + bh},
+                        IM_COL32(0, 0, 0, 80), 3.5f);
+            }
+
+            // 5. 危机状态红色脉冲外发光
+            if (pulseLow && ratio < 0.25f)
+            {
+                float glowA = 0.35f + 0.35f * std::sin(T * 6.5f);
+                dl->AddRect({px - 2, py - 2}, {px + bw + 2, py + bh + 2},
+                    IM_COL32(255, 40, 40, static_cast<int>(glowA * 200)), 4.0f, 0, 2.0f);
+            }
+
+            // 6. 金属外框（双层：外深内亮）
+            dl->AddRect({px - 1, py - 1}, {px + bw + 1, py + bh + 1},
+                IM_COL32(60, 50, 30, 200), 4.0f, 0, 1.0f);
+            dl->AddRect({px, py}, {px + bw, py + bh},
+                IM_COL32(200, 170, 80, 180), 3.5f, 0, 1.3f);
+
+            // 7. 左端金属铆钉装饰
+            dl->AddCircleFilled({px - 6, py + bh * 0.5f}, 4.5f, IM_COL32(180, 150, 60, 220));
+            dl->AddCircleFilled({px - 6, py + bh * 0.5f}, 2.8f, IM_COL32(240, 210, 100, 240));
+            dl->AddCircle({px - 6, py + bh * 0.5f}, 4.5f, IM_COL32(100, 80, 20, 180), 12, 1.0f);
+            // 右端铆钉
+            dl->AddCircleFilled({px + bw + 6, py + bh * 0.5f}, 4.5f, IM_COL32(180, 150, 60, 220));
+            dl->AddCircleFilled({px + bw + 6, py + bh * 0.5f}, 2.8f, IM_COL32(240, 210, 100, 240));
+            dl->AddCircle({px + bw + 6, py + bh * 0.5f}, 4.5f, IM_COL32(100, 80, 20, 180), 12, 1.0f);
+
+            // 8. 标签 + 数值（居中）
+            char buf[40];
+            snprintf(buf, sizeof(buf), "%s  %.0f / %.0f", label, cur, max);
             ImVec2 ts = ImGui::CalcTextSize(buf);
-            dl->AddText({x + (HP_BAR_W - ts.x) * 0.5f, y + (HP_BAR_H - ts.y) * 0.5f - 1.0f},
-                        IM_COL32(245, 245, 245, 230), buf);
+            // 文字阴影
+            dl->AddText({px + (bw - ts.x) * 0.5f + 1, py + (bh - ts.y) * 0.5f + 1},
+                IM_COL32(0, 0, 0, 200), buf);
+            dl->AddText({px + (bw - ts.x) * 0.5f, py + (bh - ts.y) * 0.5f},
+                IM_COL32(255, 240, 210, 240), buf);
         };
 
-        float hpRatio = attr->getHpRatio();
-        float seRatio = attr->getStarEnergyRatio();
-        float maxHp   = attr->get(game::component::StatType::MaxHp);
-        float maxSe   = attr->get(game::component::StatType::MaxStarEnergy);
+        const float bx = wp.x + 12.0f;
+        const float byHP = wp.y + 6.0f;
+        const float bySE = wp.y + 32.0f;
 
-        drawBottomBar(p.y + 6.0f, IM_COL32(215, 58, 58, 235), hpRatio, "HP", attr->getHp(), maxHp);
+        // ── HP 条（深红 → 亮红）
+        drawDnfBar(bx, byHP, BAR_W, BAR_H,
+            IM_COL32(200, 45, 45, 240), IM_COL32(120, 20, 20, 240),
+            hpRatio, "HP", attr->getHp(), maxHp, true);
+
+        // ── 星能条（深蓝 → 亮蓝紫）
+        drawDnfBar(bx, bySE, BAR_W, 12.0f,
+            IM_COL32(55, 100, 220, 220), IM_COL32(30, 55, 140, 220),
+            seRatio, "SP", attr->getStarEnergy(), maxSe, false);
+
         ImGui::End();
 
-        float atk   = attr->get(game::component::StatType::Attack);
-        float def   = attr->get(game::component::StatType::Defense);
-        float spd   = attr->get(game::component::StatType::Speed);
-        float crit  = attr->get(game::component::StatType::CritRate) * 100.0f;
-
-        ImGui::SetNextWindowPos({disp.x - PANEL_W - 14.0f, disp.y - PANEL_H - 14.0f}, ImGuiCond_Always);
+        // ── 属性面板（右下角，羊皮纸卷轴风格）──────────────────────────────
+        constexpr float PANEL_W = 186.0f;
+        constexpr float PANEL_H = 150.0f;
+        ImGui::SetNextWindowPos({disp.x - PANEL_W - 12.0f, disp.y - PANEL_H - 8.0f}, ImGuiCond_Always);
         ImGui::SetNextWindowSize({PANEL_W, PANEL_H}, ImGuiCond_Always);
-        ImGui::SetNextWindowBgAlpha(0.58f);
-
-        ImGui::Begin("##status_attr_hud", nullptr,
+        ImGui::SetNextWindowBgAlpha(0.0f);
+        ImGui::Begin("##dnf_attr_hud", nullptr,
             ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
             ImGuiWindowFlags_NoInputs     | ImGuiWindowFlags_NoNav  |
             ImGuiWindowFlags_NoSavedSettings);
 
-        ImGui::TextColored({0.78f, 0.86f, 1.0f, 0.96f}, "人物属性");
-        ImGui::Separator();
-        ImGui::Text("星能 %.0f / %.0f", attr->getStarEnergy(), maxSe);
-        ImGui::ProgressBar(seRatio, { -1.0f, 10.0f }, "");
-        ImGui::Spacing();
-        ImGui::Text("攻击  %.0f", atk);
-        ImGui::Text("防御  %.0f", def);
-        ImGui::Text("速度  %.2fx", spd);
-        ImGui::Text("暴击  %.0f%%", crit);
+        auto* adl = ImGui::GetWindowDrawList();
+        ImVec2 ap  = ImGui::GetWindowPos();
 
+        // 羊皮纸背景
+        adl->AddRectFilled({ap.x, ap.y}, {ap.x + PANEL_W, ap.y + PANEL_H},
+            IM_COL32(28, 22, 14, 220), 6.0f);
+        adl->AddRectFilled({ap.x + 2, ap.y + 2}, {ap.x + PANEL_W - 2, ap.y + PANEL_H - 2},
+            IM_COL32(42, 32, 18, 180), 5.0f);
+
+        // 金属外框（双层）
+        adl->AddRect({ap.x, ap.y}, {ap.x + PANEL_W, ap.y + PANEL_H},
+            IM_COL32(60, 48, 22, 200), 6.0f, 0, 1.2f);
+        adl->AddRect({ap.x + 2, ap.y + 2}, {ap.x + PANEL_W - 2, ap.y + PANEL_H - 2},
+            IM_COL32(180, 148, 60, 160), 5.0f, 0, 1.0f);
+
+        // 四角装饰铆钉
+        for (int cx2 = 0; cx2 < 2; ++cx2) for (int cy2 = 0; cy2 < 2; ++cy2)
+        {
+            float rx = ap.x + (cx2 ? PANEL_W - 6 : 6);
+            float ry = ap.y + (cy2 ? PANEL_H - 6 : 6);
+            adl->AddCircleFilled({rx, ry}, 4.0f, IM_COL32(160, 130, 50, 220));
+            adl->AddCircleFilled({rx, ry}, 2.2f, IM_COL32(230, 195, 90, 255));
+        }
+
+        // 标题：卷轴风格
+        const char* title = "人物属性";
+        ImVec2 titleSz = ImGui::CalcTextSize(title);
+        float  tx      = ap.x + (PANEL_W - titleSz.x) * 0.5f;
+        // 标题分割线（两侧各一段）
+        adl->AddLine({ap.x + 8, ap.y + 18}, {tx - 5, ap.y + 18},
+            IM_COL32(180, 148, 60, 140), 1.0f);
+        adl->AddLine({tx + titleSz.x + 5, ap.y + 18}, {ap.x + PANEL_W - 8, ap.y + 18},
+            IM_COL32(180, 148, 60, 140), 1.0f);
+        adl->AddText({tx + 1, ap.y + 8 + 1}, IM_COL32(0, 0, 0, 180), title);
+        adl->AddText({tx, ap.y + 8},  IM_COL32(230, 195, 100, 255), title);
+
+        // 属性条目：图标符号 + 数值
+        float atk  = attr->get(game::component::StatType::Attack);
+        float def  = attr->get(game::component::StatType::Defense);
+        float spd  = attr->get(game::component::StatType::Speed);
+        float crit = attr->get(game::component::StatType::CritRate) * 100.0f;
+
+        struct StatRow { const char* icon; const char* name; char val[24]; ImU32 col; };
+        char atkBuf[24], defBuf[24], spdBuf[24], crtBuf[24], seBuf[24];
+        snprintf(atkBuf, sizeof(atkBuf), "%.0f",   atk);
+        snprintf(defBuf, sizeof(defBuf), "%.0f",   def);
+        snprintf(spdBuf, sizeof(spdBuf), "%.2fx",  spd);
+        snprintf(crtBuf, sizeof(crtBuf), "%.0f%%", crit);
+        snprintf(seBuf,  sizeof(seBuf),  "%.0f/%.0f", attr->getStarEnergy(), maxSe);
+
+        const StatRow rows[] = {
+            {"⚔",  "攻击",  {}, IM_COL32(255, 120,  80, 240)},
+            {"🛡",  "防御",  {}, IM_COL32(100, 180, 255, 240)},
+            {"💨",  "速度",  {}, IM_COL32(120, 240, 160, 240)},
+            {"💥",  "暴击",  {}, IM_COL32(255, 230,  60, 240)},
+            {"✦",   "星能",  {}, IM_COL32(180, 130, 255, 240)},
+        };
+        const char* rowVals[] = {atkBuf, defBuf, spdBuf, crtBuf, seBuf};
+
+        float lineH = 20.0f;
+        float startY = ap.y + 26.0f;
+        for (int ri = 0; ri < 5; ++ri)
+        {
+            float ry2 = startY + ri * lineH;
+            // 交替行底色
+            if (ri % 2 == 0)
+                adl->AddRectFilled({ap.x + 6, ry2}, {ap.x + PANEL_W - 6, ry2 + lineH - 1},
+                    IM_COL32(60, 46, 26, 80), 2.0f);
+            // 图标
+            adl->AddText({ap.x + 10, ry2 + 3}, rows[ri].col, rows[ri].icon);
+            // 名称
+            adl->AddText({ap.x + 30, ry2 + 3}, IM_COL32(200, 178, 130, 220), rows[ri].name);
+            // 数值（右对齐）
+            ImVec2 vs = ImGui::CalcTextSize(rowVals[ri]);
+            adl->AddText({ap.x + PANEL_W - vs.x - 10, ry2 + 3},
+                IM_COL32(240, 215, 140, 255), rowVals[ri]);
+        }
+
+        // 危机/星能不足提示
         if (hpRatio < 0.25f)
         {
-            static float blinkTimer = 0.0f;
-            blinkTimer += ImGui::GetIO().DeltaTime;
-            float alpha = 0.4f + 0.4f * std::sin(blinkTimer * 6.0f);
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.25f, 0.25f, alpha));
-            ImGui::TextUnformatted("⚠ 生命值危急");
-            ImGui::PopStyleColor();
+            float blinkA = 0.4f + 0.4f * std::sin(T * 6.5f);
+            adl->AddText({ap.x + 10, ap.y + PANEL_H - 17},
+                IM_COL32(255, 60, 60, static_cast<int>(blinkA * 255)), "⚠ 生命值危急!");
         }
         else if (seRatio < 0.15f)
         {
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.6f, 1.0f, 0.75f));
-            ImGui::TextUnformatted("★ 星能不足");
-            ImGui::PopStyleColor();
+            adl->AddText({ap.x + 10, ap.y + PANEL_H - 17},
+                IM_COL32(150, 120, 255, 180), "✦ 星能不足");
         }
 
         ImGui::End();

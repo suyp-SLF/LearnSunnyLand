@@ -22,6 +22,10 @@ namespace engine::render
         glm::vec2* _follow_target = nullptr; // 跟随目标
         float _follow_smoothness = 5.0f; // 跟随平滑度
 
+        // DNF 横版卷轴：锁定 Y 轴，仅在 X 方向跟随
+        bool  _lock_y = false;
+        float _locked_y = 0.0f;
+
     public:
         Camera(const glm::vec2 &viewport_size,
                const glm::vec2 &position = glm::vec2(0.0f, 0.0f),
@@ -30,6 +34,9 @@ namespace engine::render
         void update(float delta_timer);
         void setFollowTarget(const glm::vec2* target, float smoothness = 5.0f);
         void move(const glm::vec2 &offset);
+
+        // DNF 模式：锁定相机 Y 轴固定值（传入世界坐标的 Y，相机会居中显示该行）
+        void setLockY(bool lock, float worldY = 0.0f);
 
         /**
          * @brief 检查一个矩形包围盒是否在相机视口内
@@ -58,7 +65,9 @@ namespace engine::render
         void setLimitBounds(const std::optional<engine::utils::FRect> &limit_bounds);
         void setZoom(float zoom);
         void setPseudo3DEnabled(bool enabled);
+        void setPseudo3DVerticalScale(float scale);  // DNF 俯角压缩系数（0.5~1.0）
         bool isPseudo3DEnabled() const { return _projection_mode == ProjectionMode::Pseudo3D; }
+        float getPseudo3DVerticalScale() const { return _pseudo3d_vertical_scale; }
 
         const glm::vec2 &getPosition() const;
         std::optional<engine::utils::FRect> getLimitBounds() const; // 获取限制范围

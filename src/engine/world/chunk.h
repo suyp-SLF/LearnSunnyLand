@@ -28,7 +28,7 @@ namespace engine::world
     class Chunk
     {
     public:
-        static constexpr int SIZE = 16; // 每个块 16x16 瓦片
+        static constexpr int SIZE = 8; // 每个块 8x8 瓦片
         static constexpr int TILE_COUNT = SIZE * SIZE;
 
         Chunk(int chunkX, int chunkY);

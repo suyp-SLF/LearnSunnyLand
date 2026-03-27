@@ -18,6 +18,8 @@ set(CMAKE_MAKEFILE_DEPENDS
   "CMakeFiles/4.2.1/CMakeCCompiler.cmake"
   "CMakeFiles/4.2.1/CMakeCXXCompiler.cmake"
   "CMakeFiles/4.2.1/CMakeSystem.cmake"
+  "_deps/tinygltf-src/CMakeLists.txt"
+  "_deps/tinygltf-src/cmake/TinyGLTFConfig.cmake.in"
   "/opt/homebrew/lib/cmake/SDL3/SDL3Config.cmake"
   "/opt/homebrew/lib/cmake/SDL3/SDL3ConfigVersion.cmake"
   "/opt/homebrew/lib/cmake/SDL3/SDL3headersTargets.cmake"
@@ -48,6 +50,7 @@ set(CMAKE_MAKEFILE_DEPENDS
   "/opt/homebrew/share/cmake/Modules/CMakeGenericSystem.cmake"
   "/opt/homebrew/share/cmake/Modules/CMakeInitializeConfigs.cmake"
   "/opt/homebrew/share/cmake/Modules/CMakeLanguageInformation.cmake"
+  "/opt/homebrew/share/cmake/Modules/CMakePackageConfigHelpers.cmake"
   "/opt/homebrew/share/cmake/Modules/CMakeSystemSpecificInformation.cmake"
   "/opt/homebrew/share/cmake/Modules/CMakeSystemSpecificInitialize.cmake"
   "/opt/homebrew/share/cmake/Modules/CheckCSourceCompiles.cmake"
@@ -68,6 +71,7 @@ set(CMAKE_MAKEFILE_DEPENDS
   "/opt/homebrew/share/cmake/Modules/FindPackageHandleStandardArgs.cmake"
   "/opt/homebrew/share/cmake/Modules/FindPackageMessage.cmake"
   "/opt/homebrew/share/cmake/Modules/FindThreads.cmake"
+  "/opt/homebrew/share/cmake/Modules/GNUInstallDirs.cmake"
   "/opt/homebrew/share/cmake/Modules/Internal/CMakeCLinkerInformation.cmake"
   "/opt/homebrew/share/cmake/Modules/Internal/CMakeCXXLinkerInformation.cmake"
   "/opt/homebrew/share/cmake/Modules/Internal/CMakeCommonLinkerInformation.cmake"
@@ -87,6 +91,7 @@ set(CMAKE_MAKEFILE_DEPENDS
   "/opt/homebrew/share/cmake/Modules/Platform/Linker/Apple-AppleClang.cmake"
   "/opt/homebrew/share/cmake/Modules/Platform/UnixPaths.cmake"
   "/opt/homebrew/share/cmake/Modules/SelectLibraryConfigurations.cmake"
+  "/opt/homebrew/share/cmake/Modules/WriteBasicConfigVersionFile.cmake"
   "/opt/homebrew/share/cmake/nlohmann_json/nlohmann_jsonConfig.cmake"
   "/opt/homebrew/share/cmake/nlohmann_json/nlohmann_jsonConfigVersion.cmake"
   "/opt/homebrew/share/cmake/nlohmann_json/nlohmann_jsonTargets.cmake"
@@ -101,10 +106,15 @@ set(CMAKE_MAKEFILE_OUTPUTS
 # Byproducts of CMake generate step:
 set(CMAKE_MAKEFILE_PRODUCTS
   "_deps/imgui-subbuild/CMakeLists.txt"
+  "_deps/tinygltf-subbuild/CMakeLists.txt"
   "CMakeFiles/CMakeDirectoryInformation.cmake"
+  "_deps/tinygltf-build/TinyGLTFConfig.cmake"
+  "_deps/tinygltf-build/CMakeFiles/CMakeDirectoryInformation.cmake"
   )
 
 # Dependency information for all targets:
 set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/LearnSunnyLand-Darwin.dir/DependInfo.cmake"
+  "_deps/tinygltf-build/CMakeFiles/loader_example.dir/DependInfo.cmake"
+  "_deps/tinygltf-build/CMakeFiles/tinygltf.dir/DependInfo.cmake"
   )

@@ -12,6 +12,7 @@ namespace game::skill
         IceAura,     // 寒冰：被动光环，自动冻结并消灭近身怪物
         WindBoost,   // 疾风：被动加速，提升移速与喷气包性能
         LightDash,   // 闪光：主动冲刺（Q键），向面朝方向瞬间加速
+        StarJump,    // 星跳：主动技能（Q键），沿抛物线跃向瞄准方向的落点
     };
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -37,6 +38,7 @@ namespace game::skill
             { "star_ice",   SkillEffect::IceAura,   1.2f,  52.0f,  0.0f  },
             { "star_wind",  SkillEffect::WindBoost,  0.0f,   0.0f,  1.35f },
             { "star_light", SkillEffect::LightDash,  0.8f,   0.0f, 22.0f  },
+            { "star_jump",  SkillEffect::StarJump,   2.0f,   0.0f, 15.0f  },
         };
         for (const auto& d : defs)
             if (id == d.id) return &d;

@@ -33,11 +33,21 @@ namespace engine::world
         const glm::ivec2 &getTileSize() const { return m_tileSize; }
 
         // 更新可见块（根据相机位置和视距）
-        void updateVisibleChunks(const glm::vec2 &cameraPos, int viewDistanceInChunks);
+        // viewDistanceY 独立控制垂直方向视距，默认与水平相同；DNF 模式传 0 仅加载 1 行
+        void updateVisibleChunks(const glm::vec2 &cameraPos, int viewDistanceInChunks,
+                                  int viewDistanceYOverride = -1);
+
+        // 横向单行模式：启用后 updateVisibleChunks 始终锁定到指定 chunkRowY，垂直视距=0
+        // fixedWorldY 为世界坐标 Y，内部转换为 chunk row（默认 0 即 worldY=0）
+        void setHorizontalOnly(bool enable, float fixedWorldY = 0.0f);
 
         // 渲染所有已加载的块
         void renderAll(engine::core::Context &ctx) const;
         void renderActiveChunkHighlights(engine::core::Context &ctx) const;
+
+        // 获取所有已加载区块的世界坐标与尺寸（用于外部调试绘制）
+        // 返回： pair<worldPos, worldSize>
+        std::vector<std::pair<glm::vec2, glm::vec2>> getLoadedChunkBounds() const;
 
         // 获取已加载区块数量
         size_t loadedChunkCount() const { return m_chunks.size(); }
@@ -50,12 +60,26 @@ namespace engine::world
         engine::resource::ResourceManager *m_resMgr; // 资源管理器指针（非拥有）
         engine::physics::PhysicsManager* m_physicsMgr; // 物理管理器指针（非拥有）
 
+        bool  m_horizontalOnly   = true;  // 横向单行模式（默认开启）
+        int   m_fixedChunkRowY   = 0;     // 锁定的 chunk row（Y 轴）
+        size_t m_prevChunkCount  = SIZE_MAX; // 上次日志时的 chunk 数量，避免每帧打印
+
         std::unordered_map<uint64_t, std::unique_ptr<Chunk>> m_chunks;
         std::string m_atlasTextureId;
         glm::ivec2 m_tileSize;
         std::unique_ptr<TerrainGenerator> m_terrainGenerator; // 地形生成器
 
         void rebuildChunkMesh(Chunk &chunk);
+
+        // 将世界坐标转换为区块坐标 + 区块内局部坐标（正确处理负坐标的向下取整）
+        static void worldToChunkCoords(int worldX, int worldY,
+                                       int &cx, int &cy, int &lx, int &ly)
+        {
+            cx = worldX / Chunk::SIZE; if (worldX < 0) cx--;
+            cy = worldY / Chunk::SIZE; if (worldY < 0) cy--;
+            lx = worldX - cx * Chunk::SIZE;
+            ly = worldY - cy * Chunk::SIZE;
+        }
 
         // 辅助函数：将 (chunkX, chunkY) 编码为 uint64_t 键
         static uint64_t encodeChunkKey(int x, int y)

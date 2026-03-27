@@ -9,6 +9,9 @@ namespace game::weather
         : m_rng(0xDEADBEEF12345678ULL)
     {
         m_autoChangeTimer = autoChangePeriod;
+        // 预留容量避免运行时反复内存分配
+        m_particles.reserve(500);
+        m_splashes.reserve(80);
     }
 
     // ──────────────────────────────────────────────
@@ -35,10 +38,10 @@ namespace game::weather
         switch (m_current)
         {
             case WeatherType::Clear:        return 0;
-            case WeatherType::LightRain:    return 120;
-            case WeatherType::MediumRain:   return 360;
-            case WeatherType::HeavyRain:    return 720;
-            case WeatherType::Thunderstorm: return 950;
+            case WeatherType::LightRain:    return 100;
+            case WeatherType::MediumRain:   return 240;
+            case WeatherType::HeavyRain:    return 380;
+            case WeatherType::Thunderstorm: return 500;
         }
         return 0;
     }
@@ -191,14 +194,53 @@ namespace game::weather
             p.y += p.speed * dt;
             p.x += WIND_DX * p.speed * dt;
 
-            // 离开屏幕 → 重新生成
-            if (p.y > displayH + 40.0f ||
-                p.x < -100.0f          ||
+            // 雨水落在地面走廊范围内时产生水花
+            // gMin = 走廊远端屏幕Y（背景侧），gMax = 走廊前沿屏幕Y（玩家侧）
+            float gMax = (m_groundScreenY    > 0.0f) ? m_groundScreenY    : displayH * 0.88f;
+            float gMin = (m_groundMinScreenY > 0.0f) ? m_groundMinScreenY : displayH * 0.33f;
+            if (p.y >= gMin && p.y <= gMax + displayH * 0.03f
+                && m_current != WeatherType::Clear && m_intensity > 0.3f)
+            {
+                // 按雨强决定生成概率
+                float spawnProb = particleAlpha() * m_intensity;
+                if ((nextRand() & 0x7F) < static_cast<uint32_t>(spawnProb * 24))
+                {
+                    RainSplash s;
+                    s.x        = p.x + (static_cast<float>(nextRand() & 0x7) - 3.5f);
+                    s.y        = p.y  + (static_cast<float>(nextRand() & 0x7) - 3.5f) * 0.4f;  // 落点即溅起位置
+                    s.radius   = 0.0f;
+                    s.maxRadius = 4.0f + randFloat() * 9.0f;
+                    s.age      = 0.0f;
+                    s.maxAge   = 0.22f + randFloat() * 0.20f;
+                    s.alpha    = 0.55f + randFloat() * 0.35f;
+                    m_splashes.push_back(s);
+                }
+            }
+
+            // 到达地面前沿（gMax）或离开屏幕 → 重新生成
+            if (p.y > gMax + 5.0f ||
+                p.x < -100.0f     ||
                 p.x > displayW + 100.0f)
             {
                 respawnParticle(p, displayW, displayH);
             }
         }
+
+        // ── 水花涟漪更新 ──
+        for (auto &s : m_splashes)
+        {
+            s.age += dt;
+            float t  = s.age / s.maxAge;
+            s.radius = s.maxRadius * t;
+            s.alpha  = (1.0f - t * t) * 0.85f;
+        }
+        m_splashes.erase(
+            std::remove_if(m_splashes.begin(), m_splashes.end(),
+                           [](const RainSplash &s){ return s.age >= s.maxAge; }),
+            m_splashes.end());
+
+        // ── 雾气时间累计 ──
+        m_fogTime += dt;
 
         // ── 晴天：淡出并清理粒子 ──
         if (m_current == WeatherType::Clear)
@@ -255,42 +297,108 @@ namespace game::weather
     {
         ImDrawList *bg = ImGui::GetBackgroundDrawList();
 
-        // ── 天空暗化（阴云效果）──
+        // ── 天空暗化（阴云效果）��─
         float dim = getDimAlpha() * m_intensity;
         if (dim > 0.0f)
         {
             bg->AddRectFilled(
                 ImVec2(0.0f, 0.0f),
                 ImVec2(displayW, displayH),
-                IM_COL32(10, 20, 45, static_cast<int>(dim * 220)));
+                IM_COL32(8, 16, 40, static_cast<int>(dim * 230)));
         }
 
-        // ── 雨滴条纹 ──
+        // ── 雨滴条纹（增强：主线 + 高光细线）──
         for (const auto &p : m_particles)
         {
             float alpha = p.alpha * m_intensity;
             if (alpha <= 0.01f) continue;
 
             uint8_t a  = static_cast<uint8_t>(std::min(alpha * 255.0f, 255.0f));
-            ImU32  col = IM_COL32(170, 210, 255, a);
+            float   dx = WIND_DX * p.length;
+            float   dy = p.length;
 
-            // 斜向线段
-            float dx = WIND_DX * p.length;
-            float dy = p.length;
+            // 主雨线：淡蓝白色
             bg->AddLine(
-                ImVec2(p.x,      p.y),
-                ImVec2(p.x + dx, p.y + dy),
-                col, 1.0f);
+                ImVec2(p.x,        p.y),
+                ImVec2(p.x + dx,   p.y + dy),
+                IM_COL32(175, 215, 255, a), 1.3f);
+
+            // 高光细线（仅中雨以上可见），模拟雨滴反光
+            if (alpha > 0.45f)
+            {
+                bg->AddLine(
+                    ImVec2(p.x - 0.6f,      p.y),
+                    ImVec2(p.x + dx - 0.6f, p.y + dy),
+                    IM_COL32(220, 240, 255, static_cast<int>(a * 0.38f)), 0.5f);
+            }
+        }
+
+        // ── 地面流动雾气 ──
+        if (m_current != WeatherType::Clear && m_intensity > 0.15f)
+        {
+            float fogStrength = getDimAlpha() * m_intensity;
+
+            // 底部上升渐变雾
+            float fogH = displayH * 0.20f;
+            for (int f = 0; f < 7; ++f)
+            {
+                float t     = static_cast<float>(f) / 6.0f;
+                float y     = displayH - fogH * (1.0f - t * t);
+                float aVal  = (1.0f - t) * fogStrength * 95.0f;
+                if (aVal < 1.0f) continue;
+                float xOff  = std::sin(m_fogTime * 0.25f + t * 1.8f) * 35.0f;
+                bg->AddRectFilled(
+                    ImVec2(-50.0f + xOff, y),
+                    ImVec2(displayW + 50.0f, displayH),
+                    IM_COL32(12, 22, 50, static_cast<int>(aVal)));
+            }
+
+            // 水平漂移雾带（3 条，速度各异）
+            for (int band = 0; band < 3; ++band)
+            {
+                float speed  = 14.0f + band * 8.0f;
+                float period = displayW * 1.8f;
+                float offset = std::fmod(m_fogTime * speed + band * period * 0.35f, period);
+                float bandY  = displayH * (0.72f + band * 0.07f);
+                float bAlpha = fogStrength * (18.0f + band * 14.0f);
+                if (bAlpha < 1.0f) continue;
+                // 两段平铺
+                for (int rep = -1; rep <= 1; ++rep)
+                {
+                    float bx = offset + rep * period - displayW * 0.3f;
+                    bg->AddRectFilled(
+                        ImVec2(bx,  bandY - 22.0f),
+                        ImVec2(bx + displayW * 0.65f, bandY + 22.0f),
+                        IM_COL32(14, 28, 58, static_cast<int>(bAlpha)), 22.0f);
+                }
+            }
+        }
+
+        // ── 水花涟漪 ──
+        for (const auto &s : m_splashes)
+        {
+            float effAlpha = s.alpha * m_intensity;
+            if (effAlpha <= 0.01f) continue;
+            uint8_t a = static_cast<uint8_t>(std::min(effAlpha * 210.0f, 210.0f));
+            ImU32  sc = IM_COL32(160, 215, 255, a);
+            // 外椭圆涟漪
+            bg->AddEllipse(ImVec2(s.x, s.y),
+                ImVec2{s.radius * 2.2f, s.radius * 0.75f}, sc, 0.0f, 22, 1.0f);
+            // 内小圆
+            if (s.radius > 1.5f)
+                bg->AddEllipse(ImVec2(s.x, s.y),
+                    ImVec2{s.radius * 0.9f, s.radius * 0.32f},
+                    IM_COL32(200, 235, 255, static_cast<int>(a * 0.6f)), 0.0f, 16, 0.8f);
         }
 
         // ── 闪电全屏白光 ──
         if (m_lightningFlash > 0.0f)
         {
-            uint8_t fa = static_cast<uint8_t>(m_lightningFlash * 190.0f);
+            uint8_t fa = static_cast<uint8_t>(m_lightningFlash * 195.0f);
             bg->AddRectFilled(
                 ImVec2(0.0f, 0.0f),
                 ImVec2(displayW, displayH),
-                IM_COL32(255, 255, 240, fa));
+                IM_COL32(255, 255, 245, fa));
         }
     }
 

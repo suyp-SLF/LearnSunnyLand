@@ -54,7 +54,7 @@ namespace game::scene
         SDL_GLContext m_glContext = nullptr;
 
         // 缩放滑块
-        float m_zoomSliderValue = 1.0f;
+        float m_zoomSliderValue = 9.0f;   // DNF 默认缩放
         glm::vec2 m_lastChunkUpdatePos = {-99999.0f, -99999.0f};
         glm::vec2 m_lastMouseLogicalPos = {0.0f, 0.0f};
         glm::vec2 m_lastMouseWorldPos = {0.0f, 0.0f};
@@ -212,5 +212,20 @@ namespace game::scene
         float m_mechAnimTimer  = 0.0f;
         int   m_mechAnimRow    = 1;   // 0=步行 1=待机/瞄准 2=射击
         float m_mechShootTimer = 0.0f;
+
+        // DNF 卷轴战斗：冲刺系统
+        bool  m_isDashing       = false;
+        float m_dashTimer       = 0.0f;   // 当前冲刺剩余时长
+        float m_dashCooldown    = 0.0f;   // 冲刺冷却剩余时长
+        float m_dashFacing      = 1.0f;   // 冲刺方向 (+1=右 -1=左)
+        bool  m_dashKeyWas      = false;  // 上帧 Shift 状态（边沿检测）
+
+        // DNF 卷轴战斗：连击系统
+        int   m_comboCount      = 0;      // 当前连击数 (0‑2)
+        float m_comboResetTimer = 0.0f;   // 连击窗口倒计时
+
+        // DNF 双击跑步检测
+        float m_doubleTapTimer   = 0.0f;  // 200ms 窗口倒计时
+        int   m_doubleTapLastDir = 0;     // 上次单击方向 (-1/0/1)
     };
 } // namespace game::scene

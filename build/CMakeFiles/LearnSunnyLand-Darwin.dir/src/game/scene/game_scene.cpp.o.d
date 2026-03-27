@@ -1411,6 +1411,8 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.o: \
   /opt/homebrew/include/nlohmann/detail/abi_macros.hpp \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/world/perlin_noise_generator.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/world/terrain_generator.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/dnf_terrain_generator.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../game/route/route_data.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/render/renderer.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/render/render_types.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/ecs/components.h \

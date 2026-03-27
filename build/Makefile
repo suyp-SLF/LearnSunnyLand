@@ -85,6 +85,51 @@ rebuild_cache:
 rebuild_cache/fast: rebuild_cache
 .PHONY : rebuild_cache/fast
 
+# Special rule for the target list_install_components
+list_install_components:
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Available install components are: \"Unspecified\""
+.PHONY : list_install_components
+
+# Special rule for the target list_install_components
+list_install_components/fast: list_install_components
+.PHONY : list_install_components/fast
+
+# Special rule for the target install
+install: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Install the project..."
+	/opt/homebrew/bin/cmake -P cmake_install.cmake
+.PHONY : install
+
+# Special rule for the target install
+install/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Install the project..."
+	/opt/homebrew/bin/cmake -P cmake_install.cmake
+.PHONY : install/fast
+
+# Special rule for the target install/local
+install/local: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing only the local directory..."
+	/opt/homebrew/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
+.PHONY : install/local
+
+# Special rule for the target install/local
+install/local/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing only the local directory..."
+	/opt/homebrew/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
+.PHONY : install/local/fast
+
+# Special rule for the target install/strip
+install/strip: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing the project stripped..."
+	/opt/homebrew/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
+.PHONY : install/strip
+
+# Special rule for the target install/strip
+install/strip/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing the project stripped..."
+	/opt/homebrew/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
+.PHONY : install/strip/fast
+
 # The main all target
 all: cmake_check_build_system
 	$(CMAKE_COMMAND) -E cmake_progress_start /Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles /Users/suyp/C++/Projects/LearnSunnyLand/build//CMakeFiles/progress.marks
@@ -128,6 +173,32 @@ LearnSunnyLand-Darwin: cmake_check_build_system
 LearnSunnyLand-Darwin/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/build
 .PHONY : LearnSunnyLand-Darwin/fast
+
+#=============================================================================
+# Target rules for targets named loader_example
+
+# Build rule for target.
+loader_example: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 loader_example
+.PHONY : loader_example
+
+# fast build rule for target.
+loader_example/fast:
+	$(MAKE) $(MAKESILENT) -f _deps/tinygltf-build/CMakeFiles/loader_example.dir/build.make _deps/tinygltf-build/CMakeFiles/loader_example.dir/build
+.PHONY : loader_example/fast
+
+#=============================================================================
+# Target rules for targets named tinygltf
+
+# Build rule for target.
+tinygltf: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tinygltf
+.PHONY : tinygltf
+
+# fast build rule for target.
+tinygltf/fast:
+	$(MAKE) $(MAKESILENT) -f _deps/tinygltf-build/CMakeFiles/tinygltf.dir/build.make _deps/tinygltf-build/CMakeFiles/tinygltf.dir/build
+.PHONY : tinygltf/fast
 
 _deps/imgui-src/backends/imgui_impl_opengl3.o: _deps/imgui-src/backends/imgui_impl_opengl3.cpp.o
 .PHONY : _deps/imgui-src/backends/imgui_impl_opengl3.o
@@ -1305,6 +1376,30 @@ src/game/route/route_data.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/route/route_data.cpp.s
 .PHONY : src/game/route/route_data.cpp.s
 
+src/game/scene/dnf_terrain_generator.o: src/game/scene/dnf_terrain_generator.cpp.o
+.PHONY : src/game/scene/dnf_terrain_generator.o
+
+# target to build an object file
+src/game/scene/dnf_terrain_generator.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/dnf_terrain_generator.cpp.o
+.PHONY : src/game/scene/dnf_terrain_generator.cpp.o
+
+src/game/scene/dnf_terrain_generator.i: src/game/scene/dnf_terrain_generator.cpp.i
+.PHONY : src/game/scene/dnf_terrain_generator.i
+
+# target to preprocess a source file
+src/game/scene/dnf_terrain_generator.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/dnf_terrain_generator.cpp.i
+.PHONY : src/game/scene/dnf_terrain_generator.cpp.i
+
+src/game/scene/dnf_terrain_generator.s: src/game/scene/dnf_terrain_generator.cpp.s
+.PHONY : src/game/scene/dnf_terrain_generator.s
+
+# target to generate assembly for a file
+src/game/scene/dnf_terrain_generator.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/dnf_terrain_generator.cpp.s
+.PHONY : src/game/scene/dnf_terrain_generator.cpp.s
+
 src/game/scene/game_scene.o: src/game/scene/game_scene.cpp.o
 .PHONY : src/game/scene/game_scene.o
 
@@ -1552,8 +1647,14 @@ help:
 	@echo "... clean"
 	@echo "... depend"
 	@echo "... edit_cache"
+	@echo "... install"
+	@echo "... install/local"
+	@echo "... install/strip"
+	@echo "... list_install_components"
 	@echo "... rebuild_cache"
 	@echo "... LearnSunnyLand-Darwin"
+	@echo "... loader_example"
+	@echo "... tinygltf"
 	@echo "... _deps/imgui-src/backends/imgui_impl_opengl3.o"
 	@echo "... _deps/imgui-src/backends/imgui_impl_opengl3.i"
 	@echo "... _deps/imgui-src/backends/imgui_impl_opengl3.s"
@@ -1701,6 +1802,9 @@ help:
 	@echo "... src/game/route/route_data.o"
 	@echo "... src/game/route/route_data.i"
 	@echo "... src/game/route/route_data.s"
+	@echo "... src/game/scene/dnf_terrain_generator.o"
+	@echo "... src/game/scene/dnf_terrain_generator.i"
+	@echo "... src/game/scene/dnf_terrain_generator.s"
 	@echo "... src/game/scene/game_scene.o"
 	@echo "... src/game/scene/game_scene.i"
 	@echo "... src/game/scene/game_scene.s"

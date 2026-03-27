@@ -52,9 +52,24 @@ namespace engine::component
         const char* getAnimationStateKey() const;
         float getJetpackFuelRatio() const;
 
+        // DNF Z轴：视觉跳跃高度（不影响 Box2D 物理）
+        float getPosZ()     const { return m_posZ; }
+        bool  isZGrounded() const { return m_posZ <= 0.0f && m_velZ <= 0.0f; }
+
+        // 跑步模式（双击方向键触发）：速度 ×1.5
+        void setRunMode(bool run) { m_isRunMode = run; }
+        bool isRunMode()   const { return m_isRunMode; }
+
+        // DNF Y轴深度移动范围（世界像素单位）
+        // yMin = 后方边界（近天花板），yMax = 前方边界（脚踩地面时角色中心）
+        void setGroundBand(float yMin, float yMax) { m_groundYMin = yMin; m_groundYMax = yMax; }
+
     private:
         float m_speed;
         float m_jetpackForce;
+        float m_depthSpeed  = 4.0f;    // W/S 深度移动速度（Box2D m/s）
+        float m_groundYMin  = 16.0f;   // 深度上限（靠背景，像素）
+        float m_groundYMax  = 64.0f;   // 深度下限（脚踩地面，像素）
         glm::vec2 m_inputDir{0.0f, 0.0f};
         MovementState m_state = MovementState::Idle;
         FacingDirection m_facing = FacingDirection::Right;
@@ -68,8 +83,15 @@ namespace engine::component
         float m_coyoteTimer = 0.0f;
         float m_groundedThreshold = 0.12f;
 
-        // 下落重力倍率：当 vel.y > 0（下落）时额外施加向下加速，消除飘浮感
-        float m_fallGravityMultiplier = 2.8f;
+        // 下落重力倍率：当 velZ < 0（下落）时增大 Z 轴重力加速度
+        float m_fallGravityMultiplier = 2.0f;
+
+        // DNF Z轴跳跃（视觉高度，纯逻辑，不走 Box2D）
+        float m_posZ = 0.0f;         // 当前视觉高度（像素，0 = 地面）
+        float m_velZ = 0.0f;         // Z轴速度（正=上升）
+        bool  m_isRunMode = false;   // 双击跑步模式
+        static constexpr float kZGravity  = 800.0f;  // Z轴重力（像素/秒²）
+        static constexpr float kZJumpSpeed = 240.0f; // 跳跃初速（像素/秒）
 
         float m_jetpackFuelMax = 0.75f;
         float m_jetpackFuel = 0.75f;
@@ -81,7 +103,7 @@ namespace engine::component
 
         float approach(float current, float target, float delta) const;
         bool isGrounded(const PhysicsComponent& physics) const;
-        void updateMovementState(const glm::vec2& velocity, bool grounded, bool jetpacking);
+        void updateMovementState(const glm::vec2& velocity, bool grounded, bool jetpacking, float velZ = 0.0f);
 
         void handleInput() override;
         void update(float delta_time) override;

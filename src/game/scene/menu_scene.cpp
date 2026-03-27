@@ -165,8 +165,14 @@ namespace game::scene
 
     void MenuScene::startGame()
     {
-        spdlog::info("开始游戏 → 体素 3D 场景");
-        auto scene = std::make_unique<VoxelScene>("VoxelScene", _context, _scene_manager);
+        spdlog::info("开始游戏 → DNF 走廊场景");
+        game::route::RouteData rd;
+        rd.path = { {0,0}, {1,0}, {2,0} };  // 最简路线
+        rd.terrain[0][0] = game::route::CellTerrain::Plains;
+        rd.terrain[0][1] = game::route::CellTerrain::Plains;
+        rd.terrain[0][2] = game::route::CellTerrain::Plains;
+        rd.objectiveZone = -1;
+        auto scene = std::make_unique<GameScene>("GameScene", _context, _scene_manager, rd);
         _scene_manager.requestReplaceScene(std::move(scene));
     }
 

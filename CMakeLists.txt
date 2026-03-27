@@ -48,7 +48,13 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/ocornut/imgui.git
     GIT_TAG docking
 )
+FetchContent_Declare(
+    tinygltf
+    GIT_REPOSITORY https://github.com/syoyo/tinygltf.git
+    GIT_TAG v2.9.5
+)
 FetchContent_MakeAvailable(imgui)
+FetchContent_MakeAvailable(tinygltf)
 
 # 添加可执行文件
 add_executable(
@@ -116,6 +122,7 @@ add_executable(
     src/game/scene/menu_scene.cpp
     src/game/scene/ship_scene.cpp
     src/game/scene/voxel_scene.cpp
+    src/game/scene/dnf_terrain_generator.cpp
 
     src/game/inventory/inventory.cpp
 
@@ -150,6 +157,7 @@ add_executable(
 # 这样编译器才能进入 /Users/suyp/C++/Library/build/include 找到 SDL3_mixer 文件夹
 target_include_directories(${TARGET} PRIVATE "${MY_SDL_BASE}/include")
 target_include_directories(${TARGET} PRIVATE "${imgui_SOURCE_DIR}" "${imgui_SOURCE_DIR}/backends")
+target_include_directories(${TARGET} PRIVATE "${tinygltf_SOURCE_DIR}")
 
 # 链接库
 target_link_libraries(

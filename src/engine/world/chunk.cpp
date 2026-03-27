@@ -15,25 +15,60 @@ namespace engine::world
 {
     namespace
     {
-        constexpr float kPseudoDepthX = 0.34f;
-        constexpr float kPseudoDepthY = 0.26f;
-
+        // 透视深度偏移：增大以获得更强烈的 DNF 风格伪 3D 效果
+        constexpr float kPseudoDepthX = 0.42f;
+        constexpr float kPseudoDepthY = 0.32f;
+        // DNF 风格各瓦片类型的基础颜色调色
+        // brightness: 1.0=正面, >1=顶面受光, <1=侧面暗面
         glm::vec4 faceTint(TileType type, float brightness)
         {
-            glm::vec4 tint(1.0f);
+            glm::vec4 tint;
             switch (type)
             {
-            case TileType::Grass:  tint = {1.05f, 1.08f, 0.98f, 1.0f}; break;
-            case TileType::Ore:    tint = {1.08f, 1.08f, 1.12f, 1.0f}; break;
-            case TileType::Wood:   tint = {1.02f, 0.94f, 0.86f, 1.0f}; break;
-            case TileType::Leaves: tint = {0.92f, 1.08f, 0.92f, 1.0f}; break;
-            case TileType::Gravel: tint = {0.95f, 0.95f, 0.98f, 1.0f}; break;
-            default: break;
+            // 草地：鲜亮嫩绿（顶层草皮，仿植被感）
+            case TileType::Grass:
+                tint = {0.60f, 1.08f, 0.38f, 1.0f};
+                break;
+            // 泥土：温暖的赤棕色，带红土质感
+            case TileType::Dirt:
+                tint = {1.05f, 0.68f, 0.36f, 1.0f};
+                break;
+            // 石头：冷调蓝灰，洞穴岩石感
+            case TileType::Stone:
+                tint = {0.62f, 0.68f, 0.82f, 1.0f};
+                break;
+            // 矿石：紫水晶发光感（DNF 特色矿石）
+            case TileType::Ore:
+                tint = {0.90f, 0.55f, 1.20f, 1.0f};
+                break;
+            // 木头：暖琥珀木色
+            case TileType::Wood:
+                tint = {1.05f, 0.78f, 0.48f, 1.0f};
+                break;
+            // 树叶：饱和翠绿
+            case TileType::Leaves:
+                tint = {0.55f, 1.08f, 0.50f, 1.0f};
+                break;
+            // 砾石：冷调暗灰
+            case TileType::Gravel:
+                tint = {0.72f, 0.75f, 0.80f, 1.0f};
+                break;
+            // 2.5D 地板装饰：温暖草地绿，稍微加深以区分层次
+            case TileType::GroundDecor:
+                tint = {0.52f, 0.92f, 0.32f, 1.0f};
+                break;
+            // 2.5D 后背景墙：安静暗蓝灰，距离感远
+            case TileType::WallDecor:
+                tint = {0.38f, 0.42f, 0.55f, 1.0f};
+                break;
+            default:
+                tint = {1.0f, 1.0f, 1.0f, 1.0f};
+                break;
             }
 
-            tint.r = glm::clamp(tint.r * brightness, 0.0f, 1.15f);
-            tint.g = glm::clamp(tint.g * brightness, 0.0f, 1.15f);
-            tint.b = glm::clamp(tint.b * brightness, 0.0f, 1.15f);
+            tint.r = glm::clamp(tint.r * brightness, 0.0f, 1.35f);
+            tint.g = glm::clamp(tint.g * brightness, 0.0f, 1.35f);
+            tint.b = glm::clamp(tint.b * brightness, 0.0f, 1.35f);
             return tint;
         }
 
@@ -154,9 +189,13 @@ namespace engine::world
                     continue;
 
                 float x0 = lx * tileSize.x;
-                float y0 = ly * tileSize.y;
-                float x1 = x0 + tileSize.x;
-                float y1 = y0 + tileSize.y;
+                float y0 = (float)(ly * tileSize.y);
+                float x1 = x0 + (float)tileSize.x;
+                float y1 = y0 + (float)tileSize.y;
+
+                // GroundDecor：地毯竖向暂设为 1px（后续按透视比例调整为横向的一半）
+                if (tile.type == TileType::GroundDecor)
+                    y1 = y0 + 1.0f;
 
                 glm::vec2 frontTL{x0, y0};
                 glm::vec2 frontTR{x1, y0};
@@ -167,6 +206,18 @@ namespace engine::world
                 glm::vec2 backBL{x0 - depthX, y1 - depthY};
                 glm::vec2 backBR{x1 - depthX, y1 - depthY};
 
+                // GroundDecor / WallDecor（2.5D 平面瓦片）：只画平面，不加顶面/侧面
+                if (tile.type == TileType::GroundDecor || tile.type == TileType::WallDecor)
+                {
+                    // GroundDecor 深度渐变：wy=1（远端暗 0.60）→ wy=5（前端亮 1.08），营造透视走廊感
+                    float tileLight = (tile.type == TileType::GroundDecor)
+                        ? (0.60f + (float)(m_chunkY * SIZE + ly - 1) * 0.12f)
+                        : 1.0f;
+                    appendQuad(vertices, frontTL, frontTR, frontBL, frontBR,
+                               tile.uv_rect, inv_w, inv_h, faceTint(tile.type, tileLight));
+                    continue;
+                }
+
                 appendQuad(vertices, frontTL, frontTR, frontBL, frontBR,
                            tile.uv_rect, inv_w, inv_h, faceTint(tile.type, 1.0f));
 
@@ -175,13 +226,15 @@ namespace engine::world
 
                 if (topVisible)
                 {
+                    // 顶面：受光面，大幅提亮，营造 DNF 光照感
                     appendQuad(vertices, backTL, backTR, frontTL, frontTR,
-                               tile.uv_rect, inv_w, inv_h, faceTint(tile.type, 1.12f));
+                               tile.uv_rect, inv_w, inv_h, faceTint(tile.type, 1.35f));
                 }
                 if (rightVisible)
                 {
+                    // 侧面/阴影面：深度暗化，增强立体感
                     appendQuad(vertices, frontTR, backTR, frontBR, backBR,
-                               tile.uv_rect, inv_w, inv_h, faceTint(tile.type, 0.72f));
+                               tile.uv_rect, inv_w, inv_h, faceTint(tile.type, 0.46f));
                 }
             }
         }
@@ -251,9 +304,13 @@ namespace engine::world
                     continue;
 
                 float x0 = lx * tileSize.x;
-                float y0 = ly * tileSize.y;
-                float x1 = x0 + tileSize.x;
-                float y1 = y0 + tileSize.y;
+                float y0 = (float)(ly * tileSize.y);
+                float x1 = x0 + (float)tileSize.x;
+                float y1 = y0 + (float)tileSize.y;
+
+                // GroundDecor：地毯竖向暂设为 1px（后续按透视比例调整为横向的一半）
+                if (tile.type == TileType::GroundDecor)
+                    y1 = y0 + 1.0f;
 
                 glm::vec2 frontTL{x0, y0};
                 glm::vec2 frontTR{x1, y0};
@@ -264,6 +321,18 @@ namespace engine::world
                 glm::vec2 backBL{x0 - depthX, y1 - depthY};
                 glm::vec2 backBR{x1 - depthX, y1 - depthY};
 
+                // GroundDecor / WallDecor（2.5D 平面瓦片）：只画平面，不加顶面/侧面
+                if (tile.type == TileType::GroundDecor || tile.type == TileType::WallDecor)
+                {
+                    // GroundDecor 深度渐变：wy=1（远端暗 0.60）→ wy=5（前端亮 1.08），营造透视走廊感
+                    float tileLight = (tile.type == TileType::GroundDecor)
+                        ? (0.60f + (float)(m_chunkY * SIZE + ly - 1) * 0.12f)
+                        : 1.0f;
+                    appendQuadGL(vertices, frontTL, frontTR, frontBL, frontBR,
+                                 tile.uv_rect, inv_w, inv_h, faceTint(tile.type, tileLight));
+                    continue;
+                }
+
                 appendQuadGL(vertices, frontTL, frontTR, frontBL, frontBR,
                              tile.uv_rect, inv_w, inv_h, faceTint(tile.type, 1.0f));
 
@@ -273,12 +342,12 @@ namespace engine::world
                 if (topVisible)
                 {
                     appendQuadGL(vertices, backTL, backTR, frontTL, frontTR,
-                                 tile.uv_rect, inv_w, inv_h, faceTint(tile.type, 1.12f));
+                                 tile.uv_rect, inv_w, inv_h, faceTint(tile.type, 1.35f));
                 }
                 if (rightVisible)
                 {
                     appendQuadGL(vertices, frontTR, backTR, frontBR, backBR,
-                                 tile.uv_rect, inv_w, inv_h, faceTint(tile.type, 0.72f));
+                                 tile.uv_rect, inv_w, inv_h, faceTint(tile.type, 0.46f));
                 }
             }
         }
@@ -337,7 +406,11 @@ namespace engine::world
             int lx = 0;
             while (lx < SIZE)
             {
-                while (lx < SIZE && m_tiles[ly * SIZE + lx].type == TileType::Air)
+                // 跳过无物理体的瓦片（Air、GroundDecor、WallDecor）
+                auto isPhysicsSkip = [](TileType t) {
+                    return t == TileType::Air || t == TileType::GroundDecor || t == TileType::WallDecor;
+                };
+                while (lx < SIZE && isPhysicsSkip(m_tiles[ly * SIZE + lx].type))
                 {
                     ++lx;
                 }
@@ -346,7 +419,7 @@ namespace engine::world
                     break;
 
                 int runStart = lx;
-                while (lx < SIZE && m_tiles[ly * SIZE + lx].type != TileType::Air)
+                while (lx < SIZE && !isPhysicsSkip(m_tiles[ly * SIZE + lx].type))
                 {
                     ++lx;
                 }

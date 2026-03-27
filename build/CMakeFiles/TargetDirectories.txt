@@ -1,3 +1,15 @@
 /Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles/LearnSunnyLand-Darwin.dir
 /Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles/edit_cache.dir
 /Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles/rebuild_cache.dir
+/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles/list_install_components.dir
+/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles/install.dir
+/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles/install/local.dir
+/Users/suyp/C++/Projects/LearnSunnyLand/build/CMakeFiles/install/strip.dir
+/Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/tinygltf-build/CMakeFiles/loader_example.dir
+/Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/tinygltf-build/CMakeFiles/tinygltf.dir
+/Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/tinygltf-build/CMakeFiles/edit_cache.dir
+/Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/tinygltf-build/CMakeFiles/rebuild_cache.dir
+/Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/tinygltf-build/CMakeFiles/list_install_components.dir
+/Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/tinygltf-build/CMakeFiles/install.dir
+/Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/tinygltf-build/CMakeFiles/install/local.dir
+/Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/tinygltf-build/CMakeFiles/install/strip.dir
