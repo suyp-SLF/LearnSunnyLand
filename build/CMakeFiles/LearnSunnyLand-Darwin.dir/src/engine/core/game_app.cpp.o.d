@@ -1279,6 +1279,32 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/core/game_app.cpp.o: \
   /opt/homebrew/include/spdlog/details/log_msg.h \
   /opt/homebrew/include/spdlog/version.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/game_scene.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/frame_editor.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/filesystem \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/copy_options.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/directory_entry.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/file_status.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/file_type.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/perms.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/file_time_type.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/filesystem_error.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/path.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/iomanip \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/operations.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/perm_options.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/space_info.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/directory_iterator.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/directory_options.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/path_iterator.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/recursive_directory_iterator.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/u8path.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/imgui.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/imconfig.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/state_machine_editor.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/../statemachine/sm_types.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/../statemachine/sm_loader.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/../statemachine/state_controller.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/../statemachine/input_buffer.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/../../engine/scene/scene.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/../../engine/world/chunk_manager.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/engine/core/../../game/scene/../../engine/world/chunk.h \

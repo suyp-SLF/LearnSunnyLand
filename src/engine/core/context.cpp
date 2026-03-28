@@ -1,4 +1,5 @@
 #include "context.h"
+#include "time.h"
 #include "../input/input_manager.h"
 #include "../render/camera.h"
 #include "../render/renderer.h"
@@ -15,11 +16,13 @@ namespace engine::core
     Context::Context(engine::input::InputManager &input_manager,
                      engine::render::Renderer &renderer,
                      engine::render::Camera &camera,
-                     engine::resource::ResourceManager &resource_manager)
+                     engine::resource::ResourceManager &resource_manager,
+                     engine::core::Time &time)
                      : _input_manager(input_manager),
                        _renderer(renderer),
                        _camera(camera),
-                       _resource_manager(resource_manager)
+                       _resource_manager(resource_manager),
+                       _time(time)
     {
         // 1. 绑定当前上下文到静态指针
         Current = this;

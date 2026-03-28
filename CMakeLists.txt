@@ -119,7 +119,13 @@ add_executable(
     src/engine/actor/actor_manager.cpp
 
     src/game/scene/game_scene.cpp
+    src/game/scene/frame_editor.cpp
+    src/game/scene/state_machine_editor.cpp
     src/game/scene/menu_scene.cpp
+
+    src/game/statemachine/input_buffer.cpp
+    src/game/statemachine/state_controller.cpp
+    src/game/statemachine/sm_loader.cpp
     src/game/scene/ship_scene.cpp
     src/game/scene/voxel_scene.cpp
     src/game/scene/dnf_terrain_generator.cpp

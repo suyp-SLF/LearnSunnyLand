@@ -101,14 +101,28 @@ namespace engine::component
 
         const glm::vec2 render_pos = _transform_comp->getPosition() + _offset;
 
-        // ⚡️ 将缓存好的 _cached_uv 传给渲染器
+        glm::vec4 uv_rect = _cached_uv;
+        const glm::vec2 tex_size = ctx.getResourceManager().getTextureSize(_sprite.getTextureId());
+        if (tex_size.x > 0.0f && tex_size.y > 0.0f)
+        {
+            const engine::utils::FRect src = _sprite.getSourceRect().value_or(
+                engine::utils::FRect{{0.0f, 0.0f}, tex_size});
+            uv_rect = {
+                src.position.x / tex_size.x,
+                src.position.y / tex_size.y,
+                src.size.x / tex_size.x,
+                src.size.y / tex_size.y
+            };
+        }
+
+        // 直接基于当前 sourceRect 计算 UV，避免缓存与实际帧不同步。
         ctx.getRenderer().drawSprite(
             ctx.getCamera(),
             _sprite,
             render_pos,
             _transform_comp->getScale(),
             _transform_comp->getRotation(),
-            _cached_uv // Renderer 的参数需要增加这一项
+            uv_rect
         );
     }
 
@@ -125,8 +139,15 @@ namespace engine::component
 
     void SpriteComponent::setFlipped(bool flipped)
     {
-        _sprite.setFlipped(flipped);
+        _facing_flipped = flipped;
+        updateEffectiveFlip();
         // Flipped 状态直接在渲染时由 _sprite 提供给渲染器，无需重算 Offset
+    }
+
+    void SpriteComponent::setFrameFlipped(bool flipped)
+    {
+        _frame_flipped = flipped;
+        updateEffectiveFlip();
     }
 
     void SpriteComponent::setSpriteById(const std::string &texture_id, std::optional<engine::utils::FRect> source_rect_opt)
@@ -141,6 +162,11 @@ namespace engine::component
         _sprite.setSourceRect(source_rect_opt);
         // 只要 Rect 变了，UV 和 Size 全部变脏
         _dirty_flags |= (DIRTY_SIZE | DIRTY_UV);
+    }
+
+    void SpriteComponent::updateEffectiveFlip()
+    {
+        _sprite.setFlipped(_facing_flipped != _frame_flipped);
     }
 
     // --- 内部辅助计算 ---

@@ -8,6 +8,8 @@ namespace engine::resource { class ResourceManager; }
 
 namespace engine::core
 {
+    class Time;
+
     class Context final
     {
 
@@ -18,7 +20,8 @@ namespace engine::core
         Context(engine::input::InputManager &input_manager,
                 engine::render::Renderer &renderer,
                 engine::render::Camera &camera,
-                engine::resource::ResourceManager &resource_manager);
+                engine::resource::ResourceManager &resource_manager,
+                engine::core::Time &time);
         ~Context();
         // 禁止拷贝和移动
         Context(const Context &) = delete;
@@ -31,6 +34,7 @@ namespace engine::core
         engine::render::Renderer &getRenderer() const { return _renderer; };
         engine::render::Camera &getCamera() const { return _camera; };
         engine::input::InputManager &getInputManager() const { return _input_manager; };
+        engine::core::Time &getTime() const { return _time; };
 
         // 获取渲染系统
         engine::render::SpriteRenderSystem &getSpriteRenderSystem() { return *_sprite_render_system; }
@@ -42,6 +46,7 @@ namespace engine::core
         engine::render::Renderer &_renderer;
         engine::render::Camera &_camera;
         engine::resource::ResourceManager &_resource_manager;
+        engine::core::Time &_time;
 
         std::unique_ptr<engine::render::SpriteRenderSystem> _sprite_render_system;
         std::unique_ptr<engine::render::ParallaxRenderSystem> _parallax_render_system;

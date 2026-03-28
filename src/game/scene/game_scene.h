@@ -1,4 +1,7 @@
 #pragma once
+#include "frame_editor.h"
+#include "state_machine_editor.h"
+#include "../statemachine/state_controller.h"
 #include "../../engine/scene/scene.h"
 #include "../../engine/world/chunk_manager.h"
 #include "../../engine/world/world_config.h"
@@ -63,6 +66,13 @@ namespace game::scene
         float m_rssHistoryTimer = 0.0f;      // 距上次采样经过秒数
         float m_rssPeakMB       = 0.0f;      // 历史峰值
 
+        // ── 设置界面：FPS 历史折线图 ──────────────────────────────────────────
+        std::array<float, kMemHistoryLen> m_fpsHistory{};  // 实时 FPS 历史
+        int   m_fpsHistoryIdx   = 0;         // 下一写入位置
+        float m_fpsHistoryTimer = 0.0f;      // 距上次采样经过秒数（每 0.25s 一次）
+        float m_fpsPeak         = 0.0f;      // 历史峰值
+        int   m_maxFpsSlider    = 60;        // 目标帧率设置（0 = 不限）
+
         // ── 设置界面：粒子效果档位 ────────────────────────────────────────────
         enum class UiParticleLevel { None = 0, Low, Medium, High };
         UiParticleLevel m_uiParticleLevel = UiParticleLevel::Low;
@@ -88,7 +98,9 @@ namespace game::scene
         bool m_showSkillDebugOverlay = false;
         bool m_showPhysicsDebug = false;
         bool m_showFpsOverlay = true;   // 由 config.json performance.show_fps 控制
+        bool m_invertPlayerFacing = false;
         bool m_showSettings = false;
+        bool m_devMode = false;         // 开发模式：显示地形/物理调试覆盖层
 
         // 背包系统
         game::inventory::Inventory m_inventory;
@@ -249,5 +261,57 @@ namespace game::scene
         // DNF 双击跑步检测
         float m_doubleTapTimer   = 0.0f;  // 200ms 窗口倒计时
         int   m_doubleTapLastDir = 0;     // 上次单击方向 (-1/0/1)
-    };
+
+        // ── Gundam 攻击动画状态机 ──────────────────────────────
+        // 连招动画队列：Z键/左键鼠标 触发，每轮 attack_a → attack_b → attack_c 循环
+        int   m_attackComboStep   = 0;    // 0/1/2 对应 a/b/c 连招
+        float m_attackAnimTimer   = 0.0f; // 当前攻击动画剩余时间（>0 表示正在播放攻击动画）
+        bool  m_attackInputQueued = false;// 攻击动画播放中按下攻击，等待连招
+
+        // 重击/大招变量
+        float m_heavyAttackTimer  = 0.0f; // >0 = 重击动画播放中
+        float m_ultimateTimer     = 0.0f; // >0 = 大招动画播放中
+        float m_cannonTimer       = 0.0f; // >0 = 炮击动画播放中
+
+        // 攻击动画持续时间常量（秒）
+        static constexpr float kAttackADur  = 8 * 0.07f; // attack_a: 8帧 @ 70ms
+        static constexpr float kAttackBDur  = 8 * 0.07f;
+        static constexpr float kAttackCDur  = 8 * 0.07f;
+        static constexpr float kAttackDDur  = 8 * 0.06f;
+        static constexpr float kCannonDur   = 8 * 0.08f;
+        static constexpr float kUltimateDur = 8 * 0.10f;
+
+        // ── 帧编辑器 ──────────────────────────────────────────────────
+        FrameEditor m_frameEditor;
+
+        // ── 状态机编辑器 ──────────────────────────────────────────────
+        StateMachineEditor m_smEditor;
+
+        // ── 开发模式：角色选择器 ─────────────────────────────────────────
+        struct CharacterEntry {
+            std::string id;           // e.g. "gundom"
+            std::string displayName;  // e.g. "冈达姆"
+            std::string smPath;       // e.g. "assets/textures/Characters/gundom.sm.json"
+        };
+        std::vector<CharacterEntry> m_characters;
+        int m_selectedCharacter = 0;
+
+        // ── 玩家状态机控制器 ─────────────────────────────────────────────
+        // 用法：
+        //  1. 在 init() 或切换角色时调用 loadPlayerSM("xxx.sm.json")
+        //  2. 在 update() 中调用 tickPlayerSM(dt)：
+        //     - 根据按键/物理状态构建 activeInputs
+        //     - 调用 m_playerSM.update() 并应用根位移/帧事件
+        game::statemachine::StateController m_playerSM;
+        game::statemachine::StateMachineData m_playerSMData;
+        std::string m_playerSMPath;
+        bool   m_playerSMLoaded  = false;
+        bool   m_prevGrounded    = true;   // 上帧落地状态（用于检测 LAND 事件）
+
+        void loadPlayerSM(const std::string& smJsonPath);  // 加载并 init
+        void tickPlayerSM(float dt);                        // 每帧驱动状态机
+
+        void scanCharacters();        // 扫描 *.sm.json 填充 m_characters
+        void renderDevModeOverlay();  // 右上角角色选择覆盖层（仅 dev 模式）
+    }; // class GameScene
 } // namespace game::scene

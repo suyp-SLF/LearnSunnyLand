@@ -411,7 +411,8 @@ namespace engine::core
                 *_input_manager,
                 *_renderer,
                 *_camera,
-                *_resource_manager);
+                *_resource_manager,
+                *_time);
         }
         catch (const std::exception &e)
         {

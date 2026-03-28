@@ -4,10 +4,18 @@
 #include "../utils/math.h"
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace engine::component
 {
     class SpriteComponent;
+
+    struct AnimationFrame
+    {
+        engine::utils::FRect sourceRect{{0.0f, 0.0f}, {0.0f, 0.0f}};
+        float duration = 0.1f;
+        bool  flipX = false;
+    };
 
     /**
      * @brief 描述一段动画片段
@@ -20,6 +28,13 @@ namespace engine::component
         int   frame_count;    // 帧数
         float frame_duration; // 每帧持续时间（秒）
         bool  loop = true;    // true=循环播放，false=抵达最后一帧后保持
+
+        // ── 可变帧尺寸扩展（供非等高精灵表使用，如 gundom_sheet）── 
+        float y_origin          = -1.0f;  // >=0 时直接用此像素 y 替代 row*frame_h
+        float frame_h_override  =  0.0f;  // >0 时替代 AnimationComponent 的 m_frame_h
+
+        // 显式帧序列：当非空时，优先使用这里的 sourceRect / duration / flipX。
+        std::vector<AnimationFrame> frames;
     };
 
     /**
@@ -57,6 +72,12 @@ namespace engine::component
 
         /** 切换到指定片段；若已在播该片段则无操作 */
         void play(const std::string& name);
+
+        /** 强制从头播放（即使同名也重置）；用于连招/被打动画 */
+        void forcePlay(const std::string& name);
+
+        /** 当前非循环动画是否已播完 */
+        bool isFinished() const;
 
         // --- 查询 ---
         const std::string& currentClip()  const { return m_current; }

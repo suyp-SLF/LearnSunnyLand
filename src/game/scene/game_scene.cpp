@@ -10,6 +10,7 @@
 #include "../../engine/component/physics_component.h"
 #include "../../engine/component/animation_component.h"
 #include "../../engine/core/context.h"
+#include "../../engine/core/time.h"
 #include "../../engine/render/sprite_render_system.h"
 #include "../../engine/render/parallax_render_system.h"
 #include "../../engine/render/tilelayer_render_system.h"
@@ -38,6 +39,7 @@
 #include <nlohmann/json.hpp>
 #include <unordered_set>
 #include <mach/mach.h>
+#include <filesystem>
 
 namespace game::scene
 {
@@ -265,6 +267,87 @@ static void saveBoolSetting(const char* key, bool enabled)
     file << j.dump(4);
 }
 
+static std::string normalizeFrameActionName(const std::string& name)
+{
+    std::string normalized;
+    normalized.reserve(name.size());
+    for (char ch : name)
+    {
+        normalized.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(ch))));
+    }
+    return normalized;
+}
+
+static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
+                                            engine::component::AnimationComponent& anim,
+                                            std::string* texturePathOut = nullptr)
+{
+    std::ifstream file(jsonPath);
+    if (!file.is_open())
+        return false;
+
+    nlohmann::json root;
+    try
+    {
+        file >> root;
+    }
+    catch (const std::exception& e)
+    {
+        spdlog::warn("帧动画 JSON 解析失败: {} ({})", jsonPath, e.what());
+        return false;
+    }
+
+    if (texturePathOut)
+        *texturePathOut = root.value("texture", std::string{});
+
+    bool loadedAny = false;
+    for (const auto& action : root.value("actions", nlohmann::json::array()))
+    {
+        const std::string actionName = action.value("name", std::string{});
+        const auto& framesJson = action.value("frames", nlohmann::json::array());
+        if (actionName.empty() || framesJson.empty())
+            continue;
+
+        engine::component::AnimationClip clip{};
+        clip.row = 0;
+        clip.col_start = 0;
+        clip.frame_count = static_cast<int>(framesJson.size());
+        clip.frame_duration = 0.1f;
+        clip.loop = action.value("is_loop", true);
+        clip.frames.reserve(framesJson.size());
+
+        for (const auto& frameJson : framesJson)
+        {
+            const float sx = frameJson.value("sx", 0.0f);
+            const float sy = frameJson.value("sy", 0.0f);
+            const float sw = std::max(frameJson.value("sw", 0.0f), 1.0f);
+            const float sh = std::max(frameJson.value("sh", 0.0f), 1.0f);
+            const float duration = std::max(frameJson.value("duration_ms", 100) / 1000.0f, 0.0001f);
+            clip.frames.push_back({engine::utils::FRect{{sx, sy}, {sw, sh}}, duration,
+                                   frameJson.value("flip_x", false)});
+        }
+
+        if (!clip.frames.empty())
+            clip.frame_duration = clip.frames.front().duration;
+
+        const std::string normalized = normalizeFrameActionName(actionName);
+        anim.addClip(normalized, clip);
+        if (normalized == "move")
+        {
+            anim.addClip("walk", clip);
+            anim.addClip("run", clip);
+        }
+        else if (normalized == "idle")
+        {
+            anim.addClip("idle", clip);
+        }
+
+        loadedAny = true;
+    }
+
+    return loadedAny;
+}
+
 
     GameScene::GameScene(const std::string &name,
                          engine::core::Context &context,
@@ -303,6 +386,7 @@ static void saveBoolSetting(const char* key, bool enabled)
         }
         m_showSkillDebugOverlay = loadBoolSetting("show_skill_debug_overlay");
         m_showActiveChunkHighlights = loadBoolSetting("show_active_chunk_highlights");
+        m_invertPlayerFacing = loadBoolSetting("invert_player_facing");
 
         chunk_manager = std::make_unique<engine::world::ChunkManager>(
             "assets/textures/Tiles/tileset.svg",
@@ -475,6 +559,12 @@ static void saveBoolSetting(const char* key, bool enabled)
         tickCombatEffects(delta_time);
         updateSettingsParticles(delta_time);
 
+        // ── Gundam 攻击动画计时器递减 ─────────────────────────────────────
+        m_attackAnimTimer  = std::max(0.0f, m_attackAnimTimer  - delta_time);
+        m_heavyAttackTimer = std::max(0.0f, m_heavyAttackTimer - delta_time);
+        m_ultimateTimer    = std::max(0.0f, m_ultimateTimer    - delta_time);
+        m_cannonTimer      = std::max(0.0f, m_cannonTimer      - delta_time);
+
         if (m_monsterManager)
             m_monsterManager->update(delta_time);
 
@@ -492,6 +582,9 @@ static void saveBoolSetting(const char* key, bool enabled)
         {
             actor_manager->update(delta_time);
         }
+
+        // 玩家状态机必须在表现层同步前执行，否则动画不会切到状态机所选状态。
+        tickPlayerSM(delta_time);
 
         syncPlayerPresentation();
 
@@ -747,6 +840,24 @@ static void saveBoolSetting(const char* key, bool enabled)
             renderCommandTerminal();
             renderMechPrompt();
 
+            // ── 动作序列帧编辑器 ─────────────────────────────────────────────
+            m_frameEditor.render(_context.getResourceManager());
+            // 帧编辑器内部"跳转→状态机编辑器"按钮
+            if (m_frameEditor.wantsSmEditor())
+            {
+                m_frameEditor.clearSmEditorRequest();
+                m_smEditor.open();
+            }
+
+            // ── 状态机编辑器 ────────────────────────────────────────────────
+            m_smEditor.render();
+            // 用户在 SM 编辑器里刚选了新文件 → 同步加载到游戏状态机
+            if (m_smEditor.takeJustLoaded())
+                loadPlayerSM(m_smEditor.getSavePath());
+
+            // 开发模式：右上角角色选择器覆盖层
+            if (m_devMode) renderDevModeOverlay();
+
             // 星球任务规划 UI
             {
                 glm::vec2 ppos = getActorWorldPosition(getControlledActor());
@@ -760,8 +871,8 @@ static void saveBoolSetting(const char* key, bool enabled)
             if (m_showSkillDebugOverlay)
                 renderSkillDebugOverlay();
 
-            // ── Chunk 调试红线边框 ──────────────────────────────────────────────
-            if (chunk_manager)
+            // ── Chunk 调试红线边框（仅开发模式 + 勾选时显示）────────────────────
+            if (chunk_manager && m_devMode && m_showActiveChunkHighlights)
             {
                 auto* fg = ImGui::GetForegroundDrawList();
                 const auto &cam = _context.getCamera();
@@ -783,7 +894,7 @@ static void saveBoolSetting(const char* key, bool enabled)
             }
 
             // ── DNF 瓦片悬停魔法光圈（脉动金色 L 形角标 + 外发光）──
-            if (m_hasHoveredTile && chunk_manager)
+            if (m_hasHoveredTile && m_devMode && chunk_manager)
             {
                 auto* fg = ImGui::GetForegroundDrawList();
                 const auto& cam  = _context.getCamera();
@@ -895,6 +1006,16 @@ static void saveBoolSetting(const char* key, bool enabled)
         if (m_showCommandInput)
             return;
 
+        // ── 帧编辑器打开时：屏蔽全部游戏操作（由窗口自身关闭，不再依赖快捷键）──
+        if (m_frameEditor.isOpen())
+        {
+            return; // 直接返回，跳过所有游戏输入
+        }
+
+        // ── 设置页打开时：屏蔽移动/攻击等游戏输入 ──────────────────────
+        if (m_showSettings)
+            return;
+
         if (actor_manager)
             actor_manager->handleInput();
 
@@ -959,7 +1080,6 @@ static void saveBoolSetting(const char* key, bool enabled)
 
                 if (weaponDef && weaponDef->attack_type == game::weapon::AttackType::Melee)
                 {
-                    // DNF：攻击目标 = 玩家位置沿朝向偏移（非鼠标坐标）
                     glm::vec2 playerPos = getActorWorldPosition(m_player);
                     auto* ctrl = m_player
                         ? m_player->getComponent<engine::component::ControllerComponent>()
@@ -974,18 +1094,38 @@ static void saveBoolSetting(const char* key, bool enabled)
                         m_comboCount = std::min(m_comboCount + 1, 2);
                     else
                         m_comboCount = 0;
-                    m_comboResetTimer = 0.40f;   // 0.4s 连击窗口
+                    m_comboResetTimer = 0.40f;
 
                     performMeleeAttack(attackTarget);
 
-                    // ── 攻击位移冲量：攻击瞬间沿朝向滑行（DNF 攻击手感）──
+                    // ── Gundam 连招动画驱动 ──────────────────────────────
+                    if (auto* anim = m_player
+                            ? m_player->getComponent<engine::component::AnimationComponent>()
+                            : nullptr)
+                    {
+                        bool inAttack = (m_attackAnimTimer > 0.0f);
+                        if (!inAttack)
+                        {
+                            // 开始新连招序列
+                            m_attackComboStep   = 0;
+                            m_attackInputQueued = false;
+                            m_attackAnimTimer   = kAttackADur;
+                            anim->forcePlay("attack_a");
+                        }
+                        else
+                        {
+                            // 攻击中再按：排队连招（下一段动画在 isFinished 后自动触发）
+                            m_attackInputQueued = true;
+                        }
+                    }
+
+                    // 攻击位移冲量
                     if (m_player)
                     {
                         auto* physics = m_player->getComponent<engine::component::PhysicsComponent>();
                         if (physics)
                         {
                             glm::vec2 avel = physics->getVelocity();
-                            // 冲量大小随连击段数递增（首段=5, 二段=7, 三段=4 收力）
                             float impulse = (m_comboCount == 0) ? 5.0f
                                           : (m_comboCount == 1) ? 7.0f : 4.0f;
                             avel.x = facing * impulse;
@@ -1062,9 +1202,58 @@ static void saveBoolSetting(const char* key, bool enabled)
                 tryEnterMech();
         }
 
-        // Q键：主动展光冲刺星技
+        // Q键：主动展光冲刺星技 + Gundam 炮击动画
         if (input.isActionPressed("skill_use"))
+        {
             triggerActiveStarSkills();
+            // Gundam 炮击动画（仅非攻击动画期间触发）
+            if (m_player && m_attackAnimTimer <= 0.0f && m_cannonTimer <= 0.0f
+                && m_ultimateTimer <= 0.0f)
+            {
+                if (auto* anim = m_player->getComponent<engine::component::AnimationComponent>())
+                {
+                    anim->forcePlay("cannon");
+                    m_cannonTimer = kCannonDur;
+                }
+            }
+        }
+
+        // Ctrl/X键：Gundam 大招动画 (重击)
+        if (!m_isPlayerInMech && m_player)
+        {
+            const bool* keys = SDL_GetKeyboardState(nullptr);
+            bool heavyDown = (keys[SDL_SCANCODE_X] || keys[SDL_SCANCODE_LCTRL]) != 0;
+            // 边沿检测借助 m_attackInputQueued 状态（只需要第一帧）
+            static bool s_heavyWas = false;
+            if (heavyDown && !s_heavyWas && m_attackAnimTimer <= 0.0f
+                && m_heavyAttackTimer <= 0.0f && m_ultimateTimer <= 0.0f)
+            {
+                if (auto* anim = m_player->getComponent<engine::component::AnimationComponent>())
+                {
+                    anim->forcePlay("attack_d");
+                    m_heavyAttackTimer = kAttackDDur;
+                }
+            }
+            s_heavyWas = heavyDown;
+        }
+
+        // R键：Gundam 大招剑气动画
+        if (!m_isPlayerInMech && m_player)
+        {
+            const bool* keys2 = SDL_GetKeyboardState(nullptr);
+            static bool s_ultimateWas = false;
+            bool ultiDown = keys2[SDL_SCANCODE_R] != 0;
+            if (ultiDown && !s_ultimateWas && m_ultimateTimer <= 0.0f
+                && m_attackAnimTimer <= 0.0f)
+            {
+                if (auto* anim = m_player->getComponent<engine::component::AnimationComponent>())
+                {
+                    anim->forcePlay("ultimate");
+                    m_ultimateTimer = kUltimateDur;
+                }
+            }
+            s_ultimateWas = ultiDown;
+        }
 
         // 滚轮切换武器栏
         float wheel = input.getMouseWheelDelta();
@@ -1262,17 +1451,61 @@ static void saveBoolSetting(const char* key, bool enabled)
         if (!m_player) return;
 
         auto* controller = m_player->getComponent<engine::component::ControllerComponent>();
-        auto* sprite = m_player->getComponent<engine::component::SpriteComponent>();
+        auto* sprite     = m_player->getComponent<engine::component::SpriteComponent>();
+        auto* anim       = m_player->getComponent<engine::component::AnimationComponent>();
         if (!controller || !sprite) return;
 
         bool shouldFlip = controller->getFacingDirection() == engine::component::ControllerComponent::FacingDirection::Left;
+        if (m_invertPlayerFacing)
+            shouldFlip = !shouldFlip;
         if (sprite->isFlipped() != shouldFlip)
             sprite->setFlipped(shouldFlip);
 
-        // 将动画状态委托给 AnimationComponent（组件自身 update 驱动帧推进）
-        const std::string animKey = controller->getAnimationStateKey();
-        if (auto* anim = m_player->getComponent<engine::component::AnimationComponent>())
-            anim->play(animKey);
+        // 状态机接管后，这里只保留朝向同步；动画切换由 tickPlayerSM() 统一负责。
+        if (m_playerSMLoaded)
+            return;
+
+        // ── Gundam 攻击动画优先级：攻击/技能动画期间不切换移动动画 ──────
+        if (anim)
+        {
+            // 倒计时减少（由 syncPlayerPresentation 每帧统一处理）
+            // 注意：delta_time 在 update() 里，此处通过 ImGui framerate 近似
+            // 实际已由 update() 循环在调用前更新 delta_time，此处直接使用 m_attackAnimTimer
+            // m_attackAnimTimer 的递减由 update() 内 tickCombatEffects 之前处理
+
+            bool inAttackAnim = (m_attackAnimTimer > 0.0f)
+                             || (m_heavyAttackTimer > 0.0f)
+                             || (m_ultimateTimer    > 0.0f)
+                             || (m_cannonTimer      > 0.0f);
+
+            // 攻击动画未结束时不覆盖
+            if (!inAttackAnim)
+            {
+                // 移动动画：将 ControllerComponent 状态映射到 gundam 动画 key
+                const std::string moveKey = controller->getAnimationStateKey();
+                // ControllerComponent 返回 "run"，映射到 gundam 的 "run"；其余同名
+                anim->play(moveKey);
+            }
+            else if (anim->isFinished())
+            {
+                // 一次性攻击动画播完：清零所有计时，允许连招输入
+                m_attackAnimTimer   = 0.0f;
+                m_heavyAttackTimer  = 0.0f;
+                m_ultimateTimer     = 0.0f;
+                m_cannonTimer       = 0.0f;
+
+                // 如果攻击期间有连招排队输入，立即触发下一段
+                if (m_attackInputQueued)
+                {
+                    m_attackInputQueued = false;
+                    m_attackComboStep = (m_attackComboStep + 1) % 3;
+                    const char* nextClips[] = {"attack_a", "attack_b", "attack_c"};
+                    const float nextDurs[]  = {kAttackADur, kAttackBDur, kAttackCDur};
+                    anim->forcePlay(nextClips[m_attackComboStep]);
+                    m_attackAnimTimer = nextDurs[m_attackComboStep];
+                }
+            }
+        }
 
         // ── DNF Z轴视觉偏移：将精灵沿屏幕 Y 上移 posZ 像素 ──
         auto* transform = m_player->getComponent<engine::component::TransformComponent>();
@@ -1397,6 +1630,17 @@ static void saveBoolSetting(const char* key, bool enabled)
 
     void GameScene::updateSettingsParticles(float dt)
     {
+        // FPS 历史采样：每 0.25s 记录一次实时帧率
+        m_fpsHistoryTimer += dt;
+        if (m_fpsHistoryTimer >= 0.25f)
+        {
+            m_fpsHistoryTimer = 0.0f;
+            float fps = ImGui::GetIO().Framerate;
+            m_fpsHistory[m_fpsHistoryIdx] = fps;
+            m_fpsHistoryIdx = (m_fpsHistoryIdx + 1) % kMemHistoryLen;
+            if (fps > m_fpsPeak) m_fpsPeak = fps;
+        }
+
         // 内存历史采样：每 0.5s 记录一次 RSS
         m_rssHistoryTimer += dt;
         if (m_rssHistoryTimer >= 0.5f)
@@ -1491,7 +1735,22 @@ static void saveBoolSetting(const char* key, bool enabled)
             return;
         }
 
-        // ── 粒子效果背景（绘制到窗口前景层）──────────────────────────────
+        // ── 右上角：打开帧编辑器 + 状态机编辑器 ──────────────────────────
+        {
+            ImGui::SameLine(ImGui::GetWindowWidth() - 280.0f);
+            ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.18f, 0.45f, 0.85f, 0.90f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.28f, 0.58f, 1.00f, 1.00f));
+            if (ImGui::Button("帧编辑器", ImVec2(130, 0)))
+                m_frameEditor.open();
+            ImGui::PopStyleColor(2);
+            ImGui::SameLine();
+            ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.55f, 0.28f, 0.05f, 0.90f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.75f, 0.42f, 0.12f, 1.00f));
+            if (ImGui::Button("状态机编辑器", ImVec2(130, 0)))
+                m_smEditor.open();
+            ImGui::PopStyleColor(2);
+        }
+        ImGui::Separator();
         if (m_uiParticleLevel != UiParticleLevel::None && !m_uiDusts.empty())
         {
             ImVec2 wMin = ImGui::GetWindowPos();
@@ -1604,6 +1863,113 @@ static void saveBoolSetting(const char* key, bool enabled)
         }
         ImGui::TextDisabled("* 模块内存为估算值，总 RSS 为实际物理内存占用。");
 
+        // ── FPS 折线图 ────────────────────────────────────────────────────
+        ImGui::SeparatorText("帧率监控");
+        ImGui::Text("当前 FPS: %.1f   峰值: %.1f", ImGui::GetIO().Framerate, m_fpsPeak);
+        ImGui::SameLine();
+        if (ImGui::Button("重置峰值##fps")) m_fpsPeak = ImGui::GetIO().Framerate;
+
+        {
+            const ImVec2 fpsGraphSize{ImGui::GetContentRegionAvail().x, 72.0f};
+            ImDrawList *dl = ImGui::GetWindowDrawList();
+            ImVec2 p0 = ImGui::GetCursorScreenPos();
+            ImVec2 p1 = { p0.x + fpsGraphSize.x, p0.y + fpsGraphSize.y };
+
+            dl->AddRectFilled(p0, p1, IM_COL32(12, 18, 30, 220), 4.0f);
+            dl->AddRect(p0, p1, IM_COL32(60, 100, 160, 180), 4.0f);
+
+            int targetFps = _context.getTime().getTargetFPS();
+            float yMax = (targetFps > 0) ? static_cast<float>(targetFps) * 1.1f
+                                         : std::max(m_fpsPeak * 1.1f, 60.0f);
+            yMax = std::ceil(yMax / 30.0f) * 30.0f;
+
+            // 参考线：目标帧率
+            if (targetFps > 0 && static_cast<float>(targetFps) <= yMax)
+            {
+                float gy = p1.y - fpsGraphSize.y * (static_cast<float>(targetFps) / yMax);
+                dl->AddLine(ImVec2(p0.x, gy), ImVec2(p1.x, gy), IM_COL32(100, 200, 100, 100));
+                char buf[16]; snprintf(buf, sizeof(buf), "%d", targetFps);
+                dl->AddText(ImVec2(p0.x + 3, gy - 10), IM_COL32(100, 200, 100, 160), buf);
+            }
+            // 水平网格线
+            for (int gi = 1; gi < 4; ++gi)
+            {
+                float gy = p0.y + fpsGraphSize.y * (1.0f - static_cast<float>(gi) / 4.0f);
+                dl->AddLine(ImVec2(p0.x, gy), ImVec2(p1.x, gy), IM_COL32(50, 80, 120, 60));
+            }
+
+            int n = kMemHistoryLen;
+            for (int i = 0; i < n - 1; ++i)
+            {
+                int ia = (m_fpsHistoryIdx + i)     % n;
+                int ib = (m_fpsHistoryIdx + i + 1) % n;
+                float va = m_fpsHistory[ia] / yMax;
+                float vb = m_fpsHistory[ib] / yMax;
+                float x0 = p0.x + fpsGraphSize.x * static_cast<float>(i)     / static_cast<float>(n - 1);
+                float x1 = p0.x + fpsGraphSize.x * static_cast<float>(i + 1) / static_cast<float>(n - 1);
+                float y0g = p1.y - fpsGraphSize.y * glm::clamp(va, 0.0f, 1.0f);
+                float y1g = p1.y - fpsGraphSize.y * glm::clamp(vb, 0.0f, 1.0f);
+
+                // 低于目标帧率时变红，否则绿色
+                float ratio = (targetFps > 0)
+                    ? glm::clamp(1.0f - vb * yMax / static_cast<float>(targetFps), 0.0f, 1.0f)
+                    : 0.0f;
+                uint8_t cr = static_cast<uint8_t>(glm::mix(60.0f,  255.0f, ratio));
+                uint8_t cg = static_cast<uint8_t>(glm::mix(210.0f, 60.0f,  ratio));
+                dl->AddLine(ImVec2(x0, y0g), ImVec2(x1, y1g), IM_COL32(cr, cg, 60, 220), 1.5f);
+
+                ImVec2 quad[4] = { {x0,y0g},{x1,y1g},{x1,p1.y},{x0,p1.y} };
+                dl->AddConvexPolyFilled(quad, 4, IM_COL32(cr, cg, 60, 28));
+            }
+            {
+                int ic = (m_fpsHistoryIdx + n - 1) % n;
+                float vc = m_fpsHistory[ic] / yMax;
+                float xc = p1.x - 1.0f;
+                float yc = p1.y - fpsGraphSize.y * glm::clamp(vc, 0.0f, 1.0f);
+                dl->AddCircleFilled(ImVec2(xc, yc), 3.0f, IM_COL32(255, 240, 100, 220));
+            }
+            dl->AddText(ImVec2(p0.x + 3, p0.y + 2), IM_COL32(120, 160, 200, 180), "FPS");
+            ImGui::Dummy(fpsGraphSize);
+        }
+
+        // 最大帧率设置
+        {
+            int curTarget = _context.getTime().getTargetFPS();
+            if (m_maxFpsSlider == 60 && curTarget != 60)
+                m_maxFpsSlider = (curTarget > 0) ? curTarget : 0;
+
+            const int kPresets[] = {30, 60, 120, 144, 240};
+            ImGui::Text("最大帧率：");
+            ImGui::SameLine();
+            for (int p : kPresets)
+            {
+                bool sel = (m_maxFpsSlider == p);
+                if (sel) ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.25f, 0.55f, 1.0f, 1.0f));
+                char buf[8]; snprintf(buf, sizeof(buf), "%d", p);
+                if (ImGui::Button(buf))
+                {
+                    m_maxFpsSlider = p;
+                    _context.getTime().setTargetFPS(p);
+                    _context.getTime().setFrameLimitEnabled(true);
+                }
+                if (sel) ImGui::PopStyleColor();
+                ImGui::SameLine();
+            }
+            {
+                bool sel = (m_maxFpsSlider == 0);
+                if (sel) ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.25f, 0.55f, 1.0f, 1.0f));
+                if (ImGui::Button("不限"))
+                {
+                    m_maxFpsSlider = 0;
+                    _context.getTime().setTargetFPS(0);
+                    _context.getTime().setFrameLimitEnabled(false);
+                }
+                if (sel) ImGui::PopStyleColor();
+            }
+        }
+
+        ImGui::Spacing();
+
         // ── 图形设置 ───────────────────────────────────────────────────────
         ImGui::SeparatorText("图形设置");
 
@@ -1634,10 +2000,41 @@ static void saveBoolSetting(const char* key, bool enabled)
         }
 
         if (ImGui::Checkbox("显示帧率", &m_showFpsOverlay)) {}
-        if (ImGui::Checkbox("显示技能调试", &m_showSkillDebugOverlay))
-            saveBoolSetting("show_skill_debug_overlay", m_showSkillDebugOverlay);
-        if (ImGui::Checkbox("高亮活跃地形块", &m_showActiveChunkHighlights))
-            saveBoolSetting("show_active_chunk_highlights", m_showActiveChunkHighlights);
+        if (ImGui::Checkbox("角色朝向反向", &m_invertPlayerFacing))
+            saveBoolSetting("invert_player_facing", m_invertPlayerFacing);
+
+        // ── 运行模式切换 ───────────────────────────────────────────────────
+        ImGui::SeparatorText("运行模式");
+        ImGui::PushStyleColor(ImGuiCol_Button,
+            m_devMode ? ImVec4(0.22f,0.22f,0.28f,1.f) : ImVec4(0.12f,0.45f,0.18f,1.f));
+        if (ImGui::Button("游戏模式##gm", ImVec2(90, 0))) m_devMode = false;
+        ImGui::PopStyleColor();
+        ImGui::SameLine();
+        ImGui::PushStyleColor(ImGuiCol_Button,
+            m_devMode ? ImVec4(0.65f,0.35f,0.05f,1.f) : ImVec4(0.22f,0.22f,0.28f,1.f));
+        if (ImGui::Button("开发模式##dm", ImVec2(90, 0))) m_devMode = true;
+        ImGui::PopStyleColor();
+        ImGui::SameLine();
+        ImGui::TextDisabled(m_devMode ? "  调试覆盖层已启用" : "  干净游戏画面");
+
+        // 仅开发模式下显示的调试选项
+        if (m_devMode)
+        {
+            ImGui::Separator();
+            if (ImGui::Checkbox("显示技能调试", &m_showSkillDebugOverlay))
+                saveBoolSetting("show_skill_debug_overlay", m_showSkillDebugOverlay);
+            if (ImGui::Checkbox("地形块边框", &m_showActiveChunkHighlights))
+                saveBoolSetting("show_active_chunk_highlights", m_showActiveChunkHighlights);
+            if (ImGui::Checkbox("物理调试", &m_showPhysicsDebug)) {}
+
+            ImGui::Spacing();
+            ImGui::SeparatorText("开发属导工具");
+            if (ImGui::Button("打开帧编辑器", ImVec2(160, 0)))
+                m_frameEditor.open();
+            ImGui::SameLine();
+            if (ImGui::Button("打开状态机编辑器", ImVec2(160, 0)))
+                m_smEditor.open();
+        }
 
         // ── 天气控制 ───────────────────────────────────────────────────────
         ImGui::SeparatorText("天气控制");
@@ -1667,6 +2064,323 @@ static void saveBoolSetting(const char* key, bool enabled)
             ImGui::SameLine();
         }
         ImGui::NewLine();
+
+        ImGui::End();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  加载玩家状态机
+    // ─────────────────────────────────────────────────────────────────────────
+    void GameScene::loadPlayerSM(const std::string& smJsonPath)
+    {
+        using namespace game::statemachine;
+        if (!SmLoader::load(smJsonPath, m_playerSMData))
+        {
+            spdlog::warn("[GameScene] 状态机加载失败: {}", SmLoader::lastError());
+            m_playerSMPath.clear();
+            m_playerSMLoaded = false;
+            return;
+        }
+        m_playerSM.init(&m_playerSMData);
+        m_playerSMPath   = smJsonPath;
+        m_playerSMLoaded = true;
+        spdlog::info("[GameScene] 玩家状态机加载完成: {} (初始: {})",
+                     smJsonPath, m_playerSMData.initialState);
+
+        // 立即播放初始状态对应的动画（init 内部用 dummy result，stateChanged 不会传出来）
+        if (m_player && !m_playerSMData.initialState.empty())
+        {
+            auto it = m_playerSMData.states.find(m_playerSMData.initialState);
+            if (it != m_playerSMData.states.end() && !it->second.animationId.empty())
+            {
+                if (auto* anim = m_player->getComponent<engine::component::AnimationComponent>())
+                    anim->forcePlay(it->second.animationId);
+            }
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  每帧驱动玩家状态机
+    //
+    //  activeInputs 构成规则：
+    //    - 持续型条件：每帧根据物理/输入状态判断后直接放入
+    //    - 瞬间型按键：通过 m_playerSM.pushInput() 放入 0.2s 缓冲池
+    //    - LAND 落地事件：仅在从 AIRBORNE→GROUNDED 的那一帧放入
+    //
+    //  如何自定义新触发器：
+    //    1. 在 sm_types.h kTriggerPresets 中添加字符串（供编辑器显示）
+    //    2. 在本函数中用 activeInputs.push_back("YOUR_TRIGGER") 添加判断
+    //    3. 在 *.sm.json 的 transitions 里用相同字符串引用
+    // ─────────────────────────────────────────────────────────────────────────
+    void GameScene::tickPlayerSM(float dt)
+    {
+        if (!m_playerSMLoaded || !m_player) return;
+
+        using namespace engine::component;
+        using namespace game::statemachine;
+
+        // ── 1. 物理状态查询 ────────────────────────────────────────────────
+        auto* physics    = m_player->getComponent<PhysicsComponent>();
+        auto* controller = m_player->getComponent<ControllerComponent>();
+        if (!physics || !controller) return;
+
+        const glm::vec2 vel      = physics->getVelocity();
+        const auto      mvState  = controller->getMovementState();
+        using MS = ControllerComponent::MovementState;
+        const bool grounded = (mvState == MS::Idle || mvState == MS::Run);
+        const bool land     = (!m_prevGrounded && grounded);   // 落地瞬间
+        m_prevGrounded = grounded;
+
+        // ── 2. 构建持续型 activeInputs ────────────────────────────────────
+        //  规则：每帧只要条件成立就放入，状态机内部对持续型无缓冲要求
+        std::vector<std::string> activeInputs;
+        activeInputs.reserve(8);
+
+        // 物理/重力
+        if (grounded)      activeInputs.push_back("GROUNDED");
+        else               activeInputs.push_back("AIRBORNE");
+        if (vel.y < -0.5f) activeInputs.push_back("RISING");   // Box2D y-up → 上升时 vy < 0
+        if (vel.y >  0.5f) activeInputs.push_back("FALLING");  // 下落时 vy > 0
+        if (land)          activeInputs.push_back("LAND");
+
+        // 移动方向键（按住 ≡ 持续型）
+        const auto& inp = _context.getInputManager();
+        const bool moveL = inp.isActionDown("move_left");
+        const bool moveR = inp.isActionDown("move_right");
+        if (moveL) activeInputs.push_back("KEY_MOVE_L");
+        if (moveR) activeInputs.push_back("KEY_MOVE_R");
+        if (!moveL && !moveR) activeInputs.push_back("NO_INPUT");
+        if (moveL || moveR)   activeInputs.push_back("IS_MOVING");
+
+        // 冲刺持续
+        if (m_isDashing) activeInputs.push_back("IS_DASHING");
+
+        // 当前是否处于攻击状态
+        if (m_playerSM.getCurrentState().find("ATTACK") != std::string::npos)
+            activeInputs.push_back("IS_ATTACKING");
+
+        // ── 3. 瞬间型按键 → pushInput（仅在按下那帧调用）────────────────
+        //  这些按键有 0.2s 缓冲，可以提前按下并在连招窗口期生效
+        static float s_smTime = 0.0f;
+        s_smTime += dt;
+
+        if (inp.isActionPressed("attack"))    m_playerSM.pushInput("KEY_ATTACK",  s_smTime);
+        if (inp.isActionPressed("jump"))      m_playerSM.pushInput("KEY_JUMP",    s_smTime);
+        if (inp.isActionPressed("skill_use")) m_playerSM.pushInput("KEY_SKILL_1", s_smTime);
+        // 如需 dash/block/skill_2/3，在 config.json 中绑定按键后在此处添加同样的逻辑
+
+        // ── 4. 驱动状态机 ────────────────────────────────────────────────
+        const UpdateResult result = m_playerSM.update(dt, activeInputs, s_smTime);
+
+        // ── 5. 应用根位移（Root Motion）──────────────────────────────────
+        if (result.rootMotionDx != 0.0f || result.rootMotionDy != 0.0f)
+        {
+            const float facing =
+                (controller->getFacingDirection() == ControllerComponent::FacingDirection::Left)
+                    ? -1.0f : 1.0f;
+            physics->applyImpulse({ result.rootMotionDx * facing, result.rootMotionDy });
+        }
+
+        // ── 6. 帧事件回调 ─────────────────────────────────────────────────
+        for (const auto& evt : result.firedEvents)
+        {
+            // 格式："动词:参数"，e.g. "play_sound:sword_swing"
+            if      (evt.rfind("play_sound:", 0) == 0) { /* TODO: 音频系统 */ }
+            else if (evt.rfind("spawn_vfx:",  0) == 0) { /* TODO: 特效生成 */ }
+            else if (evt == "shake_screen")             { /* TODO: 屏幕震动 */ }
+            spdlog::debug("[SM] 帧事件: {}", evt);
+        }
+
+        // ── 7. 同步动画组件 ────────────────────────────────────────────────
+        if (result.stateChanged)
+        {
+            spdlog::debug("[SM] → {}", result.currentState);
+
+            auto it = m_playerSMData.states.find(result.currentState);
+            if (it != m_playerSMData.states.end())
+            {
+                const std::string& clipName = it->second.animationId;
+                if (!clipName.empty())
+                {
+                    auto* anim = m_player->getComponent<engine::component::AnimationComponent>();
+                    if (anim)
+                        anim->play(clipName);
+                }
+            }
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  扫描 assets/textures/Characters/*.sm.json → m_characters
+    // ─────────────────────────────────────────────────────────────────────────
+    void GameScene::scanCharacters()
+    {
+        m_characters.clear();
+        const std::filesystem::path dir = "assets/textures/Characters";
+        if (!std::filesystem::exists(dir)) return;
+
+        for (const auto& entry : std::filesystem::directory_iterator(dir))
+        {
+            const auto& p = entry.path();
+            if (p.extension() == ".json" && p.stem().extension() == ".sm")
+            {
+                CharacterEntry ce;
+                ce.id          = p.stem().stem().string(); // "gundom"
+                ce.displayName = ce.id;
+                ce.smPath      = p.string();
+                m_characters.push_back(ce);
+            }
+        }
+        std::sort(m_characters.begin(), m_characters.end(),
+                  [](const CharacterEntry& a, const CharacterEntry& b){ return a.id < b.id; });
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  开发模式右上角：角色选择器覆盖层
+    // ─────────────────────────────────────────────────────────────────────────
+    void GameScene::renderDevModeOverlay()
+    {
+        const float w = 280.0f;
+        const ImGuiIO& io = ImGui::GetIO();
+        ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x - w - 8.0f, 8.0f), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(w, 0.0f), ImGuiCond_Always);
+        ImGui::SetNextWindowBgAlpha(0.80f);
+
+        const ImGuiWindowFlags flags =
+            ImGuiWindowFlags_NoDecoration  | ImGuiWindowFlags_NoMove        |
+            ImGuiWindowFlags_NoNav         | ImGuiWindowFlags_NoSavedSettings|
+            ImGuiWindowFlags_AlwaysAutoResize;
+
+        if (!ImGui::Begin("##dev_overlay", nullptr, flags))
+        { ImGui::End(); return; }
+
+        ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.2f, 1.0f), "[开发模式]");
+        ImGui::Separator();
+
+        // ── 角色下拉 ────────────────────────────────────────────────────────
+        if (m_characters.empty()) scanCharacters();
+
+        const char* curName = m_characters.empty() ? "（无）"
+                            : m_characters[m_selectedCharacter].displayName.c_str();
+        ImGui::SetNextItemWidth(-1.0f);
+        if (ImGui::BeginCombo("##char_sel", curName))
+        {
+            for (int i = 0; i < (int)m_characters.size(); i++)
+            {
+                bool sel = (i == m_selectedCharacter);
+                if (ImGui::Selectable(m_characters[i].displayName.c_str(), sel))
+                {
+                    m_selectedCharacter = i;
+                    loadPlayerSM(m_characters[i].smPath);
+                }
+                if (sel) ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+
+        // ── 当前 SM 文件提示 ────────────────────────────────────────────────
+        if (!m_characters.empty())
+        {
+            const std::string& selectedPath = m_characters[m_selectedCharacter].smPath;
+            ImGui::TextDisabled("选择的 SM: %s", selectedPath.c_str());
+
+            const bool sameAsPlayer = (!m_playerSMPath.empty() && m_playerSMPath == selectedPath);
+            if (sameAsPlayer)
+                ImGui::TextColored(ImVec4(0.40f, 0.85f, 0.45f, 1.0f), "玩家当前 SM: %s", m_playerSMPath.c_str());
+            else if (!m_playerSMPath.empty())
+                ImGui::TextColored(ImVec4(1.0f, 0.65f, 0.25f, 1.0f), "玩家当前 SM: %s", m_playerSMPath.c_str());
+        }
+
+        if (ImGui::Checkbox("角色朝向反向##dev", &m_invertPlayerFacing))
+            saveBoolSetting("invert_player_facing", m_invertPlayerFacing);
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::TextColored(ImVec4(0.55f, 0.80f, 1.0f, 1.0f), "[状态机调试]");
+        ImGui::Text("状态机已加载: %s", m_playerSMLoaded ? "true" : "false");
+        ImGui::Text("当前控制对象: %s", getControlledActor() == m_player ? "player" : "other");
+        ImGui::Text("当前状态: %s", m_playerSM.getCurrentState().empty()
+            ? "<empty>" : m_playerSM.getCurrentState().c_str());
+        if (!m_playerSM.getCurrentState().empty())
+        {
+            auto it = m_playerSMData.states.find(m_playerSM.getCurrentState());
+            ImGui::Text("状态绑定动画ID: %s", (it != m_playerSMData.states.end() && !it->second.animationId.empty())
+                ? it->second.animationId.c_str() : "<empty>");
+        }
+        if (auto* anim = m_player
+                ? m_player->getComponent<engine::component::AnimationComponent>()
+                : nullptr)
+        {
+            ImGui::Text("当前动画 Clip: %s", anim->currentClip().empty()
+                ? "<empty>" : anim->currentClip().c_str());
+            ImGui::Text("当前动画帧: %d  计时: %.3f", anim->currentFrame(), anim->currentTimer());
+        }
+        ImGui::Text("初始状态: %s", m_playerSMData.initialState.empty()
+            ? "<empty>" : m_playerSMData.initialState.c_str());
+        ImGui::Text("状态数: %d", static_cast<int>(m_playerSMData.states.size()));
+
+        if (auto* sprite = m_player
+                ? m_player->getComponent<engine::component::SpriteComponent>()
+                : nullptr)
+        {
+            const auto& spriteData = sprite->getSprite();
+            const auto& srcRectOpt = spriteData.getSourceRect();
+            const std::string& texId = spriteData.getTextureId();
+            const unsigned int glTex = _context.getResourceManager().getGLTexture(texId);
+            const glm::vec2 texSize = _context.getResourceManager().getTextureSize(texId);
+            const glm::vec2 spriteSize = sprite->getSpriteSize();
+            const glm::vec2 spriteOffset = sprite->getOffset();
+            const glm::vec4 cachedUv = sprite->getCachedUV();
+
+            if (auto* transform = m_player->getComponent<engine::component::TransformComponent>())
+            {
+                const glm::vec2 pos = transform->getPosition();
+                const glm::vec2 scale = transform->getScale();
+                ImGui::Text("玩家可见: %s  机甲中: %s", sprite->isHidden() ? "false" : "true", m_isPlayerInMech ? "true" : "false");
+                ImGui::Text("玩家位置: x=%.1f y=%.1f", pos.x, pos.y);
+                ImGui::Text("玩家缩放: x=%.3f y=%.3f  旋转: %.1f", scale.x, scale.y, transform->getRotation());
+            }
+            ImGui::Text("玩家纹理: %s", texId.empty() ? "<empty>" : texId.c_str());
+            ImGui::Text("GL纹理句柄: %u  纹理尺寸: %.0f x %.0f", glTex, texSize.x, texSize.y);
+            ImGui::Text("Sprite尺寸: %.1f x %.1f  偏移: %.1f, %.1f", spriteSize.x, spriteSize.y, spriteOffset.x, spriteOffset.y);
+            ImGui::Text("缓存UV: %.4f %.4f %.4f %.4f", cachedUv.x, cachedUv.y, cachedUv.z, cachedUv.w);
+
+            if (glTex != 0 && srcRectOpt.has_value() && texSize.x > 0.0f && texSize.y > 0.0f)
+            {
+                const auto& src = srcRectOpt.value();
+                ImGui::Text("源矩形: x=%.0f y=%.0f w=%.0f h=%.0f",
+                    src.position.x, src.position.y, src.size.x, src.size.y);
+                const float u0 = src.position.x / texSize.x;
+                const float v0 = src.position.y / texSize.y;
+                const float u1 = (src.position.x + src.size.x) / texSize.x;
+                const float v1 = (src.position.y + src.size.y) / texSize.y;
+
+                const float previewScale = 2.0f;
+                const ImVec2 previewSize(src.size.x * previewScale, src.size.y * previewScale);
+
+                ImGui::Spacing();
+                ImGui::TextUnformatted("当前动画预览:");
+                ImGui::Image((ImTextureID)(intptr_t)glTex, previewSize, ImVec2(u0, v0), ImVec2(u1, v1));
+            }
+        }
+
+        ImGui::Spacing();
+
+        // ── 快捷打开按钮 ────────────────────────────────────────────────────
+        if (ImGui::Button("帧编辑器", ImVec2(-1, 0)))
+            m_frameEditor.open();
+        if (ImGui::Button("状态机编辑器", ImVec2(-1, 0)))
+        {
+            if (!m_characters.empty())
+            {
+                // 如果编辑器当前未打开某文件，尝试用所选角色的 SM 打开
+                m_smEditor.open();
+            }
+            else
+            {
+                m_smEditor.open();
+            }
+        }
 
         ImGui::End();
     }
@@ -1743,9 +2457,28 @@ static void saveBoolSetting(const char* key, bool enabled)
 
         glm::vec2 screenLogical = _context.getCamera().worldToScreen(transform->getPosition());
         ImVec2 screen = logicalToImGuiScreen(_context, screenLogical);
-        std::string stateLabel = controller->getMovementStateName();
-        if (m_isPlayerInMech)
-            stateLabel = "机甲·" + stateLabel;
+        std::string stateLabel;
+        if (actor == m_player && m_playerSMLoaded && !m_playerSM.getCurrentState().empty())
+        {
+            if (auto* anim = m_player->getComponent<engine::component::AnimationComponent>())
+                stateLabel = anim->currentClip();
+
+            if (stateLabel.empty())
+            {
+                auto it = m_playerSMData.states.find(m_playerSM.getCurrentState());
+                if (it != m_playerSMData.states.end())
+                    stateLabel = it->second.animationId;
+            }
+
+            if (stateLabel.empty())
+                stateLabel = m_playerSM.getCurrentState();
+        }
+        else
+        {
+            stateLabel = controller->getMovementStateName();
+            if (m_isPlayerInMech)
+                stateLabel = "机甲·" + stateLabel;
+        }
         float fuelRatio = controller->getJetpackFuelRatio();
 
         ImDrawList *dl = ImGui::GetForegroundDrawList();
@@ -2615,70 +3348,93 @@ static void saveBoolSetting(const char* key, bool enabled)
     {
         m_player = actor_manager->createActor("player");
 
-        // 2.5D 地板平面布局（chunk row 0, tile Y [0..7] = pixel [0..127]）:
-        //   wy=0(px 0-15): Stone 后背景墙  wy=1-5(px 16-95): GroundDecor 地板走廊
-        // 玩家可移动深度 posY ∈ [32, 80]（地板中部到前缘）
-        //   posY=32 → 身体 px 16..48 = 靠近背景层，body top=16px 正好在 wy=0 之下
-        //   posY=56 → 身体 px 40..72 = 走廊中央（外观最佳起始点）
-        //   posY=80 → 身体 px 64..96 = 靠近屏幕前缘
         glm::vec2 startPos = {0.0f, 56.0f};
 
         auto* transform = m_player->addComponent<engine::component::TransformComponent>(startPos);
-        m_player->addComponent<engine::component::SpriteComponent>(
-            "assets/textures/Characters/player_sheet.svg",
-            engine::utils::Alignment::CENTER,
-            engine::utils::FRect{{0.0f, 0.0f}, {32.0f, 32.0f}});
-        auto* ctrl = m_player->addComponent<engine::component::ControllerComponent>(25.0f, 30.0f);
-        // DNF 手感调整：加大地面加速度（更快起步停步），减少空中阻力
-        ctrl->setGroundAcceleration(90.0f);   // DNF 地面加速度
-        ctrl->setAirAcceleration(15.0f);      // 空中控制感稍弱，DNF 风格
-        // DNF 2.5D 地面深度带（像素坐标）：
-        //   Y=32 ← 背景远端（wy=1 行，身体顶边=16px 正好在 Stone back wall 下方）
-        //   Y=80 ← 屏幕前缘（wy=5 行，足够空间展示走廊深度感）
-        ctrl->setGroundBand(32.0f, 80.0f);
 
-        // 动画管理组件：新精灵表 256×256，8×8 网格，每帧 32×32 像素
-        // 行布局：0=待机  1=跑动  2=喷气背包  3=(备用)  4-5=(备用)  6=跳跃  7=下落
-        auto* anim = m_player->addComponent<engine::component::AnimationComponent>(32.0f, 32.0f);
-        anim->addClip("idle",    engine::component::AnimationClip{0, 0, 8, 0.30f, true});
-        anim->addClip("run",     engine::component::AnimationClip{1, 0, 8, 0.09f, true});
-        anim->addClip("jetpack", engine::component::AnimationClip{2, 0, 8, 0.10f, true});
-        anim->addClip("jump",    engine::component::AnimationClip{6, 0, 4, 0.12f, false});
-        anim->addClip("fall",    engine::component::AnimationClip{7, 0, 4, 0.12f, false});
+        const std::string frameJsonPath = "assets/textures/Characters/gundom.json";
+        std::string playerTexturePath = "assets/textures/Characters/gundom.png";
+
+        // ── Gundam 精灵表：优先读取帧编辑器 JSON 中声明的实际贴图路径 ──
+        m_player->addComponent<engine::component::SpriteComponent>(
+            playerTexturePath,
+            engine::utils::Alignment::CENTER,
+            engine::utils::FRect{{241.0f, 1625.0f}, {241.0f, 125.0f}});
+
+        auto* ctrl = m_player->addComponent<engine::component::ControllerComponent>(20.0f, 28.0f);
+        ctrl->setGroundAcceleration(80.0f);
+        ctrl->setAirAcceleration(12.0f);
+        ctrl->setGroundBand(16.0f, 96.0f);
+
+        // ── Gundam 动画组件：按当前实际图集 gundom.png 的有效帧配置 ──
+        // 目前明确可用的是：
+        //   idle: x=241 y=1625 w=241 h=125，共 1 帧
+        //   move: x=241..482 y=2750 w=241 h=125，共 2 帧
+        // 其它动作先回退到 idle / walk，保证运行时不会出现空白精灵。
+        using AC = engine::component::AnimationClip;
+        const auto makeClip = [](int row, int colStart, int frameCount, float duration, bool loop,
+                                 float yOrigin, float frameHeight) {
+            AC clip{};
+            clip.row = row;
+            clip.col_start = colStart;
+            clip.frame_count = frameCount;
+            clip.frame_duration = duration;
+            clip.loop = loop;
+            clip.y_origin = yOrigin;
+            clip.frame_h_override = frameHeight;
+            return clip;
+        };
+        auto* anim = m_player->addComponent<engine::component::AnimationComponent>(241.0f, 125.0f);
+
+        const bool loadedFromFrameJson = loadAnimationClipsFromFrameJson(frameJsonPath, *anim, &playerTexturePath);
+        if (auto* sprite = m_player->getComponent<engine::component::SpriteComponent>())
+        {
+            sprite->setSpriteById(playerTexturePath, engine::utils::FRect{{241.0f, 1625.0f}, {241.0f, 125.0f}});
+        }
+
+        // 移动类（移动状态机驱动）
+        if (!loadedFromFrameJson)
+        {
+            anim->addClip("idle",    makeClip(0, 1, 1, 0.12f, true,  1625.0f, 125.0f));
+            anim->addClip("walk",    makeClip(0, 1, 2, 0.10f, true,  2750.0f, 125.0f));
+            anim->addClip("run",     makeClip(0, 1, 2, 0.075f, true, 2750.0f, 125.0f));
+        }
+        anim->addClip("turn",    makeClip(0, 1, 1, 0.10f, false, 1625.0f, 125.0f));
+        anim->addClip("fly",     makeClip(0, 1, 2, 0.10f, true,  2750.0f, 125.0f));
+        anim->addClip("jetpack", makeClip(0, 1, 2, 0.10f, true,  2750.0f, 125.0f));
+        anim->addClip("jump",    makeClip(0, 1, 1, 0.10f, false, 1625.0f, 125.0f));
+        anim->addClip("fall",    makeClip(0, 1, 1, 0.12f, true,  1625.0f, 125.0f));
+
+        // 攻击类（game_scene 直接调用 forcePlay 触发）
+        anim->addClip("attack_a", makeClip(0, 1, 2, 0.08f, false, 2750.0f, 125.0f));
+        anim->addClip("attack_b", makeClip(0, 1, 2, 0.08f, false, 2750.0f, 125.0f));
+        anim->addClip("attack_c", makeClip(0, 1, 2, 0.08f, false, 2750.0f, 125.0f));
+        anim->addClip("attack_d", makeClip(0, 1, 2, 0.08f, false, 2750.0f, 125.0f));
+        anim->addClip("cannon",   makeClip(0, 1, 2, 0.08f, false, 2750.0f, 125.0f));
+        anim->addClip("ultimate", makeClip(0, 1, 2, 0.10f, false, 2750.0f, 125.0f));
+
         anim->play("idle");
 
-        // 创建物理体并添加 PhysicsComponent
-        // 碰撞体积 = 脚下阴影脚印（24px 宽 × 7px 深），不包含人物空中高度
-        // halfSize 单位为米（Box2D），startPos 为像素坐标，需除以 PPM
+        // 物理体（shadow footprint）
         constexpr float PPM = engine::world::WorldConfig::PIXELS_PER_METER;
-        // 阴影基础尺寸：glm::vec2(24.0f, 7.0f)（见 drawWorldShadow baseSize）
-        constexpr float kShadowHalfW = 24.0f * 0.5f / PPM;  // 12px / 32 = 0.375 m
-        constexpr float kShadowHalfD = 7.0f  * 0.5f / PPM;  // 3.5px / 32 ≈ 0.109 m
+        constexpr float kShadowHalfW = 24.0f * 0.5f / PPM;
+        constexpr float kShadowHalfD = 7.0f  * 0.5f / PPM;
         b2BodyId bodyId = physics_manager->createDynamicBody(
             {startPos.x / PPM, startPos.y / PPM}, {kShadowHalfW, kShadowHalfD}, m_player);
         m_player->addComponent<engine::component::PhysicsComponent>(bodyId, physics_manager.get());
 
-        // 属性组件（血量、星能、速度倍率等）
         m_player->addComponent<game::component::AttributeComponent>();
 
-        // 相机跟随玩家；DNF 模式锁定 Y 轴，仅水平滚轴
         _context.getCamera().setFollowTarget(&transform->getPosition(), 5.0f);
-        // 2.5D 透视走廊相机设置：
-        //   zoom=2.5 → 可视高度 720/2.5=288px
-        //   lockY=40 → 后背景墙(wy=0,px 0-15) 在屏幕 36-41%
-        //              地板走廊(wy=1-5,px 16-95) 在屏幕 42-69%
-        //              角色 startPos=56 → 屏幕55%
-        //              角色 groundBand(16,96) → 屏幕41-69%
         m_zoomSliderValue = 2.5f;
         _context.getCamera().setZoom(2.5f);
         _context.getCamera().setPseudo3DVerticalScale(1.0f);
         _context.getCamera().setLockY(true, 40.0f);
-        // 立即将相机居中到走廊，避免启动时从 (0,0) 平滑到锁定位置导致一瞬间显示错误区域
         {
             const glm::vec2& vp = _context.getCamera().getViewportSize();
             _context.getCamera().setPosition({
                 transform->getPosition().x - vp.x * 0.5f,
-                40.0f - vp.y * 0.5f  // camera top = 40 - half_viewport
+                40.0f - vp.y * 0.5f
             });
         }
     }

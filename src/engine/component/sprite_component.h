@@ -70,12 +70,14 @@ namespace engine::component
         const glm::vec2               getOffset()       const { return _offset; }
         engine::utils::Alignment      getAlignment()    const { return _alignment; }
         TransformComponent* getTransformComp() const { return _transform_comp; }
-        bool                          isFlipped()       const { return _sprite.isFlipped(); }
+        bool                          isFlipped()       const { return _facing_flipped; }
+        bool                          isFrameFlipped()  const { return _frame_flipped; }
         bool                          isHidden()        const { return _is_hidden; }
 
         // --- Setter (部分会触发脏标记) ---
         void setHidden(bool hidden)    { _is_hidden = hidden; }
         void setFlipped(bool flipped); // 实现内更新状态
+        void setFrameFlipped(bool flipped);
         
         void setSpriteById(const std::string &texture_id, 
                            std::optional<engine::utils::FRect> source_rect_opt = std::nullopt);
@@ -93,6 +95,7 @@ namespace engine::component
         // --- 私有辅助计算 ---
         void updateOffset();
         void updateSpriteSizeAndUV(); // ⚡️ 合并更新，因为它们都依赖纹理大小
+        void updateEffectiveFlip();
 
         // --- 状态追踪 ---
         uint8_t  _dirty_flags = DIRTY_ALL; // 脏标记位掩码
@@ -107,6 +110,8 @@ namespace engine::component
         glm::vec4 _cached_uv = {0.0f, 0.0f, 1.0f, 1.0f};
         glm::vec2 _sprite_size = {0.0f, 0.0f};
         glm::vec2 _offset      = {0.0f, 0.0f};
+        bool      _facing_flipped = false;
+        bool      _frame_flipped  = false;
         bool      _is_hidden   = false;
     };
 }
