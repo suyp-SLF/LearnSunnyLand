@@ -1,6 +1,7 @@
 #include "game_scene.h"
 #include "menu_scene.h"
 #include "ship_scene.h"
+#include "../animation/frame_animation_loader.h"
 #include "../component/attribute_component.h"
 #include "../../engine/scene/scene_manager.h"
 #include "../../engine/object/game_object.h"
@@ -9,6 +10,7 @@
 #include "../../engine/component/controller_component.h"
 #include "../../engine/component/physics_component.h"
 #include "../../engine/component/animation_component.h"
+#include "../../engine/component/parallax_component.h"
 #include "../../engine/core/context.h"
 #include "../../engine/core/time.h"
 #include "../../engine/render/sprite_render_system.h"
@@ -24,6 +26,8 @@
 #include "../../engine/world/chunk_manager.h"
 #include "dnf_terrain_generator.h"
 #include "../../engine/render/renderer.h"
+#include "../../engine/render/sdl_renderer.h"
+#include "../../engine/render/opengl_renderer.h"
 #include "../../engine/ecs/components.h"
 #include "../locale/locale_manager.h"
 #include "../../engine/utils/math.h"
@@ -32,6 +36,7 @@
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_opengl3.h>
 #include <SDL3/SDL_opengl.h>
+#include <SDL3/SDL_timer.h>
 #include <algorithm>
 #include <cctype>
 #include <cstring>
@@ -43,6 +48,20 @@
 
 namespace game::scene
 {
+
+static void recordPerfMetric(PerfMetric& metric, float elapsedMs)
+{
+    metric.lastMs = elapsedMs;
+    metric.avgMs = (metric.avgMs <= 0.0f) ? elapsedMs : (metric.avgMs * 0.88f + elapsedMs * 0.12f);
+    metric.peakMs = std::max(metric.peakMs * 0.985f, elapsedMs);
+}
+
+static float elapsedMilliseconds(Uint64 startCounter, Uint64 endCounter, Uint64 frequency)
+{
+    if (endCounter <= startCounter || frequency == 0)
+        return 0.0f;
+    return static_cast<float>(static_cast<double>(endCounter - startCounter) * 1000.0 / static_cast<double>(frequency));
+}
 
 static void drawWorldShadow(engine::core::Context &context,
                             const glm::vec2 &center,
@@ -240,6 +259,91 @@ static bool loadBoolSetting(const char* key, bool defaultValue = false)
     }
 }
 
+static float loadFloatSetting(const char* key, float defaultValue = 0.0f)
+{
+    std::ifstream file("assets/settings.json");
+    if (!file.is_open())
+        return defaultValue;
+
+    try
+    {
+        nlohmann::json j;
+        file >> j;
+        return j.value(key, defaultValue);
+    }
+    catch (const std::exception&)
+    {
+        return defaultValue;
+    }
+}
+
+static nlohmann::json loadConfigJsonObject()
+{
+    std::ifstream file("assets/config.json");
+    if (!file.is_open())
+        return nlohmann::json::object();
+
+    try
+    {
+        nlohmann::json j;
+        file >> j;
+        return j;
+    }
+    catch (const std::exception&)
+    {
+        return nlohmann::json::object();
+    }
+}
+
+static bool loadConfigBool(const char* section, const char* key, bool defaultValue)
+{
+    const nlohmann::json j = loadConfigJsonObject();
+    if (!j.contains(section) || !j[section].is_object())
+        return defaultValue;
+    return j[section].value(key, defaultValue);
+}
+
+static int loadConfigInt(const char* section, const char* key, int defaultValue)
+{
+    const nlohmann::json j = loadConfigJsonObject();
+    if (!j.contains(section) || !j[section].is_object())
+        return defaultValue;
+    return j[section].value(key, defaultValue);
+}
+
+template <typename T>
+static void saveConfigValue(const char* section, const char* key, T value)
+{
+    nlohmann::json j = loadConfigJsonObject();
+    if (!j.is_object())
+        j = nlohmann::json::object();
+    if (!j.contains(section) || !j[section].is_object())
+        j[section] = nlohmann::json::object();
+    j[section][key] = value;
+
+    std::ofstream file("assets/config.json");
+    if (!file.is_open())
+        return;
+    file << j.dump(4);
+}
+
+static void applyRendererVSync(engine::render::Renderer& renderer, bool enabled)
+{
+    if (dynamic_cast<engine::render::OpenGLRenderer*>(&renderer))
+    {
+        const int adaptiveMode = enabled ? -1 : 0;
+        if (!SDL_GL_SetSwapInterval(adaptiveMode) && enabled)
+            SDL_GL_SetSwapInterval(1);
+        return;
+    }
+
+    if (auto* sdlRenderer = dynamic_cast<engine::render::SDLRenderer*>(&renderer))
+    {
+        const int mode = enabled ? SDL_RENDERER_VSYNC_ADAPTIVE : SDL_RENDERER_VSYNC_DISABLED;
+        SDL_SetRenderVSync(sdlRenderer->getSDLRenderer(), mode);
+    }
+}
+
 static void saveBoolSetting(const char* key, bool enabled)
 {
     nlohmann::json j = nlohmann::json::object();
@@ -267,87 +371,32 @@ static void saveBoolSetting(const char* key, bool enabled)
     file << j.dump(4);
 }
 
-static std::string normalizeFrameActionName(const std::string& name)
+static void saveFloatSetting(const char* key, float value)
 {
-    std::string normalized;
-    normalized.reserve(name.size());
-    for (char ch : name)
-    {
-        normalized.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(ch))));
-    }
-    return normalized;
-}
+    nlohmann::json j = nlohmann::json::object();
 
-static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
-                                            engine::component::AnimationComponent& anim,
-                                            std::string* texturePathOut = nullptr)
-{
-    std::ifstream file(jsonPath);
+    {
+        std::ifstream file("assets/settings.json");
+        if (file.is_open())
+        {
+            try
+            {
+                file >> j;
+            }
+            catch (const std::exception&)
+            {
+                j = nlohmann::json::object();
+            }
+        }
+    }
+
+    j[key] = value;
+
+    std::ofstream file("assets/settings.json");
     if (!file.is_open())
-        return false;
-
-    nlohmann::json root;
-    try
-    {
-        file >> root;
-    }
-    catch (const std::exception& e)
-    {
-        spdlog::warn("帧动画 JSON 解析失败: {} ({})", jsonPath, e.what());
-        return false;
-    }
-
-    if (texturePathOut)
-        *texturePathOut = root.value("texture", std::string{});
-
-    bool loadedAny = false;
-    for (const auto& action : root.value("actions", nlohmann::json::array()))
-    {
-        const std::string actionName = action.value("name", std::string{});
-        const auto& framesJson = action.value("frames", nlohmann::json::array());
-        if (actionName.empty() || framesJson.empty())
-            continue;
-
-        engine::component::AnimationClip clip{};
-        clip.row = 0;
-        clip.col_start = 0;
-        clip.frame_count = static_cast<int>(framesJson.size());
-        clip.frame_duration = 0.1f;
-        clip.loop = action.value("is_loop", true);
-        clip.frames.reserve(framesJson.size());
-
-        for (const auto& frameJson : framesJson)
-        {
-            const float sx = frameJson.value("sx", 0.0f);
-            const float sy = frameJson.value("sy", 0.0f);
-            const float sw = std::max(frameJson.value("sw", 0.0f), 1.0f);
-            const float sh = std::max(frameJson.value("sh", 0.0f), 1.0f);
-            const float duration = std::max(frameJson.value("duration_ms", 100) / 1000.0f, 0.0001f);
-            clip.frames.push_back({engine::utils::FRect{{sx, sy}, {sw, sh}}, duration,
-                                   frameJson.value("flip_x", false)});
-        }
-
-        if (!clip.frames.empty())
-            clip.frame_duration = clip.frames.front().duration;
-
-        const std::string normalized = normalizeFrameActionName(actionName);
-        anim.addClip(normalized, clip);
-        if (normalized == "move")
-        {
-            anim.addClip("walk", clip);
-            anim.addClip("run", clip);
-        }
-        else if (normalized == "idle")
-        {
-            anim.addClip("idle", clip);
-        }
-
-        loadedAny = true;
-    }
-
-    return loadedAny;
+        return;
+    file << j.dump(4);
 }
-
 
     GameScene::GameScene(const std::string &name,
                          engine::core::Context &context,
@@ -384,9 +433,17 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
             engine::core::Config gameConfig("assets/config.json");
             m_showFpsOverlay = gameConfig._show_fps_overlay;
         }
+        m_vsyncEnabled = loadConfigBool("graphics", "vsync", true);
+        m_maxFpsSlider = loadConfigInt("performance", "target_fps", 60);
         m_showSkillDebugOverlay = loadBoolSetting("show_skill_debug_overlay");
         m_showActiveChunkHighlights = loadBoolSetting("show_active_chunk_highlights");
         m_invertPlayerFacing = loadBoolSetting("invert_player_facing");
+        m_screenRainOverlay = loadBoolSetting("screen_rain_overlay");
+        m_screenRainOverlayStrength = std::clamp(loadFloatSetting("screen_rain_overlay_strength", 1.0f), 0.2f, 2.0f);
+        m_screenRainMotionStrength = std::clamp(loadFloatSetting("screen_rain_motion_strength", 1.0f), 0.2f, 3.0f);
+        m_weatherSystem.setScreenRainOverlayEnabled(m_screenRainOverlay);
+        m_weatherSystem.setScreenRainOverlayStrength(m_screenRainOverlayStrength);
+        m_weatherSystem.setScreenRainMotionScale(m_screenRainMotionStrength);
 
         chunk_manager = std::make_unique<engine::world::ChunkManager>(
             "assets/textures/Tiles/tileset.svg",
@@ -413,6 +470,43 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
 
         actor_manager = std::make_unique<engine::actor::ActorManager>(_context);
         createPlayer();
+
+        // --- 视差背景层 ---
+        // 坐标系说明：factor.y=0.0 时 screen_y = 2.5*world_Y - 540
+        //  相机锁定在 Y=40 → 地面顶部(wy=1=16px)在 screen_y≈300
+        //  sky/building 的 world_Y 计算:  world_Y = (screen_top + 540) / 2.5
+        //
+        // 天空背景（最远, back.png 384×240, scale 1.2 → screen_h=720填满屏, screen_y=-420..300）
+        {
+            auto *sky = actor_manager->createActor("bg_sky");
+            sky->addComponent<engine::component::TransformComponent>(
+                glm::vec2{0.0f, 48.0f}, glm::vec2{1.2f, 1.2f});
+            sky->addComponent<engine::component::ParallaxComponent>(
+                "assets/textures/Layers/back.png",
+                glm::vec2{0.08f, 0.0f},
+                glm::bvec2{true, false});
+        }
+        // 远景大楼（big-house 170×144, scale{2.0,1.2} → screen_h=432, 底边贴地面顶 screen_y≈280）
+        {
+            auto *bldgFar = actor_manager->createActor("bg_building_far");
+            bldgFar->addComponent<engine::component::TransformComponent>(
+                glm::vec2{0.0f, 155.0f}, glm::vec2{2.0f, 1.2f});
+            bldgFar->addComponent<engine::component::ParallaxComponent>(
+                "assets/textures/Props/big-house.png",
+                glm::vec2{0.30f, 0.0f},
+                glm::bvec2{true, false});
+        }
+        // 中景建筑（tree-house 119×144, scale{1.8,1.0} → screen_h=360, 底边对齐地面顶）
+        {
+            auto *bldgMid = actor_manager->createActor("bg_building_mid");
+            bldgMid->addComponent<engine::component::TransformComponent>(
+                glm::vec2{80.0f, 184.0f}, glm::vec2{1.8f, 1.0f});
+            bldgMid->addComponent<engine::component::ParallaxComponent>(
+                "assets/textures/Props/tree-house.png",
+                glm::vec2{0.55f, 0.0f},
+                glm::bvec2{true, false});
+        }
+
         m_monsterManager = std::make_unique<game::monster::MonsterManager>(
             _context,
             *actor_manager,
@@ -432,30 +526,29 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
         {
             m_glContext = SDL_GL_GetCurrentContext();
             spdlog::debug("GameScene::init() - GL context ptr: {}", (void*)m_glContext);
-            if (m_glContext)
-            {
-                IMGUI_CHECKVERSION();
-                ImGui::CreateContext();
-
-                // 加载支持中文的字体，解决中文显示为问号的问题
-                ImGuiIO &io = ImGui::GetIO();
-                io.Fonts->AddFontFromFileTTF(
-                    "assets/fonts/VonwaonBitmap-16px.ttf",
-                    16.0f, nullptr,
-                    io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
-
-                ImGui_ImplSDL3_InitForOpenGL(window, m_glContext);
-                ImGui_ImplOpenGL3_Init("#version 330");
-                spdlog::info("ImGui initialized with OpenGL3 + 中文字体");
-            }
-            else
-            {
-                spdlog::error("Failed to get OpenGL context for ImGui");
-            }
         }
-        else
+
+        if (m_glContext)
         {
-            spdlog::error("Failed to get window for ImGui");
+            IMGUI_CHECKVERSION();
+            ImGui::CreateContext();
+            ImGuiIO &io = ImGui::GetIO();
+            (void)io;
+            ImGui::StyleColorsDark();
+
+            if (!io.Fonts->AddFontFromFileTTF(
+                    "assets/fonts/VonwaonBitmap-16px.ttf",
+                    16.0f,
+                    nullptr,
+                    io.Fonts->GetGlyphRangesChineseSimplifiedCommon()))
+            {
+                spdlog::error("GameScene: 加载 ImGui 字体失败 assets/fonts/VonwaonBitmap-16px.ttf");
+            }
+
+            if (!ImGui_ImplSDL3_InitForOpenGL(window, m_glContext))
+                spdlog::error("Failed to init ImGui SDL3 backend");
+            if (!ImGui_ImplOpenGL3_Init("#version 330"))
+                spdlog::error("Failed to init ImGui OpenGL3 backend");
         }
 
         // ECS测试
@@ -469,17 +562,24 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
 
         initTestItems();
 
-        // 预热 SVG 纹理缓存：IMG_Load 会光栅化 SVG，首次调用耗时 ~100-300ms
-        // 在 updateVisibleChunks 触发区块网格构建前预先完成，避免首帧卡顿
+        // 预热纹理缓存：首次调用会触发解码，预热后避免怪物/建筑初次出现时卡顿
         {
             auto& resMgr = _context.getResourceManager();
             resMgr.getGLTexture("assets/textures/Tiles/tileset.svg");
             resMgr.getGLTexture("assets/textures/Characters/player_sheet.svg");
-            resMgr.getGLTexture("assets/textures/Characters/wolf.svg");
-            resMgr.getGLTexture("assets/textures/Characters/white_ape.svg");
-            resMgr.getGLTexture("assets/textures/Characters/slime.svg");
+            // 怪物新 PNG 精灵
+            resMgr.getGLTexture("assets/textures/Actors/eagle-attack.png");
+            resMgr.getGLTexture("assets/textures/Actors/opossum.png");
+            resMgr.getGLTexture("assets/textures/Actors/frog.png");
             resMgr.getGLTexture("assets/textures/Props/tileset_atlas.svg");
-            spdlog::info("纹理预热完毕（6 个 SVG）");
+            resMgr.getGLTexture("assets/textures/Props/rock.png");
+            resMgr.getGLTexture("assets/textures/Props/rock-1.png");
+            resMgr.getGLTexture("assets/textures/Props/rock-2.png");
+            // 背景视差纹理
+            resMgr.getGLTexture("assets/textures/Layers/back.png");
+            resMgr.getGLTexture("assets/textures/Props/big-house.png");
+            resMgr.getGLTexture("assets/textures/Props/tree-house.png");
+            spdlog::info("纹理预热完毕（包含怪物 PNG 和背景建筑）");
         }
 
         // 在初始可见区域生成树木（先 updateVisibleChunks 确保区块已加载）
@@ -496,97 +596,112 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
 
         // 在目标区域注入矿脉（需在区块加载后）
         injectOreVeins();
+        generateRockObstacles();
     }
     void GameScene::update(float delta_time)
     {
-        Scene::update(delta_time);
+        const Uint64 perfFreq = SDL_GetPerformanceFrequency();
+        const Uint64 updateStart = SDL_GetPerformanceCounter();
+        m_frameProfiler.frameDeltaMs = delta_time * 1000.0f;
 
-        m_mechAttackCooldown = std::max(0.0f, m_mechAttackCooldown - delta_time);
-        m_mechAttackFlashTimer = std::max(0.0f, m_mechAttackFlashTimer - delta_time);
-        m_weaponAttackCooldown = std::max(0.0f, m_weaponAttackCooldown - delta_time);
-        m_timeOfDaySystem.update(delta_time);
+        auto measure = [&](PerfMetric& metric, auto&& fn) {
+            const Uint64 start = SDL_GetPerformanceCounter();
+            fn();
+            recordPerfMetric(metric, elapsedMilliseconds(start, SDL_GetPerformanceCounter(), perfFreq));
+        };
 
-        // ── DNF 连击窗口递减 ──────────────────────────────────────────
-        if (m_comboResetTimer > 0.0f)
-        {
-            m_comboResetTimer -= delta_time;
-            if (m_comboResetTimer <= 0.0f)
-                m_comboCount = 0;
-        }
+        measure(m_frameProfiler.coreLogic, [&] {
+            Scene::update(delta_time);
 
-        // ── DNF 双击跑步：窗口计时器递减 ──────────────────────────────
-        m_doubleTapTimer = std::max(0.0f, m_doubleTapTimer - delta_time);
+            m_mechAttackCooldown = std::max(0.0f, m_mechAttackCooldown - delta_time);
+            m_mechAttackFlashTimer = std::max(0.0f, m_mechAttackFlashTimer - delta_time);
+            m_weaponAttackCooldown = std::max(0.0f, m_weaponAttackCooldown - delta_time);
+            m_possessedAttackCooldown = std::max(0.0f, m_possessedAttackCooldown - delta_time);
+            m_possessedSkillCooldown = std::max(0.0f, m_possessedSkillCooldown - delta_time);
+            m_timeOfDaySystem.update(delta_time);
 
-        // ── DNF 冲刺：施加速度 + 推进计时器 ─────────────────────────
-        m_dashCooldown = std::max(0.0f, m_dashCooldown - delta_time);
-        if (m_isDashing && m_player)
-        {
-            auto* physics = m_player->getComponent<engine::component::PhysicsComponent>();
-            if (physics)
+            if (m_comboResetTimer > 0.0f)
             {
-                // 冲刺期间：强制水平速度为 dash 速度，垂直保持原值（不飞）
-                glm::vec2 vel = physics->getVelocity();
-                vel.x = m_dashFacing * 320.0f;  // 冲刺速度 320 px/s （约 20m/s）
-                vel.y *= 0.5f;                  // 减弱垂直分量，突出水平推力
-                physics->setVelocity(vel);
-
-                // 暂时禁用 Controller，使其不干扰冲刺速度
-                if (auto* ctrl = m_player->getComponent<engine::component::ControllerComponent>())
-                    ctrl->setEnabled(false);
+                m_comboResetTimer -= delta_time;
+                if (m_comboResetTimer <= 0.0f)
+                    m_comboCount = 0;
             }
 
-            m_dashTimer -= delta_time;
-            if (m_dashTimer <= 0.0f)
+            m_doubleTapTimer = std::max(0.0f, m_doubleTapTimer - delta_time);
+            m_dashCooldown = std::max(0.0f, m_dashCooldown - delta_time);
+            if (m_isDashing && m_player)
             {
-                m_isDashing = false;
-                // 恢复 Controller
-                if (auto* ctrl = m_player->getComponent<engine::component::ControllerComponent>())
-                    ctrl->setEnabled(true);
-                // 缓和残余速度，避免冲刺结束后水平暴冲
-                if (auto* physics = m_player->getComponent<engine::component::PhysicsComponent>())
+                auto* physics = m_player->getComponent<engine::component::PhysicsComponent>();
+                if (physics)
                 {
                     glm::vec2 vel = physics->getVelocity();
-                    vel.x *= 0.4f;
+                    vel.x = m_dashFacing * 320.0f;
+                    vel.y *= 0.5f;
                     physics->setVelocity(vel);
+
+                    if (auto* ctrl = m_player->getComponent<engine::component::ControllerComponent>())
+                        ctrl->setEnabled(false);
+                }
+
+                m_dashTimer -= delta_time;
+                if (m_dashTimer <= 0.0f)
+                {
+                    m_isDashing = false;
+                    if (auto* ctrl = m_player->getComponent<engine::component::ControllerComponent>())
+                        ctrl->setEnabled(true);
+                    if (auto* physics = m_player->getComponent<engine::component::PhysicsComponent>())
+                    {
+                        glm::vec2 vel = physics->getVelocity();
+                        vel.x *= 0.4f;
+                        physics->setVelocity(vel);
+                    }
                 }
             }
-        }
 
+            tickStarSkillPassives(delta_time);
+            tickSkillVFX(delta_time);
+            tickSkillProjectiles(delta_time);
+            tickCombatEffects(delta_time);
+            updateSettingsParticles(delta_time);
 
-        tickStarSkillPassives(delta_time);
-        tickSkillVFX(delta_time);
-        tickSkillProjectiles(delta_time);
-        tickCombatEffects(delta_time);
-        updateSettingsParticles(delta_time);
+            m_attackAnimTimer  = std::max(0.0f, m_attackAnimTimer  - delta_time);
+            m_heavyAttackTimer = std::max(0.0f, m_heavyAttackTimer - delta_time);
+            m_ultimateTimer    = std::max(0.0f, m_ultimateTimer    - delta_time);
+            m_cannonTimer      = std::max(0.0f, m_cannonTimer      - delta_time);
+        });
 
-        // ── Gundam 攻击动画计时器递减 ─────────────────────────────────────
-        m_attackAnimTimer  = std::max(0.0f, m_attackAnimTimer  - delta_time);
-        m_heavyAttackTimer = std::max(0.0f, m_heavyAttackTimer - delta_time);
-        m_ultimateTimer    = std::max(0.0f, m_ultimateTimer    - delta_time);
-        m_cannonTimer      = std::max(0.0f, m_cannonTimer      - delta_time);
+        measure(m_frameProfiler.monsterUpdate, [&] {
+            if (m_monsterManager)
+            {
+                m_monsterManager->setAnchorActor(getControlledActor());
+                m_monsterManager->setHostileTarget(m_possessedMonster ? m_possessedMonster : m_player);
+                m_monsterManager->update(delta_time);
+            }
+        });
 
-        if (m_monsterManager)
-            m_monsterManager->update(delta_time);
+        measure(m_frameProfiler.cameraUpdate, [&] {
+            _context.getCamera().update(delta_time);
+        });
 
-        // 更新相机
-        _context.getCamera().update(delta_time);
+        measure(m_frameProfiler.physicsUpdate, [&] {
+            if (physics_manager)
+            {
+                const float physDt = std::min(delta_time, 1.0f / 30.0f);
+                physics_manager->update(physDt, 2);
+            }
+        });
 
-        if (physics_manager)
-        {
-            // 限幅 delta 防止帧率低时物理负荷越大越慢的死循环；子步 2 = 拟真精度对折中
-            const float physDt = std::min(delta_time, 1.0f / 30.0f);
-            physics_manager->update(physDt, 2);
-        }
+        measure(m_frameProfiler.actorUpdate, [&] {
+            if (actor_manager)
+                actor_manager->update(delta_time);
+        });
 
-        if (actor_manager)
-        {
-            actor_manager->update(delta_time);
-        }
+        updatePossession(delta_time);
 
-        // 玩家状态机必须在表现层同步前执行，否则动画不会切到状态机所选状态。
-        tickPlayerSM(delta_time);
-
-        syncPlayerPresentation();
+        measure(m_frameProfiler.stateMachineUpdate, [&] {
+            tickPlayerSM(delta_time);
+            syncPlayerPresentation();
+        });
 
         // 每秒输出一次玩家信息
         static float timer = 0.0f;
@@ -603,22 +718,32 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
         }
 
         // 更新掉落物（重力、拾取）
-        {
+        measure(m_frameProfiler.dropUpdate, [&] {
             glm::vec2 ppos = getActorWorldPosition(getControlledActor());
             m_treeManager.updateDrops(delta_time, ppos, m_inventory, *chunk_manager);
-        }
+        });
 
         // 更新天气
-        {
+        measure(m_frameProfiler.weatherUpdate, [&] {
             const auto &io = ImGui::GetIO();
+            glm::vec2 rainMotion{0.0f, 0.0f};
+            if (auto* actor = getControlledActor())
+            {
+                if (auto* physics = actor->getComponent<engine::component::PhysicsComponent>())
+                    rainMotion = physics->getVelocity();
+            }
+            const auto& cam = _context.getCamera();
+            const glm::vec2 camPos = cam.getPosition();
+            m_weatherSystem.setViewMotion(rainMotion.x, rainMotion.y);
+            m_weatherSystem.setCameraState(camPos.x, camPos.y, cam.getZoom(), cam.getPseudo3DVerticalScale());
             m_weatherSystem.update(delta_time, io.DisplaySize.x, io.DisplaySize.y);
-        }
+        });
 
         // 更新星球任务规划 UI
-        {
+        measure(m_frameProfiler.missionUpdate, [&] {
             glm::vec2 ppos = getActorWorldPosition(getControlledActor());
             m_missionUI.update(delta_time, ppos, *chunk_manager);
-        }
+        });
 
         // 更新路线区域进度
         if (!m_routeData.path.empty())
@@ -640,32 +765,63 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
 
         glm::vec2 playerPos = getActorWorldPosition(getControlledActor());
 
-        // 只在玩家移动超过半个 chunk 时才更新可见区块
-        constexpr float CHUNK_UPDATE_THRESHOLD = engine::world::Chunk::SIZE * 16.0f * 0.5f;
-        if (glm::distance(playerPos, m_lastChunkUpdatePos) > CHUNK_UPDATE_THRESHOLD)
-        {
-            // DNF 横向单行模式：只传 X，manager 内部自动锁定 chunk row Y
-            chunk_manager->updateVisibleChunks({playerPos.x, 0.0f}, 3);
-            m_lastChunkUpdatePos = playerPos;
-        }
+        const float chunkWorldWidth = static_cast<float>(engine::world::Chunk::SIZE * chunk_manager->getTileSize().x);
+        const int currentChunkX = static_cast<int>(std::floor(playerPos.x / chunkWorldWidth));
+        const int lastChunkX = static_cast<int>(std::floor(m_lastChunkUpdatePos.x / chunkWorldWidth));
+        measure(m_frameProfiler.chunkStreamUpdate, [&] {
+            if (currentChunkX != lastChunkX)
+            {
+                chunk_manager->updateVisibleChunks({playerPos.x, 0.0f}, 3);
+                m_lastChunkUpdatePos = playerPos;
+            }
+        });
+
+        m_frameProfiler.loadedChunks = chunk_manager ? chunk_manager->loadedChunkCount() : 0;
+        m_frameProfiler.pendingChunkLoads = chunk_manager ? chunk_manager->pendingChunkLoadCount() : 0;
+        recordPerfMetric(m_frameProfiler.updateTotal,
+                         elapsedMilliseconds(updateStart, SDL_GetPerformanceCounter(), perfFreq));
     }
 
     void GameScene::render()
     {
-        Scene::render();
-        m_timeOfDaySystem.renderBackground(_context, m_weatherSystem.getSkyVisibility());
-        chunk_manager->renderAll(_context);
-        _context.getParallaxRenderSystem().renderAll(_context);
-        _context.getSpriteRenderSystem().renderAll(_context);
-        _context.getTilelayerRenderSystem().renderAll(_context);
-        renderActorGroundShadows();
+        const Uint64 perfFreq = SDL_GetPerformanceFrequency();
+        const Uint64 renderStart = SDL_GetPerformanceCounter();
+        auto measure = [&](PerfMetric& metric, auto&& fn) {
+            const Uint64 start = SDL_GetPerformanceCounter();
+            fn();
+            recordPerfMetric(metric, elapsedMilliseconds(start, SDL_GetPerformanceCounter(), perfFreq));
+        };
 
-        if (actor_manager)
         {
-            actor_manager->render();
-        }
+            const Uint64 backgroundStart = SDL_GetPerformanceCounter();
 
-        m_timeOfDaySystem.renderLighting(_context);
+            const Uint64 sceneStart = SDL_GetPerformanceCounter();
+            Scene::render();
+            recordPerfMetric(m_frameProfiler.sceneRender,
+                             elapsedMilliseconds(sceneStart, SDL_GetPerformanceCounter(), perfFreq));
+
+            const Uint64 skyStart = SDL_GetPerformanceCounter();
+            m_timeOfDaySystem.renderBackground(_context, m_weatherSystem.getSkyVisibility());
+            recordPerfMetric(m_frameProfiler.skyBackgroundRender,
+                             elapsedMilliseconds(skyStart, SDL_GetPerformanceCounter(), perfFreq));
+
+            recordPerfMetric(m_frameProfiler.backgroundRender,
+                             elapsedMilliseconds(backgroundStart, SDL_GetPerformanceCounter(), perfFreq));
+        }
+        measure(m_frameProfiler.chunkRender, [&] { chunk_manager->renderAll(_context); });
+        measure(m_frameProfiler.parallaxRender, [&] { _context.getParallaxRenderSystem().renderAll(_context); });
+        measure(m_frameProfiler.spriteRender, [&] { _context.getSpriteRenderSystem().renderAll(_context); });
+        measure(m_frameProfiler.tileRender, [&] { _context.getTilelayerRenderSystem().renderAll(_context); });
+        measure(m_frameProfiler.shadowRender, [&] { renderActorGroundShadows(); });
+
+        measure(m_frameProfiler.actorRender, [&] {
+            if (actor_manager)
+                actor_manager->render();
+        });
+
+        measure(m_frameProfiler.lightingRender, [&] {
+            m_timeOfDaySystem.renderLighting(_context);
+        });
 
         if (chunk_manager && m_showActiveChunkHighlights)
         {
@@ -708,6 +864,7 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
         }
 
         // ImGui滑块 + 武器显示
+        measure(m_frameProfiler.imguiRender, [&] {
         if (m_glContext)
         {
             ImGui_ImplOpenGL3_NewFrame();
@@ -800,6 +957,7 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
 
             // ── 天气效果（背景层，位于所有ImGui窗口之下）──
             m_weatherSystem.render(displayW, displayH);
+            m_weatherSystem.renderForeground(displayW, displayH);
 
             // 天气 / 时间 HUD（右上角常驻，按 ESC 或 ` 打开完整设置）
             ImGui::SetNextWindowPos(ImVec2(displayW - 230, 20), ImGuiCond_Always);
@@ -825,6 +983,7 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
 
             // 玩家头顶状态名
             renderPlayerStateTag();
+            renderMonsterIFFMarkers();
 
             // 背包界面（E 键开关）
             renderInventoryUI();
@@ -955,6 +1114,10 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         }
+        });
+
+        recordPerfMetric(m_frameProfiler.renderTotal,
+                         elapsedMilliseconds(renderStart, SDL_GetPerformanceCounter(), perfFreq));
     }
 
     void GameScene::renderActorGroundShadows()
@@ -1006,20 +1169,23 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
         if (m_showCommandInput)
             return;
 
-        // ── 帧编辑器打开时：屏蔽全部游戏操作（由窗口自身关闭，不再依赖快捷键）──
         if (m_frameEditor.isOpen())
-        {
-            return; // 直接返回，跳过所有游戏输入
-        }
+            return;
 
-        // ── 设置页打开时：屏蔽移动/攻击等游戏输入 ──────────────────────
         if (m_showSettings)
             return;
 
         if (actor_manager)
             actor_manager->handleInput();
 
-        // ── DNF 双击跑步检测（200ms 窗口内同向二次按键 → 跑步模式）──────
+        if (input.isActionPressed("possess"))
+        {
+            if (m_possessedMonster)
+                releasePossessedMonster(false);
+            else
+                tryPossessNearestMonster();
+        }
+
         {
             auto* ctrl = m_player
                 ? m_player->getComponent<engine::component::ControllerComponent>()
@@ -1031,22 +1197,19 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
                 bool leftDown     = input.isActionDown("move_left");
                 bool rightDown    = input.isActionDown("move_right");
 
-                // 任意方向键松开时退出跑步模式
                 if (!leftDown && !rightDown)
                     ctrl->setRunMode(false);
 
-                // 新按键事件：检测双击
                 if (leftPressed || rightPressed)
                 {
                     int pressDir = rightPressed ? 1 : -1;
                     if (m_doubleTapTimer > 0.0f && m_doubleTapLastDir == pressDir)
                     {
-                        ctrl->setRunMode(true);   // 双击同向 → 跑步
-                        m_doubleTapTimer = 0.0f;  // 消耗窗口
+                        ctrl->setRunMode(true);
+                        m_doubleTapTimer = 0.0f;
                     }
                     else
                     {
-                        // 首次按键：开启 200ms 等待窗口
                         m_doubleTapTimer   = 0.20f;
                         m_doubleTapLastDir = pressDir;
                     }
@@ -1064,8 +1227,11 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
             + glm::vec2(chunk_manager->getTileSize()) * 0.5f;
         m_lastHoveredTileCenter = hoveredTileCenter;
 
+        if (m_possessedMonster && input.isActionPressed("attack"))
+            performPossessedMonsterAttack();
+
         // ── DNF 卷轴战斗：K 键近战攻击（方向由角色朝向决定，不依赖鼠标）──
-        if (input.isActionPressed("attack"))
+        if (!m_possessedMonster && input.isActionPressed("attack"))
         {
             if (m_isPlayerInMech)
             {
@@ -1203,7 +1369,10 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
         }
 
         // Q键：主动展光冲刺星技 + Gundam 炮击动画
-        if (input.isActionPressed("skill_use"))
+        if (m_possessedMonster && input.isActionPressed("skill_use"))
+            performPossessedMonsterSkill();
+
+        if (!m_possessedMonster && input.isActionPressed("skill_use"))
         {
             triggerActiveStarSkills();
             // Gundam 炮击动画（仅非攻击动画期间触发）
@@ -1219,7 +1388,7 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
         }
 
         // Ctrl/X键：Gundam 大招动画 (重击)
-        if (!m_isPlayerInMech && m_player)
+        if (!m_possessedMonster && !m_isPlayerInMech && m_player)
         {
             const bool* keys = SDL_GetKeyboardState(nullptr);
             bool heavyDown = (keys[SDL_SCANCODE_X] || keys[SDL_SCANCODE_LCTRL]) != 0;
@@ -1238,7 +1407,7 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
         }
 
         // R键：Gundam 大招剑气动画
-        if (!m_isPlayerInMech && m_player)
+        if (!m_possessedMonster && !m_isPlayerInMech && m_player)
         {
             const bool* keys2 = SDL_GetKeyboardState(nullptr);
             static bool s_ultimateWas = false;
@@ -1350,6 +1519,109 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
             chunk_manager->rebuildDirtyChunks();
         spdlog::info("矿脉注入完毕：目标区域 zone={}, X=[{},{}), {} 个矿团",
             oz, startTileX, endTileX, clusters);
+    }
+
+    void GameScene::generateRockObstacles()
+    {
+        if (!actor_manager || !physics_manager || !chunk_manager || !m_routeData.isValid())
+            return;
+
+        constexpr float kPixelsPerMeter = engine::world::WorldConfig::PIXELS_PER_METER;
+        constexpr int kSectionWidth = game::route::RouteData::TILES_PER_CELL;
+        constexpr float kRoomMinY = 28.0f;
+        constexpr float kRoomMaxY = 76.0f;
+
+        const std::array<const char *, 3> rockTextures = {
+            "assets/textures/Props/rock.png",
+            "assets/textures/Props/rock-1.png",
+            "assets/textures/Props/rock-2.png"
+        };
+        // 2.5D 脚部矩形：halfX 保持精灵宽度，halfY 统一压缩为 ~4px 薄片（深度碰撞域）
+        const std::array<glm::vec2, 3> bodyHalfSizesPx = {
+            glm::vec2{13.0f, 4.0f},
+            glm::vec2{10.0f, 4.0f},
+            glm::vec2{15.0f, 4.0f}
+        };
+        const std::array<glm::vec2, 3> spriteScales = {
+            glm::vec2{0.92f, 0.92f},
+            glm::vec2{0.82f, 0.82f},
+            glm::vec2{1.04f, 1.04f}
+        };
+
+        auto mixSeed = [](uint64_t value) -> uint64_t {
+            value ^= value >> 33;
+            value *= 0xff51afd7ed558ccdULL;
+            value ^= value >> 33;
+            value *= 0xc4ceb9fe1a85ec53ULL;
+            value ^= value >> 33;
+            return value;
+        };
+
+        auto obstacleCountForTerrain = [](game::route::CellTerrain terrain) -> int {
+            switch (terrain)
+            {
+            case game::route::CellTerrain::Plains: return 1;
+            case game::route::CellTerrain::Forest: return 1;
+            case game::route::CellTerrain::Rocky: return 3;
+            case game::route::CellTerrain::Mountain: return 2;
+            case game::route::CellTerrain::Cave: return 2;
+            }
+            return 1;
+        };
+
+        int spawned = 0;
+        for (int zone = 0; zone < static_cast<int>(m_routeData.path.size()); ++zone)
+        {
+            if (zone == 0)
+                continue;
+
+            const glm::ivec2 cell = m_routeData.path[zone];
+            const game::route::CellTerrain terrain = m_routeData.terrain[cell.y][cell.x];
+            const int obstacleCount = obstacleCountForTerrain(terrain);
+            for (int obstacleIdx = 0; obstacleIdx < obstacleCount; ++obstacleIdx)
+            {
+                const uint64_t seed = mixSeed(
+                    static_cast<uint64_t>(m_routeData.planetSeed) +
+                    static_cast<uint64_t>((zone + 1) * 131) +
+                    static_cast<uint64_t>((obstacleIdx + 3) * 977));
+
+                const int variant = static_cast<int>(seed % rockTextures.size());
+                // 在 section 内按 obstacleCount 等间距放置（像素坐标）
+                const float sectionPx  = static_cast<float>(kSectionWidth * 16); // 1600 px/section
+                const float slotW      = sectionPx / static_cast<float>(obstacleCount + 1);
+                const float jitterX    = static_cast<float>((seed >> 8) % 41) - 20.0f;  // ±20 px
+                const float jitterY    = static_cast<float>((seed >> 20) % 17) - 8.0f;  // ±8 px
+                const float worldX     = static_cast<float>(zone * kSectionWidth * 16)
+                                         + slotW * static_cast<float>(obstacleIdx + 1)
+                                         + jitterX;
+                const float worldY = std::clamp(54.0f + jitterY, kRoomMinY, kRoomMaxY);
+
+                const int tileX = static_cast<int>(worldX / 16.0f);
+
+                // DNF 模式地板全为 GroundDecor，worldY 已 clamp 至 [28,76] 故必在走廊内。
+                // 只需跳过每 section 末尾 2 格隔墙区，不依赖 chunk 是否已加载。
+                const int posInSection = ((tileX % kSectionWidth) + kSectionWidth) % kSectionWidth;
+                if (posInSection >= kSectionWidth - 2)
+                    continue;
+
+                auto *rock = actor_manager->createActor(std::string{"rock_obstacle_"} + std::to_string(zone) + "_" + std::to_string(obstacleIdx));
+                rock->setTag("rock_obstacle");
+                rock->addComponent<engine::component::TransformComponent>(
+                    glm::vec2{worldX, worldY}, spriteScales[variant]);
+                rock->addComponent<engine::component::SpriteComponent>(
+                    rockTextures[variant], engine::utils::Alignment::CENTER);
+
+                const glm::vec2 bodyHalfMeters = bodyHalfSizesPx[variant] / kPixelsPerMeter;
+                b2BodyId bodyId = physics_manager->createStaticBody(
+                    {worldX / kPixelsPerMeter, worldY / kPixelsPerMeter},
+                    {bodyHalfMeters.x, bodyHalfMeters.y},
+                    rock);
+                rock->addComponent<engine::component::PhysicsComponent>(bodyId, physics_manager.get());
+                ++spawned;
+            }
+        }
+
+        spdlog::info("背景障碍石块生成完毕：{} 个", spawned);
     }
 
     // ------------------------------------------------------------------
@@ -1751,6 +2023,27 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
             ImGui::PopStyleColor(2);
         }
         ImGui::Separator();
+        if (ImGui::CollapsingHeader("字体试显", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            const char *fontName = (ImGui::GetFont() && ImGui::GetFont()->GetDebugName() && ImGui::GetFont()->GetDebugName()[0] != '\0')
+                ? ImGui::GetFont()->GetDebugName()
+                : "默认字体";
+            ImGui::Text("当前 ImGui 字体: %s", fontName);
+            ImGui::TextDisabled("资源路径: assets/fonts/VonwaonBitmap-16px.ttf");
+            ImGui::TextDisabled("当前字号: %.1f", ImGui::GetFontSize());
+            ImGui::SeparatorText("地名试显");
+            ImGui::TextUnformatted("白桦前哨站 / 旧港装卸区 / 晴雪岭观测点 / 南侧采掘平台 / 轨道四号库");
+            ImGui::TextUnformatted("东三区补给线 / 地下二层机修间 / 北坡通信塔 / 晨雾农场 / 灰石避难所");
+            ImGui::SeparatorText("单位试显");
+            ImGui::TextUnformatted("距离 12 m / 240 m / 1.6 km / 23.5 km");
+            ImGui::TextUnformatted("质量 3 kg / 85 kg / 1.2 t");
+            ImGui::TextUnformatted("功率 600 W / 12 kW / 2.4 MW");
+            ImGui::TextUnformatted("速度 4.5 m/s / 72 km/h / 0.82 Mach");
+            ImGui::TextUnformatted("温度 -12 C / 23 C / 107 C");
+            ImGui::SeparatorText("混排样本");
+            ImGui::TextUnformatted("轨道四号库 -> 白桦前哨站 3.4 km, 预计 12 min, 载荷 1.8 t");
+            ImGui::TextUnformatted("南侧采掘平台输出 2.4 MW, 冷却液 18 L/min, 压力 0.72 MPa");
+        }
         if (m_uiParticleLevel != UiParticleLevel::None && !m_uiDusts.empty())
         {
             ImVec2 wMin = ImGui::GetWindowPos();
@@ -1932,6 +2225,60 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
             ImGui::Dummy(fpsGraphSize);
         }
 
+        ImGui::Spacing();
+        ImGui::SeparatorText("性能剖析");
+        ImGui::Text("帧耗时: %.2fms  Update: %.2fms  Render: %.2fms",
+            m_frameProfiler.frameDeltaMs,
+            m_frameProfiler.updateTotal.lastMs,
+            m_frameProfiler.renderTotal.lastMs);
+        ImGui::Text("Chunk: 已加载 %zu  待加载 %zu",
+            m_frameProfiler.loadedChunks,
+            m_frameProfiler.pendingChunkLoads);
+
+        if (ImGui::BeginTable("##perf_breakdown", 4,
+                              ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
+                              ImGuiTableFlags_SizingStretchProp))
+        {
+            ImGui::TableSetupColumn("阶段");
+            ImGui::TableSetupColumn("当前(ms)");
+            ImGui::TableSetupColumn("均值(ms)");
+            ImGui::TableSetupColumn("峰值(ms)");
+            ImGui::TableHeadersRow();
+
+            auto perfRow = [&](const char* label, const PerfMetric& metric) {
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0); ImGui::TextUnformatted(label);
+                ImGui::TableSetColumnIndex(1); ImGui::Text("%.2f", metric.lastMs);
+                ImGui::TableSetColumnIndex(2); ImGui::Text("%.2f", metric.avgMs);
+                ImGui::TableSetColumnIndex(3); ImGui::Text("%.2f", metric.peakMs);
+            };
+
+            perfRow("Update 总计", m_frameProfiler.updateTotal);
+            perfRow("Update 核心逻辑", m_frameProfiler.coreLogic);
+            perfRow("Update 怪物", m_frameProfiler.monsterUpdate);
+            perfRow("Update 相机", m_frameProfiler.cameraUpdate);
+            perfRow("Update 物理", m_frameProfiler.physicsUpdate);
+            perfRow("Update Actor", m_frameProfiler.actorUpdate);
+            perfRow("Update 状态机", m_frameProfiler.stateMachineUpdate);
+            perfRow("Update 掉落", m_frameProfiler.dropUpdate);
+            perfRow("Update 天气", m_frameProfiler.weatherUpdate);
+            perfRow("Update 任务", m_frameProfiler.missionUpdate);
+            perfRow("Update Chunk流送", m_frameProfiler.chunkStreamUpdate);
+            perfRow("Render 总计", m_frameProfiler.renderTotal);
+            perfRow("Render 背景", m_frameProfiler.backgroundRender);
+            perfRow("Render 场景对象", m_frameProfiler.sceneRender);
+            perfRow("Render 天空背景", m_frameProfiler.skyBackgroundRender);
+            perfRow("Render Chunk", m_frameProfiler.chunkRender);
+            perfRow("Render 视差", m_frameProfiler.parallaxRender);
+            perfRow("Render Sprite", m_frameProfiler.spriteRender);
+            perfRow("Render Tile", m_frameProfiler.tileRender);
+            perfRow("Render 阴影", m_frameProfiler.shadowRender);
+            perfRow("Render Actor", m_frameProfiler.actorRender);
+            perfRow("Render 光照", m_frameProfiler.lightingRender);
+            perfRow("Render ImGui", m_frameProfiler.imguiRender);
+            ImGui::EndTable();
+        }
+
         // 最大帧率设置
         {
             int curTarget = _context.getTime().getTargetFPS();
@@ -1949,8 +2296,8 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
                 if (ImGui::Button(buf))
                 {
                     m_maxFpsSlider = p;
-                    _context.getTime().setTargetFPS(p);
-                    _context.getTime().setFrameLimitEnabled(true);
+                    saveConfigValue("performance", "target_fps", p);
+                    applyRuntimeGraphicsSettings();
                 }
                 if (sel) ImGui::PopStyleColor();
                 ImGui::SameLine();
@@ -1961,12 +2308,18 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
                 if (ImGui::Button("不限"))
                 {
                     m_maxFpsSlider = 0;
-                    _context.getTime().setTargetFPS(0);
-                    _context.getTime().setFrameLimitEnabled(false);
+                    saveConfigValue("performance", "target_fps", 0);
+                    applyRuntimeGraphicsSettings();
                 }
                 if (sel) ImGui::PopStyleColor();
             }
         }
+
+        if (ImGui::Checkbox("垂直同步 VSync", &m_vsyncEnabled))
+        {
+            applyRuntimeGraphicsSettings();
+        }
+        ImGui::TextDisabled("开启 VSync 时，OpenGL 会被显示器刷新率限制；想超过 60/120/144，必须先关闭它。");
 
         ImGui::Spacing();
 
@@ -2046,6 +2399,25 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
         ImGui::Text("当前天气: %s  天体可见度: %.0f%%",
             m_weatherSystem.getCurrentWeatherName(),
             m_weatherSystem.getSkyVisibility() * 100.0f);
+        if (ImGui::Checkbox("贴屏雨滴（移动时掠过）", &m_screenRainOverlay))
+        {
+            saveBoolSetting("screen_rain_overlay", m_screenRainOverlay);
+            m_weatherSystem.setScreenRainOverlayEnabled(m_screenRainOverlay);
+        }
+        if (m_screenRainOverlay)
+        {
+            if (ImGui::SliderFloat("贴屏雨强", &m_screenRainOverlayStrength, 0.2f, 2.0f, "%.2f"))
+            {
+                m_weatherSystem.setScreenRainOverlayStrength(m_screenRainOverlayStrength);
+                saveFloatSetting("screen_rain_overlay_strength", m_screenRainOverlayStrength);
+            }
+            if (ImGui::SliderFloat("掠过强度", &m_screenRainMotionStrength, 0.2f, 3.0f, "%.2f"))
+            {
+                m_weatherSystem.setScreenRainMotionScale(m_screenRainMotionStrength);
+                saveFloatSetting("screen_rain_motion_strength", m_screenRainMotionStrength);
+            }
+        }
+        ImGui::TextDisabled("会额外绘制一层屏幕空间雨幕，并根据角色移动速度增强横向掠过感。");
         using game::weather::WeatherType;
         const struct { WeatherType type; const char* label; } kWeathers[] = {
             { WeatherType::Clear,        "晴天" },
@@ -2066,6 +2438,15 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
         ImGui::NewLine();
 
         ImGui::End();
+    }
+
+    void GameScene::applyRuntimeGraphicsSettings()
+    {
+        _context.getTime().setTargetFPS(m_maxFpsSlider);
+        _context.getTime().setFrameLimitEnabled(!m_vsyncEnabled);
+
+        applyRendererVSync(_context.getRenderer(), m_vsyncEnabled);
+        saveConfigValue("graphics", "vsync", m_vsyncEnabled);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -2114,7 +2495,7 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
     // ─────────────────────────────────────────────────────────────────────────
     void GameScene::tickPlayerSM(float dt)
     {
-        if (!m_playerSMLoaded || !m_player) return;
+        if (!m_playerSMLoaded || !m_player || m_isPlayerInMech || m_possessedMonster) return;
 
         using namespace engine::component;
         using namespace game::statemachine;
@@ -2385,18 +2766,62 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
         ImGui::End();
     }
 
-    void GameScene::renderPerformanceOverlay() const    {
+    void GameScene::renderPerformanceOverlay()    {
         ImGui::SetNextWindowPos({10.0f, 10.0f}, ImGuiCond_Always);
         ImGui::SetNextWindowBgAlpha(0.45f);
         ImGui::Begin("##fps_game", nullptr,
             ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
             ImGuiWindowFlags_NoNav | ImGuiWindowFlags_AlwaysAutoResize);
-        ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+        ImGui::Text("FPS: %.1f  Δ: %.2fms", ImGui::GetIO().Framerate, m_frameProfiler.frameDeltaMs);
+        ImGui::Text("Update %.2f | Render %.2f", m_frameProfiler.updateTotal.lastMs, m_frameProfiler.renderTotal.lastMs);
+        ImGui::Text("Chunk 已加载 %zu | 待加载 %zu", m_frameProfiler.loadedChunks, m_frameProfiler.pendingChunkLoads);
+        if (m_devMode)
+        {
+            ImGui::Separator();
+            ImGui::Text("U 逻辑 %.2f  怪物 %.2f  相机 %.2f", m_frameProfiler.coreLogic.lastMs, m_frameProfiler.monsterUpdate.lastMs, m_frameProfiler.cameraUpdate.lastMs);
+            ImGui::Text("U 物理 %.2f  Actor %.2f  状态机 %.2f", m_frameProfiler.physicsUpdate.lastMs, m_frameProfiler.actorUpdate.lastMs, m_frameProfiler.stateMachineUpdate.lastMs);
+            ImGui::Text("U 掉落 %.2f  天气 %.2f  任务 %.2f", m_frameProfiler.dropUpdate.lastMs, m_frameProfiler.weatherUpdate.lastMs, m_frameProfiler.missionUpdate.lastMs);
+            ImGui::Text("U Chunk流送 %.2f", m_frameProfiler.chunkStreamUpdate.lastMs);
+            ImGui::Separator();
+            ImGui::Text("R 背景 %.2f  场景 %.2f  天空 %.2f", m_frameProfiler.backgroundRender.lastMs, m_frameProfiler.sceneRender.lastMs, m_frameProfiler.skyBackgroundRender.lastMs);
+            ImGui::Text("R Chunk %.2f  视差 %.2f  Sprite %.2f", m_frameProfiler.chunkRender.lastMs, m_frameProfiler.parallaxRender.lastMs, m_frameProfiler.spriteRender.lastMs);
+            ImGui::Text("R Sprite %.2f  Tile %.2f  阴影 %.2f", m_frameProfiler.spriteRender.lastMs, m_frameProfiler.tileRender.lastMs, m_frameProfiler.shadowRender.lastMs);
+            ImGui::Text("R Actor %.2f  光照 %.2f  ImGui %.2f", m_frameProfiler.actorRender.lastMs, m_frameProfiler.lightingRender.lastMs, m_frameProfiler.imguiRender.lastMs);
+        }
         ImGui::End();
     }
 
     void GameScene::renderMechPrompt()
     {
+        if (m_possessedMonster)
+        {
+            ImGuiIO &io = ImGui::GetIO();
+            const float width = 320.0f;
+            ImGui::SetNextWindowPos({(io.DisplaySize.x - width) * 0.5f, io.DisplaySize.y - 112.0f}, ImGuiCond_Always);
+            ImGui::SetNextWindowSize({width, 84.0f}, ImGuiCond_Always);
+            ImGui::SetNextWindowBgAlpha(0.84f);
+            ImGui::Begin("##possession_hud", nullptr,
+                ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoNav |
+                ImGuiWindowFlags_NoSavedSettings);
+            ImGui::Text("已接管: %s", m_possessedMonster->getName().c_str());
+            ImGui::Text("C 解除接管   WASD 直接控制   攻击/技能 可用");
+            if (m_possessedAttackCooldown > 0.0f)
+                ImGui::Text("普攻冷却 %.2fs", m_possessedAttackCooldown);
+            else
+                ImGui::TextColored({0.55f, 1.0f, 0.7f, 1.0f}, "普攻就绪");
+            if (m_possessedSkillCooldown > 0.0f)
+                ImGui::Text("技能冷却 %.2fs", m_possessedSkillCooldown);
+            else
+                ImGui::TextColored({0.60f, 0.85f, 1.0f, 1.0f}, "技能就绪");
+            if (m_possessedLastAttackHits > 0)
+                ImGui::Text("上次攻击清除: %d", m_possessedLastAttackHits);
+            else
+                ImGui::TextDisabled("上次攻击未命中");
+            ImGui::ProgressBar(std::clamp(m_possessionEnergy / 12.0f, 0.0f, 1.0f), ImVec2(-1.0f, 0.0f), "控制能量");
+            ImGui::End();
+            return;
+        }
+
         if (!m_mech)
             return;
 
@@ -2478,6 +2903,8 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
             stateLabel = controller->getMovementStateName();
             if (m_isPlayerInMech)
                 stateLabel = "机甲·" + stateLabel;
+            else if (actor == m_possessedMonster)
+                stateLabel = "接管·" + stateLabel;
         }
         float fuelRatio = controller->getJetpackFuelRatio();
 
@@ -2496,6 +2923,15 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
         float fuelFillX = fuelBarMin.x + (fuelBarMax.x - fuelBarMin.x) * fuelRatio;
         dl->AddRectFilled(fuelBarMin, fuelBarMax, IM_COL32(30, 36, 46, 230), 2.0f);
         dl->AddRectFilled(fuelBarMin, {fuelFillX, fuelBarMax.y}, IM_COL32(255, 190, 60, 230), 2.0f);
+    }
+
+    void GameScene::renderMonsterIFFMarkers()
+    {
+        if (!m_monsterManager)
+            return;
+
+        const float pulse = 0.5f + 0.5f * std::sin(static_cast<float>(SDL_GetTicks()) * 0.008f);
+        m_monsterManager->renderIFFMarkers(getControlledActor(), pulse);
     }
 
     // ------------------------------------------------------------------
@@ -3353,65 +3789,31 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
         auto* transform = m_player->addComponent<engine::component::TransformComponent>(startPos);
 
         const std::string frameJsonPath = "assets/textures/Characters/gundom.json";
-        std::string playerTexturePath = "assets/textures/Characters/gundom.png";
+        game::animation::FrameAnimationSet animationSet;
+        if (!game::animation::loadFrameAnimationSet(frameJsonPath, animationSet))
+            animationSet = game::animation::makeDefaultGundomAnimationSet();
+
+        if (animationSet.texturePath.empty())
+            animationSet.texturePath = "assets/textures/Characters/gundom.png";
+
+        const auto initialRect = animationSet.initialSourceRect().value_or(
+            engine::utils::FRect{{241.0f, 1625.0f}, {241.0f, 125.0f}});
 
         // ── Gundam 精灵表：优先读取帧编辑器 JSON 中声明的实际贴图路径 ──
         m_player->addComponent<engine::component::SpriteComponent>(
-            playerTexturePath,
+            animationSet.texturePath,
             engine::utils::Alignment::CENTER,
-            engine::utils::FRect{{241.0f, 1625.0f}, {241.0f, 125.0f}});
+            initialRect);
 
         auto* ctrl = m_player->addComponent<engine::component::ControllerComponent>(20.0f, 28.0f);
         ctrl->setGroundAcceleration(80.0f);
         ctrl->setAirAcceleration(12.0f);
         ctrl->setGroundBand(16.0f, 96.0f);
 
-        // ── Gundam 动画组件：按当前实际图集 gundom.png 的有效帧配置 ──
-        // 目前明确可用的是：
-        //   idle: x=241 y=1625 w=241 h=125，共 1 帧
-        //   move: x=241..482 y=2750 w=241 h=125，共 2 帧
-        // 其它动作先回退到 idle / walk，保证运行时不会出现空白精灵。
-        using AC = engine::component::AnimationClip;
-        const auto makeClip = [](int row, int colStart, int frameCount, float duration, bool loop,
-                                 float yOrigin, float frameHeight) {
-            AC clip{};
-            clip.row = row;
-            clip.col_start = colStart;
-            clip.frame_count = frameCount;
-            clip.frame_duration = duration;
-            clip.loop = loop;
-            clip.y_origin = yOrigin;
-            clip.frame_h_override = frameHeight;
-            return clip;
-        };
         auto* anim = m_player->addComponent<engine::component::AnimationComponent>(241.0f, 125.0f);
 
-        const bool loadedFromFrameJson = loadAnimationClipsFromFrameJson(frameJsonPath, *anim, &playerTexturePath);
-        if (auto* sprite = m_player->getComponent<engine::component::SpriteComponent>())
-        {
-            sprite->setSpriteById(playerTexturePath, engine::utils::FRect{{241.0f, 1625.0f}, {241.0f, 125.0f}});
-        }
-
-        // 移动类（移动状态机驱动）
-        if (!loadedFromFrameJson)
-        {
-            anim->addClip("idle",    makeClip(0, 1, 1, 0.12f, true,  1625.0f, 125.0f));
-            anim->addClip("walk",    makeClip(0, 1, 2, 0.10f, true,  2750.0f, 125.0f));
-            anim->addClip("run",     makeClip(0, 1, 2, 0.075f, true, 2750.0f, 125.0f));
-        }
-        anim->addClip("turn",    makeClip(0, 1, 1, 0.10f, false, 1625.0f, 125.0f));
-        anim->addClip("fly",     makeClip(0, 1, 2, 0.10f, true,  2750.0f, 125.0f));
-        anim->addClip("jetpack", makeClip(0, 1, 2, 0.10f, true,  2750.0f, 125.0f));
-        anim->addClip("jump",    makeClip(0, 1, 1, 0.10f, false, 1625.0f, 125.0f));
-        anim->addClip("fall",    makeClip(0, 1, 1, 0.12f, true,  1625.0f, 125.0f));
-
-        // 攻击类（game_scene 直接调用 forcePlay 触发）
-        anim->addClip("attack_a", makeClip(0, 1, 2, 0.08f, false, 2750.0f, 125.0f));
-        anim->addClip("attack_b", makeClip(0, 1, 2, 0.08f, false, 2750.0f, 125.0f));
-        anim->addClip("attack_c", makeClip(0, 1, 2, 0.08f, false, 2750.0f, 125.0f));
-        anim->addClip("attack_d", makeClip(0, 1, 2, 0.08f, false, 2750.0f, 125.0f));
-        anim->addClip("cannon",   makeClip(0, 1, 2, 0.08f, false, 2750.0f, 125.0f));
-        anim->addClip("ultimate", makeClip(0, 1, 2, 0.10f, false, 2750.0f, 125.0f));
+        for (const auto& [clipName, clip] : animationSet.clips)
+            anim->addClip(clipName, clip);
 
         anim->play("idle");
 
@@ -3529,7 +3931,7 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
 
     void GameScene::tryEnterMech()
     {
-        if (!m_mech || m_isPlayerInMech || !m_player)
+        if (!m_mech || m_isPlayerInMech || !m_player || m_possessedMonster)
             return;
 
         glm::vec2 playerPos = getActorWorldPosition(m_player);
@@ -3581,6 +3983,264 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
         _context.getCamera().setFollowTarget(&playerTransform->getPosition(), 5.0f);
         m_isPlayerInMech = false;
         spdlog::info("驾驶员已离开机甲");
+    }
+
+    void GameScene::tryPossessNearestMonster()
+    {
+        if (!m_monsterManager || !m_player || m_isPlayerInMech || m_possessedMonster)
+            return;
+
+        const glm::vec2 origin = getActorWorldPosition(m_player);
+        auto *candidate = m_monsterManager->findNearestMonster(origin, 180.0f);
+        if (!candidate)
+            return;
+
+        auto *playerController = m_player->getComponent<engine::component::ControllerComponent>();
+        auto *playerPhysics = m_player->getComponent<engine::component::PhysicsComponent>();
+        auto *playerTransform = m_player->getComponent<engine::component::TransformComponent>();
+        auto *playerSprite = m_player->getComponent<engine::component::SpriteComponent>();
+        auto *targetTransform = candidate->getComponent<engine::component::TransformComponent>();
+        if (!playerController || !playerPhysics || !playerTransform || !playerSprite || !targetTransform)
+            return;
+
+        if (!m_monsterManager->possessMonster(candidate))
+            return;
+
+        playerController->setEnabled(false);
+        playerPhysics->setVelocity({0.0f, 0.0f});
+        playerPhysics->setWorldPosition({-4096.0f, -4096.0f});
+        playerTransform->setPosition({-4096.0f, -4096.0f});
+        playerSprite->setHidden(true);
+
+        _context.getCamera().setFollowTarget(&targetTransform->getPosition(), 4.0f);
+        m_possessedMonster = candidate;
+        m_possessionEnergy = 12.0f;
+        m_possessionFxTimer = 0.5f;
+        m_possessedAttackCooldown = 0.0f;
+        m_possessedSkillCooldown = 0.0f;
+        m_possessedLastAttackHits = 0;
+        spdlog::info("控制权切换：已接管怪物 {}", candidate->getName());
+    }
+
+    void GameScene::releasePossessedMonster(bool forced)
+    {
+        if (!m_possessedMonster || !m_player || !m_monsterManager)
+            return;
+
+        auto *playerController = m_player->getComponent<engine::component::ControllerComponent>();
+        auto *playerPhysics = m_player->getComponent<engine::component::PhysicsComponent>();
+        auto *playerTransform = m_player->getComponent<engine::component::TransformComponent>();
+        auto *playerSprite = m_player->getComponent<engine::component::SpriteComponent>();
+        if (!playerController || !playerPhysics || !playerTransform || !playerSprite)
+            return;
+
+        glm::vec2 restorePos = getActorWorldPosition(m_possessedMonster) + glm::vec2(-28.0f, 0.0f);
+        playerSprite->setHidden(false);
+        playerTransform->setPosition(restorePos);
+        playerPhysics->setWorldPosition(restorePos);
+        playerPhysics->setVelocity({0.0f, 0.0f});
+        playerController->setEnabled(true);
+
+        m_monsterManager->releasePossessedMonster();
+        _context.getCamera().setFollowTarget(&playerTransform->getPosition(), 5.0f);
+        m_possessedMonster = nullptr;
+        m_possessionEnergy = 0.0f;
+        m_possessionFxTimer = forced ? 0.0f : 0.35f;
+        m_possessedAttackCooldown = 0.0f;
+        m_possessedSkillCooldown = 0.0f;
+        m_possessedLastAttackHits = 0;
+        spdlog::info("控制权切换：已返回玩家本体{}", forced ? "（强制中断）" : "");
+    }
+
+    void GameScene::updatePossession(float dt)
+    {
+        if (m_possessionFxTimer > 0.0f)
+            m_possessionFxTimer = std::max(0.0f, m_possessionFxTimer - dt);
+
+        if (!m_possessedMonster)
+            return;
+
+        if (m_possessedMonster->isNeedRemove())
+        {
+            releasePossessedMonster(true);
+            return;
+        }
+
+        m_possessionEnergy = std::max(0.0f, m_possessionEnergy - dt);
+        if (m_possessionEnergy <= 0.0f)
+        {
+            releasePossessedMonster(true);
+        }
+    }
+
+    void GameScene::performPossessedMonsterAttack()
+    {
+        if (!m_possessedMonster || !m_monsterManager || m_possessedAttackCooldown > 0.0f)
+            return;
+
+        auto *controller = m_possessedMonster->getComponent<engine::component::ControllerComponent>();
+        auto *physics = m_possessedMonster->getComponent<engine::component::PhysicsComponent>();
+        auto *transform = m_possessedMonster->getComponent<engine::component::TransformComponent>();
+        auto *ai = m_possessedMonster->getComponent<game::monster::MonsterAIComponent>();
+        if (!controller || !physics || !transform || !ai)
+            return;
+
+        const float facing = controller->getFacingDirection() == engine::component::ControllerComponent::FacingDirection::Left ? -1.0f : 1.0f;
+        const glm::vec2 origin = transform->getPosition();
+
+        float range = 84.0f;
+        float halfHeight = 56.0f;
+        float cooldown = 0.48f;
+        float dashImpulse = 4.2f;
+        float upwardImpulse = 0.0f;
+        float vfxAge = 0.18f;
+        switch (ai->getMonsterType())
+        {
+        case game::monster::MonsterType::Slime:
+            range = 82.0f;
+            halfHeight = 48.0f;
+            cooldown = 0.50f;
+            dashImpulse = 4.0f;
+            upwardImpulse = -2.2f;
+            break;
+        case game::monster::MonsterType::Wolf:
+            range = 118.0f;
+            halfHeight = 58.0f;
+            cooldown = 0.34f;
+            dashImpulse = 6.8f;
+            break;
+        case game::monster::MonsterType::WhiteApe:
+            range = 138.0f;
+            halfHeight = 86.0f;
+            cooldown = 0.72f;
+            dashImpulse = 5.4f;
+            upwardImpulse = -1.1f;
+            vfxAge = 0.24f;
+            break;
+        }
+
+        std::vector<glm::vec2> defeatPositions;
+        const int slain = m_monsterManager->strikeMonstersFrom(
+            m_possessedMonster, facing, range, halfHeight, &defeatPositions);
+
+        const glm::vec2 slashCenter = origin + glm::vec2{facing * range * 0.56f, -10.0f};
+        m_slashVfxList.push_back({slashCenter, facing, 0.0f, vfxAge, range * 0.9f});
+        for (const glm::vec2 &pos : defeatPositions)
+        {
+            for (int i = 0; i < 10; ++i)
+            {
+                const float t = static_cast<float>(i) / 9.0f;
+                glm::vec2 dir = glm::normalize(glm::vec2(facing * (1.1f + t), -0.8f + 1.6f * t));
+                m_combatFragments.push_back({
+                    pos,
+                    dir * (210.0f + 90.0f * t),
+                    0.0f,
+                    0.38f + 0.08f * t,
+                    3.0f + 2.0f * t
+                });
+            }
+        }
+
+        glm::vec2 vel = physics->getVelocity();
+        vel.x = facing * dashImpulse;
+        vel.y = std::min(vel.y, upwardImpulse);
+        physics->setVelocity(vel);
+
+        m_possessedAttackCooldown = cooldown;
+        m_possessedLastAttackHits = slain;
+        m_possessionEnergy = std::min(12.0f, m_possessionEnergy + 0.20f + 0.35f * static_cast<float>(slain));
+    }
+
+    void GameScene::performPossessedMonsterSkill()
+    {
+        if (!m_possessedMonster || !m_monsterManager || m_possessedSkillCooldown > 0.0f)
+            return;
+
+        auto *controller = m_possessedMonster->getComponent<engine::component::ControllerComponent>();
+        auto *physics = m_possessedMonster->getComponent<engine::component::PhysicsComponent>();
+        auto *transform = m_possessedMonster->getComponent<engine::component::TransformComponent>();
+        auto *ai = m_possessedMonster->getComponent<game::monster::MonsterAIComponent>();
+        if (!controller || !physics || !transform || !ai)
+            return;
+
+        const float facing = controller->getFacingDirection() == engine::component::ControllerComponent::FacingDirection::Left ? -1.0f : 1.0f;
+        const glm::vec2 origin = transform->getPosition();
+
+        float energyCost = 2.6f;
+        float cooldown = 3.0f;
+        float vfxAge = 0.28f;
+        float vfxRadius = 108.0f;
+        float strikeRange = 0.0f;
+        float strikeHalfHeight = 0.0f;
+        float blastRadius = 0.0f;
+        bool useBlast = false;
+        glm::vec2 effectCenter = origin;
+        glm::vec2 newVelocity = physics->getVelocity();
+
+        switch (ai->getMonsterType())
+        {
+        case game::monster::MonsterType::Slime:
+            energyCost = 2.2f;
+            cooldown = 2.8f;
+            effectCenter = origin + glm::vec2{0.0f, 8.0f};
+            useBlast = true;
+            blastRadius = 92.0f;
+            vfxRadius = 96.0f;
+            newVelocity.y = -5.8f;
+            break;
+        case game::monster::MonsterType::Wolf:
+            energyCost = 2.8f;
+            cooldown = 3.1f;
+            vfxAge = 0.24f;
+            vfxRadius = 150.0f;
+            effectCenter = origin + glm::vec2{facing * 88.0f, -6.0f};
+            strikeRange = 178.0f;
+            strikeHalfHeight = 74.0f;
+            newVelocity.x = facing * 10.0f;
+            newVelocity.y = -3.4f;
+            break;
+        case game::monster::MonsterType::WhiteApe:
+            energyCost = 3.5f;
+            cooldown = 4.2f;
+            vfxAge = 0.34f;
+            vfxRadius = 138.0f;
+            effectCenter = origin + glm::vec2{facing * 54.0f, 22.0f};
+            useBlast = true;
+            blastRadius = 126.0f;
+            newVelocity.x = facing * 2.5f;
+            break;
+        }
+
+        if (m_possessionEnergy < energyCost)
+            return;
+
+        int slain = 0;
+        std::vector<glm::vec2> defeatPositions;
+        if (useBlast)
+            slain = m_monsterManager->blastMonstersFrom(m_possessedMonster, effectCenter, blastRadius, &defeatPositions);
+        else
+            slain = m_monsterManager->strikeMonstersFrom(m_possessedMonster, facing, strikeRange, strikeHalfHeight, &defeatPositions);
+
+        physics->setVelocity(newVelocity);
+        m_possessionEnergy = std::max(0.0f, m_possessionEnergy - energyCost);
+        m_possessedSkillCooldown = cooldown;
+        m_possessedLastAttackHits = slain;
+        m_slashVfxList.push_back({effectCenter, facing, 0.0f, vfxAge, vfxRadius});
+        for (const glm::vec2 &pos : defeatPositions)
+        {
+            for (int i = 0; i < 14; ++i)
+            {
+                const float t = static_cast<float>(i) / 13.0f;
+                glm::vec2 dir = glm::normalize(glm::vec2(-1.0f + 2.0f * t, -0.65f + 1.3f * t));
+                m_combatFragments.push_back({
+                    pos,
+                    dir * (180.0f + 120.0f * t),
+                    0.0f,
+                    0.46f + 0.10f * t,
+                    3.2f + 2.3f * t
+                });
+            }
+        }
     }
 
     void GameScene::performMeleeAttack(glm::vec2 targetPos)
@@ -4722,6 +5382,8 @@ static bool loadAnimationClipsFromFrameJson(const std::string& jsonPath,
     {
         if (m_isPlayerInMech && m_mech)
             return m_mech;
+        if (m_possessedMonster)
+            return m_possessedMonster;
         return m_player;
     }
 

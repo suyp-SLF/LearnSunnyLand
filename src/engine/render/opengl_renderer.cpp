@@ -5,6 +5,7 @@
 #include <spdlog/spdlog.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <cmath>
 #define IMGUI_IMPL_OPENGL_LOADER_CUSTOM
 #include <imgui_impl_opengl3_loader.h>
 #ifndef GL_STATIC_DRAW
@@ -93,6 +94,71 @@ namespace engine::render
         drawQuad(_whiteTex, mvp, {0.0f, 0.0f, 1.0f, 1.0f}, w, h, false, color);
     }
 
+    void OpenGLRenderer::drawRectBatch(const Camera &camera, const std::vector<ColoredRect> &rects)
+    {
+        if (!_tileShader || !_whiteTex || rects.empty())
+            return;
+
+        std::vector<float> vertices;
+        vertices.reserve(rects.size() * 6 * 8);
+
+        for (const auto &rect : rects)
+        {
+            if (rect.w <= 0.0f || rect.h <= 0.0f || rect.color.a <= 0.0f)
+                continue;
+
+            const float x0 = rect.x;
+            const float y0 = rect.y;
+            const float x1 = rect.x + rect.w;
+            const float y1 = rect.y + rect.h;
+            const float r = rect.color.r;
+            const float g = rect.color.g;
+            const float b = rect.color.b;
+            const float a = rect.color.a;
+
+            const float quad[] = {
+                x0, y0, r, g, b, a, 0.0f, 0.0f,
+                x1, y0, r, g, b, a, 1.0f, 0.0f,
+                x0, y1, r, g, b, a, 0.0f, 1.0f,
+                x1, y0, r, g, b, a, 1.0f, 0.0f,
+                x1, y1, r, g, b, a, 1.0f, 1.0f,
+                x0, y1, r, g, b, a, 0.0f, 1.0f,
+            };
+            vertices.insert(vertices.end(), std::begin(quad), std::end(quad));
+        }
+
+        if (vertices.empty())
+            return;
+
+        const glm::mat4 mvp = camera.getProjectionMatrix() * camera.getViewMatrix();
+
+        if (_boundShader != _tileShader)
+        {
+            glUseProgram(_tileShader);
+            _boundShader = _tileShader;
+        }
+        glUniformMatrix4fv(_tileUniformMVP, 1, GL_FALSE, glm::value_ptr(mvp));
+        if (_glUniform4f)
+            _glUniform4f(_tileUniformColor, 1.0f, 1.0f, 1.0f, 1.0f);
+
+        if (_boundTexture != _whiteTex)
+        {
+            glBindTexture(GL_TEXTURE_2D, _whiteTex);
+            _boundTexture = _whiteTex;
+        }
+        if (_boundVAO != _quadVAO)
+        {
+            glBindVertexArray(_quadVAO);
+            _boundVAO = _quadVAO;
+        }
+
+        glBindBuffer(GL_ARRAY_BUFFER, _quadVBO);
+        ensureQuadBufferCapacity(vertices.size() * sizeof(float));
+        glBufferSubData(GL_ARRAY_BUFFER, 0, static_cast<GLsizeiptr>(vertices.size() * sizeof(float)), vertices.data());
+        if (_glDrawArrays)
+            _glDrawArrays(GL_TRIANGLES, 0, static_cast<int>(vertices.size() / 8));
+    }
+
     void OpenGLRenderer::drawTexture(SDL_GPUTexture*, float, float, float, float)
     {
     }
@@ -174,6 +240,7 @@ void main() {
         glBindVertexArray(_quadVAO);
         glBindBuffer(GL_ARRAY_BUFFER, _quadVBO);
         glBufferData(GL_ARRAY_BUFFER, 6 * 8 * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
+        _quadVBOCapacityBytes = 6 * 8 * sizeof(float);
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(1);
@@ -322,8 +389,80 @@ void main() {
             _boundVAO = _quadVAO;
         }
         glBindBuffer(GL_ARRAY_BUFFER, _quadVBO);
+        ensureQuadBufferCapacity(sizeof(verts));
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(verts), verts);
         if (_glDrawArrays) _glDrawArrays(GL_TRIANGLES, 0, 6);
         // 不解绑 — 留给下一个 draw call 覆盖
+    }
+
+    void OpenGLRenderer::ensureQuadBufferCapacity(size_t requiredBytes)
+    {
+        if (requiredBytes <= _quadVBOCapacityBytes)
+            return;
+
+        glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(requiredBytes), nullptr, GL_DYNAMIC_DRAW);
+        _quadVBOCapacityBytes = requiredBytes;
+    }
+
+    void OpenGLRenderer::drawParallax(const Camera &camera, const Sprite &sprite,
+                                       const glm::vec2 &position, const glm::vec2 &scroll_factor,
+                                       const glm::bvec2 &repeat, const glm::vec2 &scale, double /*angle*/)
+    {
+        if (!_res_mgr || !_tileShader) return;
+
+        unsigned int glTex = _res_mgr->getGLTexture(sprite.getTextureId());
+        if (!glTex) return;
+
+        glm::vec2 size = sprite.getSize();
+        if (size.x <= 0 || size.y <= 0) return;
+
+        float zoom = camera.getZoom();
+        // 屏幕空间尺寸 = 世界像素尺寸 * 缩放 * 相机缩放
+        glm::vec2 screenSize = size * scale * zoom;
+
+        // 视差公式转换到屏幕空间（与 SDL 渲染器保持一致）
+        glm::vec2 posScreen = camera.worldToScreenWithParallax(position, scroll_factor);
+        glm::vec2 viewport  = camera.getViewportSize();
+
+        glm::vec2 start, stop;
+        if (repeat.x)
+        {
+            float tx = std::fmod(posScreen.x, screenSize.x);
+            if (tx > 0) tx -= screenSize.x;
+            start.x = tx;
+            stop.x  = viewport.x;
+        }
+        else
+        {
+            start.x = posScreen.x;
+            stop.x  = posScreen.x + screenSize.x;
+        }
+        if (repeat.y)
+        {
+            float ty = std::fmod(posScreen.y, screenSize.y);
+            if (ty > 0) ty -= screenSize.y;
+            start.y = ty;
+            stop.y  = viewport.y;
+        }
+        else
+        {
+            start.y = posScreen.y;
+            stop.y  = posScreen.y + screenSize.y;
+        }
+
+        // 屏幕空间正交投影（与视口像素一一对应）
+        glm::mat4 proj = glm::ortho(0.0f, viewport.x, viewport.y, 0.0f, 0.0f, 1.0f);
+        glm::vec4 uvRect{0.0f, 0.0f, 1.0f, 1.0f};
+
+        for (float x = start.x; x < stop.x; x += screenSize.x)
+        {
+            for (float y = start.y; y < stop.y; y += screenSize.y)
+            {
+                glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, 0.0f));
+                glm::mat4 mvp   = proj * model;
+                drawQuad(glTex, mvp, uvRect, screenSize.x, screenSize.y,
+                         sprite.isFlipped(), glm::vec4(1.0f));
+            }
+        }
     }
 }

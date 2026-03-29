@@ -122,6 +122,7 @@ add_executable(
     src/game/scene/frame_editor.cpp
     src/game/scene/state_machine_editor.cpp
     src/game/scene/menu_scene.cpp
+    src/game/animation/frame_animation_loader.cpp
 
     src/game/statemachine/input_buffer.cpp
     src/game/statemachine/state_controller.cpp

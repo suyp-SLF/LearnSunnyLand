@@ -1208,6 +1208,30 @@ src/engine/world/world_config.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/world_config.cpp.s
 .PHONY : src/engine/world/world_config.cpp.s
 
+src/game/animation/frame_animation_loader.o: src/game/animation/frame_animation_loader.cpp.o
+.PHONY : src/game/animation/frame_animation_loader.o
+
+# target to build an object file
+src/game/animation/frame_animation_loader.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/animation/frame_animation_loader.cpp.o
+.PHONY : src/game/animation/frame_animation_loader.cpp.o
+
+src/game/animation/frame_animation_loader.i: src/game/animation/frame_animation_loader.cpp.i
+.PHONY : src/game/animation/frame_animation_loader.i
+
+# target to preprocess a source file
+src/game/animation/frame_animation_loader.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/animation/frame_animation_loader.cpp.i
+.PHONY : src/game/animation/frame_animation_loader.cpp.i
+
+src/game/animation/frame_animation_loader.s: src/game/animation/frame_animation_loader.cpp.s
+.PHONY : src/game/animation/frame_animation_loader.s
+
+# target to generate assembly for a file
+src/game/animation/frame_animation_loader.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/animation/frame_animation_loader.cpp.s
+.PHONY : src/game/animation/frame_animation_loader.cpp.s
+
 src/game/component/attribute_component.o: src/game/component/attribute_component.cpp.o
 .PHONY : src/game/component/attribute_component.o
 
@@ -1901,6 +1925,9 @@ help:
 	@echo "... src/engine/world/world_config.o"
 	@echo "... src/engine/world/world_config.i"
 	@echo "... src/engine/world/world_config.s"
+	@echo "... src/game/animation/frame_animation_loader.o"
+	@echo "... src/game/animation/frame_animation_loader.i"
+	@echo "... src/game/animation/frame_animation_loader.s"
 	@echo "... src/game/component/attribute_component.o"
 	@echo "... src/game/component/attribute_component.i"
 	@echo "... src/game/component/attribute_component.s"

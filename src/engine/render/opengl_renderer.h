@@ -20,10 +20,14 @@ namespace engine::render
                         const glm::vec2 &scale = {1.0f, 1.0f}, double angle = 0.0f,
                         const glm::vec4 &uv_rect = {0.0f, 0.0f, 1.0f, 1.0f}) override;
         void drawRect(const Camera &camera, float x, float y, float w, float h, const glm::vec4 &color) override;
+        void drawRectBatch(const Camera &camera, const std::vector<ColoredRect> &rects) override;
         void drawTexture(SDL_GPUTexture* texture, float x, float y, float w, float h) override;
         void setDrawColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a) override {}
-        void drawParallax(const Camera &, const Sprite &, const glm::vec2 &, const glm::vec2 &,
-                          const glm::bvec2 & = {true, true}, const glm::vec2 & = {1.0f, 1.0f}, double = 0.0f) override {}
+        void drawParallax(const Camera &camera, const Sprite &sprite, const glm::vec2 &position,
+                          const glm::vec2 &scroll_factor,
+                          const glm::bvec2 &repeat = {true, true},
+                          const glm::vec2 &scale = {1.0f, 1.0f},
+                          double angle = 0.0f) override;
         void drawChunkBatches(const Camera &, const std::unordered_map<SDL_GPUTexture *, engine::world::TextureBatch> &,
                               const glm::vec2 &) override {}
         void drawChunkVertices(const Camera &, const std::unordered_map<SDL_GPUTexture *, std::vector<GPUVertex>> &,
@@ -46,6 +50,7 @@ namespace engine::render
         unsigned int _quadVAO = 0;
         unsigned int _quadVBO = 0;
         unsigned int _whiteTex = 0;
+        size_t _quadVBOCapacityBytes = 0;
 
         // GL 状态缓存 — 避免帧内重复绑定同一 shader
         unsigned int _boundShader   = 0;
@@ -61,5 +66,6 @@ namespace engine::render
         void initTileShader();
         void drawQuad(unsigned int glTex, const glm::mat4 &mvp, const glm::vec4 &uvRect, float w, float h, bool flipped,
                       const glm::vec4 &color);
+        void ensureQuadBufferCapacity(size_t requiredBytes);
     };
 }

@@ -34,6 +34,8 @@ namespace game::world
     {
         auto &camera = context.getCamera();
         auto &renderer = context.getRenderer();
+        std::vector<engine::render::ColoredRect> rects;
+        rects.reserve(128);
 
         const glm::vec2 cameraPos = camera.getPosition();
         const glm::vec2 viewport = camera.getViewportSize() / std::max(camera.getZoom(), 0.01f);
@@ -53,7 +55,7 @@ namespace game::world
             float t0 = static_cast<float>(i) / static_cast<float>(gradientBands);
             float t1 = static_cast<float>(i + 1) / static_cast<float>(gradientBands);
             glm::vec4 bandColor = lerpColor(topColor, bottomColor, (t0 + t1) * 0.5f);
-            renderer.drawRect(camera, left, top + height * t0, width, height * (t1 - t0) + 2.0f, bandColor);
+            rects.push_back({left, top + height * t0, width, height * (t1 - t0) + 2.0f, bandColor});
         }
 
         float daylight = getDaylightFactor();
@@ -73,7 +75,7 @@ namespace game::world
             glm::vec4 color = star.color;
             color.a *= starAlpha;
             float starSize = detailFactor > 0.38f ? star.size : std::max(1.0f, std::floor(star.size));
-            renderer.drawRect(camera, pos.x, pos.y, starSize, starSize, color);
+            rects.push_back({pos.x, pos.y, starSize, starSize, color});
         }
 
         const glm::vec2 sunPosNorm = sunNormalizedPosition();
@@ -92,8 +94,8 @@ namespace game::world
         const glm::vec4 sunGlow{1.0f, 0.76f, 0.34f, (0.16f + daylight * 0.18f) * sunlightVisibility};
         const glm::vec4 sunCore{1.0f, 0.88f, 0.52f, 0.95f * sunlightVisibility};
         if (detailFactor > 0.30f)
-            renderer.drawRect(camera, sunPos.x - 36.0f, sunPos.y - 36.0f, 72.0f, 72.0f, sunGlow);
-        renderer.drawRect(camera, sunPos.x - 14.0f, sunPos.y - 14.0f, 28.0f, 28.0f, sunCore);
+            rects.push_back({sunPos.x - 36.0f, sunPos.y - 36.0f, 72.0f, 72.0f, sunGlow});
+        rects.push_back({sunPos.x - 14.0f, sunPos.y - 14.0f, 28.0f, 28.0f, sunCore});
 
         const glm::vec2 farStarNorm = farStarNormalizedPosition();
         const glm::vec2 farStarPos = celestialWorldPosition(
@@ -109,8 +111,9 @@ namespace game::world
             1.7f);
         glm::vec4 farStarColor{0.9f, 0.95f, 1.0f, (0.15f + (1.0f - daylight) * 0.55f) * visibility};
         if (detailFactor > 0.58f)
-            renderer.drawRect(camera, farStarPos.x - 18.0f, farStarPos.y - 18.0f, 36.0f, 36.0f, farStarColor);
-        renderer.drawRect(camera, farStarPos.x - 5.0f, farStarPos.y - 5.0f, 10.0f, 10.0f, {0.82f, 0.92f, 1.0f, std::min(farStarColor.a + 0.15f * visibility, 1.0f)});
+            rects.push_back({farStarPos.x - 18.0f, farStarPos.y - 18.0f, 36.0f, 36.0f, farStarColor});
+        rects.push_back({farStarPos.x - 5.0f, farStarPos.y - 5.0f, 10.0f, 10.0f,
+                         {0.82f, 0.92f, 1.0f, std::min(farStarColor.a + 0.15f * visibility, 1.0f)}});
 
         const float night = getNightFactor();
         const glm::vec2 planetA = celestialWorldPosition(
@@ -135,15 +138,22 @@ namespace game::world
             {28.0f, 13.0f},
             0.41f,
             2.6f);
-        renderer.drawRect(camera, planetA.x - 30.0f, planetA.y - 30.0f, 60.0f, 60.0f, {0.42f, 0.55f, 0.82f, (0.22f + night * 0.18f) * visibility});
+        rects.push_back({planetA.x - 30.0f, planetA.y - 30.0f, 60.0f, 60.0f,
+                         {0.42f, 0.55f, 0.82f, (0.22f + night * 0.18f) * visibility}});
         if (detailFactor > 0.55f)
         {
-            renderer.drawRect(camera, planetA.x - 38.0f, planetA.y - 2.0f, 76.0f, 4.0f, {0.7f, 0.78f, 0.94f, (0.18f + night * 0.16f) * visibility});
-            renderer.drawRect(camera, planetA.x - 12.0f, planetA.y - 20.0f, 18.0f, 8.0f, {0.78f, 0.88f, 1.0f, (0.10f + night * 0.10f) * visibility});
+            rects.push_back({planetA.x - 38.0f, planetA.y - 2.0f, 76.0f, 4.0f,
+                             {0.7f, 0.78f, 0.94f, (0.18f + night * 0.16f) * visibility}});
+            rects.push_back({planetA.x - 12.0f, planetA.y - 20.0f, 18.0f, 8.0f,
+                             {0.78f, 0.88f, 1.0f, (0.10f + night * 0.10f) * visibility}});
         }
-        renderer.drawRect(camera, planetB.x - 18.0f, planetB.y - 18.0f, 36.0f, 36.0f, {0.76f, 0.42f, 0.6f, (0.12f + night * 0.15f) * visibility});
+        rects.push_back({planetB.x - 18.0f, planetB.y - 18.0f, 36.0f, 36.0f,
+                         {0.76f, 0.42f, 0.6f, (0.12f + night * 0.15f) * visibility}});
         if (detailFactor > 0.65f)
-            renderer.drawRect(camera, planetB.x - 6.0f, planetB.y - 24.0f, 24.0f, 3.0f, {0.96f, 0.72f, 0.84f, (0.08f + night * 0.08f) * visibility});
+            rects.push_back({planetB.x - 6.0f, planetB.y - 24.0f, 24.0f, 3.0f,
+                             {0.96f, 0.72f, 0.84f, (0.08f + night * 0.08f) * visibility}});
+
+        renderer.drawRectBatch(camera, rects);
     }
 
     void TimeOfDaySystem::renderLighting(engine::core::Context &context) const

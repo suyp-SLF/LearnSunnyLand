@@ -85,6 +85,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/terrain_generator.cpp.o.d"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/world_config.cpp.o"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/engine/world/world_config.cpp.o.d"
+  "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/animation/frame_animation_loader.cpp.o"
+  "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/animation/frame_animation_loader.cpp.o.d"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/component/attribute_component.cpp.o"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/component/attribute_component.cpp.o.d"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/inventory/inventory.cpp.o"

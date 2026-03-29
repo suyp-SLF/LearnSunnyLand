@@ -1224,6 +1224,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_manager.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/stdbool.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdbool.h \
   /opt/homebrew/include/box2d/id.h /opt/homebrew/include/box2d/types.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/monster/../../engine/component/controller_component.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/monster/../../engine/component/sprite_component.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/monster/../../engine/component/./component.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/monster/../../engine/component/../utils/alignment.h \
@@ -1329,4 +1330,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_manager.cpp.o: \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/monster/../../engine/utils/alignment.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/monster/../../engine/world/chunk_manager.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/monster/../../engine/world/chunk.h \
-  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/monster/../../engine/world/tile_info.h
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/monster/../../engine/world/tile_info.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/unordered_set \
+  /Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/imgui.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/imconfig.h

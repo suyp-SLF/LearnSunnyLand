@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <SDL3/SDL.h>
 #include <cstdint>
+#include <vector>
 namespace engine::resource
 {
     class ResourceManager;
@@ -15,6 +16,15 @@ namespace engine::render
 {
     class Camera;
     class Sprite;
+
+    struct ColoredRect
+    {
+        float x = 0.0f;
+        float y = 0.0f;
+        float w = 0.0f;
+        float h = 0.0f;
+        glm::vec4 color{1.0f};
+    };
 
     class Renderer
     {
@@ -94,6 +104,11 @@ namespace engine::render
 
         virtual void drawTexture(SDL_GPUTexture* texture, float x, float y, float w, float h) = 0;
         virtual void drawRect(const Camera &camera, float x, float y, float w, float h, const glm::vec4 &color) = 0;
+        virtual void drawRectBatch(const Camera &camera, const std::vector<ColoredRect> &rects)
+        {
+            for (const auto &rect : rects)
+                drawRect(camera, rect.x, rect.y, rect.w, rect.h, rect.color);
+        }
         virtual void clean() = 0;
     };
 }

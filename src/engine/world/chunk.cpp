@@ -193,10 +193,6 @@ namespace engine::world
                 float x1 = x0 + (float)tileSize.x;
                 float y1 = y0 + (float)tileSize.y;
 
-                // GroundDecor：地毯竖向暂设为 1px（后续按透视比例调整为横向的一半）
-                if (tile.type == TileType::GroundDecor)
-                    y1 = y0 + 1.0f;
-
                 glm::vec2 frontTL{x0, y0};
                 glm::vec2 frontTR{x1, y0};
                 glm::vec2 frontBL{x0, y1};
@@ -209,7 +205,7 @@ namespace engine::world
                 // GroundDecor / WallDecor（2.5D 平面瓦片）：只画平面，不加顶面/侧面
                 if (tile.type == TileType::GroundDecor || tile.type == TileType::WallDecor)
                 {
-                    // GroundDecor 深度渐变：wy=1（远端暗 0.60）→ wy=5（前端亮 1.08），营造透视走廊感
+                    // GroundDecor 深度渐变：wy=1（远端暗 0.60）→ wy=5（前端亮 1.08），营造草地透视走廊感
                     float tileLight = (tile.type == TileType::GroundDecor)
                         ? (0.60f + (float)(m_chunkY * SIZE + ly - 1) * 0.12f)
                         : 1.0f;
@@ -308,10 +304,6 @@ namespace engine::world
                 float x1 = x0 + (float)tileSize.x;
                 float y1 = y0 + (float)tileSize.y;
 
-                // GroundDecor：地毯竖向暂设为 1px（后续按透视比例调整为横向的一半）
-                if (tile.type == TileType::GroundDecor)
-                    y1 = y0 + 1.0f;
-
                 glm::vec2 frontTL{x0, y0};
                 glm::vec2 frontTR{x1, y0};
                 glm::vec2 frontBL{x0, y1};
@@ -324,7 +316,7 @@ namespace engine::world
                 // GroundDecor / WallDecor（2.5D 平面瓦片）：只画平面，不加顶面/侧面
                 if (tile.type == TileType::GroundDecor || tile.type == TileType::WallDecor)
                 {
-                    // GroundDecor 深度渐变：wy=1（远端暗 0.60）→ wy=5（前端亮 1.08），营造透视走廊感
+                    // GroundDecor 深度渐变：wy=1（远端暗 0.60）→ wy=5（前端亮 1.08），营造草地透视走廊感
                     float tileLight = (tile.type == TileType::GroundDecor)
                         ? (0.60f + (float)(m_chunkY * SIZE + ly - 1) * 0.12f)
                         : 1.0f;

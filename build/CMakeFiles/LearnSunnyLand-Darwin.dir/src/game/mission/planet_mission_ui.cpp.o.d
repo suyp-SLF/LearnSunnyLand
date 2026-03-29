@@ -1115,6 +1115,9 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/mission/planet_mission_ui.cpp.o: \
   /opt/homebrew/include/SDL3/SDL_iostream.h \
   /opt/homebrew/include/SDL3/SDL_video.h \
   /opt/homebrew/include/box2d/id.h /opt/homebrew/include/box2d/base.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/deque \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__fwd/deque.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/unordered_set \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/mission/../inventory/inventory.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/imgui.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/imconfig.h

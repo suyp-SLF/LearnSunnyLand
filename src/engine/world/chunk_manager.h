@@ -1,5 +1,7 @@
 #pragma once
 #include "chunk.h"
+#include <deque>
+#include <unordered_set>
 #include <unordered_map>
 #include <glm/glm.hpp>
 
@@ -51,6 +53,7 @@ namespace engine::world
 
         // 获取已加载区块数量
         size_t loadedChunkCount() const { return m_chunks.size(); }
+        size_t pendingChunkLoadCount() const { return m_pendingChunkLoads.size(); }
 
         // 加载/卸载块（内部调用）
         void loadChunk(int chunkX, int chunkY);
@@ -63,13 +66,18 @@ namespace engine::world
         bool  m_horizontalOnly   = true;  // 横向单行模式（默认开启）
         int   m_fixedChunkRowY   = 0;     // 锁定的 chunk row（Y 轴）
         size_t m_prevChunkCount  = SIZE_MAX; // 上次日志时的 chunk 数量，避免每帧打印
+        int   m_streamingLoadBudget = 2;
 
         std::unordered_map<uint64_t, std::unique_ptr<Chunk>> m_chunks;
+        std::deque<std::pair<int, int>> m_pendingChunkLoads;
+        std::unordered_set<uint64_t> m_pendingChunkLoadKeys;
         std::string m_atlasTextureId;
         glm::ivec2 m_tileSize;
         std::unique_ptr<TerrainGenerator> m_terrainGenerator; // 地形生成器
 
         void rebuildChunkMesh(Chunk &chunk);
+        void enqueueChunkLoad(int chunkX, int chunkY);
+        void processPendingChunkLoads();
 
         // 将世界坐标转换为区块坐标 + 区块内局部坐标（正确处理负坐标的向下取整）
         static void worldToChunkCoords(int worldX, int worldY,

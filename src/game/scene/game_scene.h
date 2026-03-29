@@ -20,6 +20,7 @@
 #include "../skill/star_skill.h"
 #include "../component/attribute_component.h"
 #include <array>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -30,6 +31,43 @@ namespace engine::object
 
 namespace game::scene
 {
+    struct PerfMetric
+    {
+        float lastMs = 0.0f;
+        float avgMs = 0.0f;
+        float peakMs = 0.0f;
+    };
+
+    struct FrameProfiler
+    {
+        PerfMetric updateTotal;
+        PerfMetric coreLogic;
+        PerfMetric monsterUpdate;
+        PerfMetric cameraUpdate;
+        PerfMetric physicsUpdate;
+        PerfMetric actorUpdate;
+        PerfMetric stateMachineUpdate;
+        PerfMetric dropUpdate;
+        PerfMetric weatherUpdate;
+        PerfMetric missionUpdate;
+        PerfMetric chunkStreamUpdate;
+        PerfMetric renderTotal;
+        PerfMetric backgroundRender;
+        PerfMetric sceneRender;
+        PerfMetric skyBackgroundRender;
+        PerfMetric chunkRender;
+        PerfMetric parallaxRender;
+        PerfMetric spriteRender;
+        PerfMetric tileRender;
+        PerfMetric shadowRender;
+        PerfMetric actorRender;
+        PerfMetric lightingRender;
+        PerfMetric imguiRender;
+        float frameDeltaMs = 0.0f;
+        size_t loadedChunks = 0;
+        size_t pendingChunkLoads = 0;
+    };
+
     class GameScene : public engine::scene::Scene
     {
     public:
@@ -72,6 +110,7 @@ namespace game::scene
         float m_fpsHistoryTimer = 0.0f;      // 距上次采样经过秒数（每 0.25s 一次）
         float m_fpsPeak         = 0.0f;      // 历史峰值
         int   m_maxFpsSlider    = 60;        // 目标帧率设置（0 = 不限）
+        FrameProfiler m_frameProfiler;
 
         // ── 设置界面：粒子效果档位 ────────────────────────────────────────────
         enum class UiParticleLevel { None = 0, Low, Medium, High };
@@ -99,6 +138,10 @@ namespace game::scene
         bool m_showPhysicsDebug = false;
         bool m_showFpsOverlay = true;   // 由 config.json performance.show_fps 控制
         bool m_invertPlayerFacing = false;
+        bool m_screenRainOverlay = false;
+        float m_screenRainOverlayStrength = 1.0f;
+        float m_screenRainMotionStrength = 1.0f;
+        bool m_vsyncEnabled = true;
         bool m_showSettings = false;
         bool m_devMode = false;         // 开发模式：显示地形/物理调试覆盖层
 
@@ -203,21 +246,29 @@ namespace game::scene
         void renderWeaponBar();
         void renderDropItems();
         void renderPlayerStateTag();
+        void renderMonsterIFFMarkers();
         void renderActorGroundShadows();
         void syncPlayerPresentation();
-        void renderPerformanceOverlay() const;
+        void renderPerformanceOverlay();
         void renderCommandTerminal();
         void renderSettingsPage();
+        void applyRuntimeGraphicsSettings();
         void updateSettingsParticles(float dt);  // 设置界面粒子更新（每帧调用）
         void renderMechPrompt();
         void renderRouteHUD();    // 左下角路线 HUD
         void renderSettlementUI(); // 撤离结算界面
         void injectOreVeins();    // 在目标格区域注入矿脉
+        void generateRockObstacles();
         void initTestItems();
         void executeCommand();
         void spawnMechDrop();
         void tryEnterMech();
         void exitMech();
+        void tryPossessNearestMonster();
+        void releasePossessedMonster(bool forced = false);
+        void updatePossession(float dt);
+        void performPossessedMonsterAttack();
+        void performPossessedMonsterSkill();
         void performMeleeAttack(glm::vec2 targetPos);
         void performMechAttack();
         void tickStarSkillPassives(float dt);          // 被动星技每帧更新
@@ -236,6 +287,12 @@ namespace game::scene
         bool m_isPlayerInMech = false;
         std::array<char, 16> m_commandBuffer{};
         engine::object::GameObject* m_mech = nullptr;
+        engine::object::GameObject* m_possessedMonster = nullptr;
+        float m_possessionEnergy = 0.0f;
+        float m_possessionFxTimer = 0.0f;
+        float m_possessedAttackCooldown = 0.0f;
+        float m_possessedSkillCooldown = 0.0f;
+        int m_possessedLastAttackHits = 0;
         float m_mechAttackCooldown = 0.0f;
         float m_mechAttackFlashTimer = 0.0f;
         int m_mechLastAttackHits = 0;
@@ -274,9 +331,10 @@ namespace game::scene
         float m_cannonTimer       = 0.0f; // >0 = 炮击动画播放中
 
         // 攻击动画持续时间常量（秒）
-        static constexpr float kAttackADur  = 8 * 0.07f; // attack_a: 8帧 @ 70ms
-        static constexpr float kAttackBDur  = 8 * 0.07f;
-        static constexpr float kAttackCDur  = 8 * 0.07f;
+        // attack_a/b/c: 4帧，时序 60+80+80+100 ms = 320 ms
+        static constexpr float kAttackADur  = 0.32f;
+        static constexpr float kAttackBDur  = 0.32f;
+        static constexpr float kAttackCDur  = 0.32f;
         static constexpr float kAttackDDur  = 8 * 0.06f;
         static constexpr float kCannonDur   = 8 * 0.08f;
         static constexpr float kUltimateDur = 8 * 0.10f;

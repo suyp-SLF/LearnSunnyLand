@@ -12,6 +12,33 @@ namespace game::weather
         // 预留容量避免运行时反复内存分配
         m_particles.reserve(500);
         m_splashes.reserve(80);
+        m_screenDrops.reserve(64);
+        m_lensDrops.reserve(24);
+    }
+
+    void WeatherSystem::setScreenRainOverlayStrength(float strength)
+    {
+        m_screenRainOverlayStrength = std::clamp(strength, 0.0f, 2.0f);
+    }
+
+    void WeatherSystem::setScreenRainMotionScale(float scale)
+    {
+        m_screenRainMotionScale = std::clamp(scale, 0.0f, 3.0f);
+    }
+
+    void WeatherSystem::setCameraState(float worldX, float worldY, float zoom, float verticalScale)
+    {
+        if (!m_hasCameraState)
+        {
+            m_prevCameraWorldX = worldX;
+            m_prevCameraWorldY = worldY;
+            m_hasCameraState = true;
+        }
+
+        m_cameraWorldX = worldX;
+        m_cameraWorldY = worldY;
+        m_cameraZoom = std::max(zoom, 0.01f);
+        m_cameraVerticalScale = std::max(verticalScale, 0.01f);
     }
 
     // ──────────────────────────────────────────────
@@ -96,6 +123,40 @@ namespace game::weather
         return 0.0f;
     }
 
+    int WeatherSystem::targetScreenDropCount() const
+    {
+        if (!m_screenRainOverlayEnabled)
+            return 0;
+
+        const float density = std::max(0.1f, m_screenRainOverlayStrength);
+        switch (m_current)
+        {
+            case WeatherType::Clear:        return 0;
+            case WeatherType::LightRain:    return static_cast<int>(10.0f * density);
+            case WeatherType::MediumRain:   return static_cast<int>(18.0f * density);
+            case WeatherType::HeavyRain:    return static_cast<int>(28.0f * density);
+            case WeatherType::Thunderstorm: return static_cast<int>(40.0f * density);
+        }
+        return 0;
+    }
+
+    int WeatherSystem::targetLensDropCount() const
+    {
+        if (!m_screenRainOverlayEnabled)
+            return 0;
+
+        const float density = std::max(0.1f, m_screenRainOverlayStrength);
+        switch (m_current)
+        {
+            case WeatherType::Clear:        return 0;
+            case WeatherType::LightRain:    return static_cast<int>(4.0f * density);
+            case WeatherType::MediumRain:   return static_cast<int>(7.0f * density);
+            case WeatherType::HeavyRain:    return static_cast<int>(10.0f * density);
+            case WeatherType::Thunderstorm: return static_cast<int>(14.0f * density);
+        }
+        return 0;
+    }
+
     float WeatherSystem::getSkyVisibility() const
     {
         float baseVisibility = 1.0f;
@@ -116,21 +177,66 @@ namespace game::weather
     void WeatherSystem::spawnParticle(float displayW, float displayH)
     {
         RainParticle p;
+        p.depth  = randFloat();
         p.x      = randFloat() * (displayW + 120.0f) - 60.0f;
         p.y      = randFloat() * -displayH;  // 从屏幕上方随机位置开始
-        p.speed  = particleSpeed()  * (0.8f + randFloat() * 0.4f);
-        p.length = particleLength() * (0.7f + randFloat() * 0.6f);
-        p.alpha  = particleAlpha()  * (0.5f + randFloat() * 0.5f) * m_intensity;
+        const float depthScale = 0.55f + p.depth * 0.85f;
+        p.speed  = particleSpeed()  * depthScale * (0.78f + randFloat() * 0.36f);
+        p.length = particleLength() * (0.60f + p.depth * 0.95f) * (0.72f + randFloat() * 0.50f);
+        p.alpha  = particleAlpha()  * (0.32f + p.depth * 0.68f) * (0.45f + randFloat() * 0.45f) * m_intensity;
         m_particles.push_back(p);
     }
 
     void WeatherSystem::respawnParticle(RainParticle &p, float displayW, float /*displayH*/)
     {
+        p.depth  = randFloat();
         p.x      = randFloat() * (displayW + 120.0f) - 60.0f;
+        const float depthScale = 0.55f + p.depth * 0.85f;
+        p.speed  = particleSpeed()  * depthScale * (0.78f + randFloat() * 0.36f);
+        p.length = particleLength() * (0.60f + p.depth * 0.95f) * (0.72f + randFloat() * 0.50f);
         p.y      = -p.length - randFloat() * 30.0f;
-        p.speed  = particleSpeed()  * (0.8f + randFloat() * 0.4f);
-        p.length = particleLength() * (0.7f + randFloat() * 0.6f);
-        p.alpha  = particleAlpha()  * (0.5f + randFloat() * 0.5f) * m_intensity;
+        p.alpha  = particleAlpha()  * (0.32f + p.depth * 0.68f) * (0.45f + randFloat() * 0.45f) * m_intensity;
+    }
+
+    void WeatherSystem::spawnScreenDrop(float displayW, float displayH)
+    {
+        ScreenRainDrop drop;
+        respawnScreenDrop(drop, displayW, displayH, false);
+        m_screenDrops.push_back(drop);
+    }
+
+    void WeatherSystem::respawnScreenDrop(ScreenRainDrop &drop, float displayW, float displayH, bool topOnly)
+    {
+        const float baseSpeed = particleSpeed() * (1.35f + randFloat() * 0.55f);
+        const float lateralFromMotion = -m_viewMotionX * m_screenRainMotionScale * (0.85f + randFloat() * 0.45f);
+
+        drop.x = randFloat() * (displayW + 180.0f) - 90.0f;
+        drop.y = topOnly ? (-40.0f - randFloat() * 80.0f) : (randFloat() * displayH);
+        drop.vy = baseSpeed;
+        drop.vx = WIND_DX * baseSpeed * (0.9f + randFloat() * 0.45f) + lateralFromMotion;
+        drop.length = particleLength() * (1.3f + 0.8f * m_screenRainOverlayStrength + randFloat() * 1.5f)
+            + std::abs(m_viewMotionX) * 0.015f * m_screenRainMotionScale;
+        drop.alpha = std::min(0.95f, particleAlpha() * (0.22f + 0.14f * m_screenRainOverlayStrength + randFloat() * 0.24f));
+        drop.width = 1.1f + randFloat() * 1.4f;
+    }
+
+    void WeatherSystem::spawnLensDrop(float displayW, float displayH)
+    {
+        LensRainDrop drop;
+        respawnLensDrop(drop, displayW, displayH, false);
+        m_lensDrops.push_back(drop);
+    }
+
+    void WeatherSystem::respawnLensDrop(LensRainDrop &drop, float displayW, float displayH, bool topOnly)
+    {
+        drop.x = randFloat() * (displayW * 0.94f) + displayW * 0.03f;
+        drop.y = topOnly ? (-20.0f - randFloat() * 50.0f) : (randFloat() * displayH * 0.74f);
+        drop.radius = (4.5f + randFloat() * 7.0f) * (0.85f + m_screenRainOverlayStrength * 0.35f);
+        drop.alpha = std::min(0.34f, particleAlpha() * (0.10f + randFloat() * 0.10f) * (0.75f + 0.35f * m_screenRainOverlayStrength));
+        drop.vy = 8.0f + randFloat() * 20.0f + std::abs(m_viewMotionY) * 0.015f;
+        drop.smear = drop.radius * (1.6f + randFloat() * 2.8f) + std::abs(m_viewMotionX) * 0.020f * m_screenRainMotionScale;
+        drop.age = 0.0f;
+        drop.maxAge = 1.6f + randFloat() * 3.0f;
     }
 
     // ──────────────────────────────────────────────
@@ -146,6 +252,8 @@ namespace game::weather
         m_intensity          = 0.0f;     // 从零开始淡入
         m_isTransitioning    = true;
         m_particles.clear();             // 清除旧粒子，让新天气自然生成
+        m_screenDrops.clear();
+        m_lensDrops.clear();
 
         // 重置雷电计时（切换到雷雨时稍后触发）
         m_lightningFlash    = 0.0f;
@@ -170,6 +278,16 @@ namespace game::weather
     // ──────────────────────────────────────────────
     void WeatherSystem::update(float dt, float displayW, float displayH)
     {
+        float cameraDriftX = 0.0f;
+        float cameraDriftY = 0.0f;
+        if (m_hasCameraState)
+        {
+            cameraDriftX = (m_cameraWorldX - m_prevCameraWorldX) * m_cameraZoom;
+            cameraDriftY = (m_cameraWorldY - m_prevCameraWorldY) * m_cameraZoom * m_cameraVerticalScale;
+            m_prevCameraWorldX = m_cameraWorldX;
+            m_prevCameraWorldY = m_cameraWorldY;
+        }
+
         // ── 过渡淡入 ──
         if (m_isTransitioning)
         {
@@ -188,9 +306,28 @@ namespace game::weather
         if (static_cast<int>(m_particles.size()) > target)
             m_particles.resize(static_cast<size_t>(target));
 
+        const int screenTarget = targetScreenDropCount();
+        int screenDeficit = screenTarget - static_cast<int>(m_screenDrops.size());
+        int screenSpawnBudget = std::min(screenDeficit, 8);
+        while (screenSpawnBudget-- > 0)
+            spawnScreenDrop(displayW, displayH);
+        if (static_cast<int>(m_screenDrops.size()) > screenTarget)
+            m_screenDrops.resize(static_cast<size_t>(screenTarget));
+
+        const int lensTarget = targetLensDropCount();
+        int lensDeficit = lensTarget - static_cast<int>(m_lensDrops.size());
+        int lensSpawnBudget = std::min(lensDeficit, 3);
+        while (lensSpawnBudget-- > 0)
+            spawnLensDrop(displayW, displayH);
+        if (static_cast<int>(m_lensDrops.size()) > lensTarget)
+            m_lensDrops.resize(static_cast<size_t>(lensTarget));
+
         // ── 粒子物理 ──
         for (auto &p : m_particles)
         {
+            const float parallax = 0.68f + p.depth * 0.52f;
+            p.x -= cameraDriftX * parallax;
+            p.y -= cameraDriftY * parallax;
             p.y += p.speed * dt;
             p.x += WIND_DX * p.speed * dt;
 
@@ -226,6 +363,43 @@ namespace game::weather
             }
         }
 
+        for (auto &s : m_splashes)
+        {
+            s.x -= cameraDriftX;
+            s.y -= cameraDriftY;
+        }
+
+        for (auto &drop : m_screenDrops)
+        {
+            const float motionBoostX = -m_viewMotionX * 1.2f * m_screenRainMotionScale;
+            const float motionBoostY = std::abs(m_viewMotionY) * 0.10f;
+            drop.x += (drop.vx + motionBoostX) * dt;
+            drop.y += (drop.vy + motionBoostY) * dt;
+
+            if (drop.y > displayH + drop.length + 12.0f ||
+                drop.x < -120.0f ||
+                drop.x > displayW + 120.0f)
+            {
+                respawnScreenDrop(drop, displayW, displayH, true);
+            }
+        }
+
+        for (auto &drop : m_lensDrops)
+        {
+            drop.age += dt;
+            drop.y += drop.vy * dt;
+            drop.x += -m_viewMotionX * 0.04f * m_screenRainMotionScale * dt;
+            drop.smear = std::max(drop.radius * 1.1f,
+                                  drop.smear * (1.0f - dt * 0.8f)
+                                      + std::abs(m_viewMotionX) * 0.018f * m_screenRainMotionScale);
+
+            if (drop.age >= drop.maxAge ||
+                drop.y > displayH + drop.smear + drop.radius)
+            {
+                respawnLensDrop(drop, displayW, displayH, true);
+            }
+        }
+
         // ── 水花涟漪更新 ──
         for (auto &s : m_splashes)
         {
@@ -251,6 +425,20 @@ namespace game::weather
                 std::remove_if(m_particles.begin(), m_particles.end(),
                                [](const RainParticle &p){ return p.alpha <= 0.0f; }),
                 m_particles.end());
+
+            for (auto &drop : m_screenDrops)
+                drop.alpha -= dt * 0.9f;
+            m_screenDrops.erase(
+                std::remove_if(m_screenDrops.begin(), m_screenDrops.end(),
+                               [](const ScreenRainDrop &drop){ return drop.alpha <= 0.0f; }),
+                m_screenDrops.end());
+
+            for (auto &drop : m_lensDrops)
+                drop.alpha -= dt * 0.22f;
+            m_lensDrops.erase(
+                std::remove_if(m_lensDrops.begin(), m_lensDrops.end(),
+                               [](const LensRainDrop &drop){ return drop.alpha <= 0.0f; }),
+                m_lensDrops.end());
         }
 
         // ── 雷电（仅雷雨天气）──
@@ -316,21 +504,42 @@ namespace game::weather
             uint8_t a  = static_cast<uint8_t>(std::min(alpha * 255.0f, 255.0f));
             float   dx = WIND_DX * p.length;
             float   dy = p.length;
+            const float thickness = 0.75f + p.depth * 0.95f;
 
             // 主雨线：淡蓝白色
             bg->AddLine(
                 ImVec2(p.x,        p.y),
                 ImVec2(p.x + dx,   p.y + dy),
-                IM_COL32(175, 215, 255, a), 1.3f);
+                IM_COL32(165 + static_cast<int>(p.depth * 20.0f), 205 + static_cast<int>(p.depth * 15.0f), 255, a),
+                thickness);
 
             // 高光细线（仅中雨以上可见），模拟雨滴反光
-            if (alpha > 0.45f)
+            if (alpha > 0.32f && p.depth > 0.35f)
             {
                 bg->AddLine(
                     ImVec2(p.x - 0.6f,      p.y),
                     ImVec2(p.x + dx - 0.6f, p.y + dy),
-                    IM_COL32(220, 240, 255, static_cast<int>(a * 0.38f)), 0.5f);
+                    IM_COL32(220, 240, 255, static_cast<int>(a * (0.18f + p.depth * 0.22f))), 0.5f + p.depth * 0.25f);
             }
+        }
+
+        for (const auto &drop : m_screenDrops)
+        {
+            float alpha = drop.alpha * m_intensity;
+            if (alpha <= 0.01f) continue;
+
+            const float dx = drop.vx * 0.020f;
+            const float dy = drop.length;
+            const uint8_t a = static_cast<uint8_t>(std::min(alpha * 255.0f, 255.0f));
+            bg->AddLine(
+                ImVec2(drop.x, drop.y),
+                ImVec2(drop.x + dx, drop.y + dy),
+                IM_COL32(210, 232, 255, a), drop.width);
+
+            bg->AddLine(
+                ImVec2(drop.x - 0.8f, drop.y - 2.0f),
+                ImVec2(drop.x + dx - 0.8f, drop.y + dy - 2.0f),
+                IM_COL32(255, 255, 255, static_cast<int>(a * 0.22f)), 0.7f);
         }
 
         // ── 地面流动雾气 ──
@@ -399,6 +608,53 @@ namespace game::weather
                 ImVec2(0.0f, 0.0f),
                 ImVec2(displayW, displayH),
                 IM_COL32(255, 255, 245, fa));
+        }
+    }
+
+    void WeatherSystem::renderForeground(float /*displayW*/, float /*displayH*/)
+    {
+        ImDrawList *fg = ImGui::GetForegroundDrawList();
+
+        for (const auto &drop : m_lensDrops)
+        {
+            const float lifeT = std::clamp(drop.age / std::max(drop.maxAge, 0.0001f), 0.0f, 1.0f);
+            const float alpha = drop.alpha * m_intensity * (1.0f - lifeT * 0.35f);
+            if (alpha <= 0.008f) continue;
+
+            const float tailLen = drop.smear * (0.65f + 0.35f * lifeT);
+            const int coreA = static_cast<int>(std::min(alpha * 255.0f, 255.0f));
+            const int glowA = static_cast<int>(coreA * 0.28f);
+            const int tailA = static_cast<int>(coreA * 0.18f);
+
+            fg->AddCircleFilled(
+                ImVec2(drop.x, drop.y),
+                drop.radius * 1.85f,
+                IM_COL32(160, 205, 255, glowA), 20);
+            fg->AddCircleFilled(
+                ImVec2(drop.x, drop.y),
+                drop.radius,
+                IM_COL32(185, 220, 255, static_cast<int>(coreA * 0.45f)), 20);
+            fg->AddCircleFilled(
+                ImVec2(drop.x - drop.radius * 0.22f, drop.y - drop.radius * 0.28f),
+                drop.radius * 0.32f,
+                IM_COL32(255, 255, 255, static_cast<int>(coreA * 0.75f)), 12);
+            fg->AddCircle(
+                ImVec2(drop.x + drop.radius * 0.12f, drop.y + drop.radius * 0.10f),
+                drop.radius * 0.82f,
+                IM_COL32(140, 190, 245, static_cast<int>(coreA * 0.22f)), 18, 1.0f);
+
+            fg->AddLine(
+                ImVec2(drop.x, drop.y + drop.radius * 0.35f),
+                ImVec2(drop.x - m_viewMotionX * 0.02f * m_screenRainMotionScale,
+                       drop.y + tailLen),
+                IM_COL32(185, 220, 255, tailA),
+                std::max(1.0f, drop.radius * 0.42f));
+            fg->AddLine(
+                ImVec2(drop.x - drop.radius * 0.18f, drop.y + drop.radius * 0.10f),
+                ImVec2(drop.x - m_viewMotionX * 0.028f * m_screenRainMotionScale,
+                       drop.y + tailLen * 0.92f),
+                IM_COL32(255, 255, 255, static_cast<int>(tailA * 0.55f)),
+                std::max(0.8f, drop.radius * 0.18f));
         }
     }
 

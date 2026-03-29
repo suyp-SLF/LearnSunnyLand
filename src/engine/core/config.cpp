@@ -84,11 +84,13 @@ namespace engine::core
         {
             const auto &performance_config = json["performance"];
             _target_fps = performance_config.value("target_fps", _target_fps);
-            if (_target_fps <= 0)
+            if (_target_fps < 0)
             {
                 spdlog::warn("目标帧率必须大于0，使用默认值 60");
                 _target_fps = 60;
-            }            _show_fps_overlay = performance_config.value("show_fps", _show_fps_overlay);        }
+            }
+            _show_fps_overlay = performance_config.value("show_fps", _show_fps_overlay);
+        }
         if (json.contains("audio"))
         {
             const auto &audio_config = json["audio"];

@@ -1179,6 +1179,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.o: \
   /opt/homebrew/include/SDL3/SDL_iostream.h \
   /opt/homebrew/include/SDL3/SDL_video.h \
   /opt/homebrew/include/box2d/id.h /opt/homebrew/include/box2d/base.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/unordered_set \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/world/world_config.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/physics/physics_manager.h \
   /opt/homebrew/include/box2d/box2d.h \
@@ -1340,7 +1341,6 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.o: \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../world/../../engine/world/chunk_manager.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../world/../../engine/world/world_config.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../world/../inventory/inventory.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/unordered_set \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../world/time_of_day_system.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../weather/weather_system.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../mission/planet_mission_ui.h \
@@ -1352,6 +1352,10 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.o: \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../component/../../engine/component/component.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/menu_scene.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/ship_scene.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../animation/frame_animation_loader.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../animation/../../engine/component/animation_component.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../animation/../../engine/component/component.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../animation/../../engine/component/../utils/math.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/scene/scene_manager.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/object/game_object.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/object/../component/component.h \
@@ -1422,6 +1426,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.o: \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/component/component.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/component/physics_component.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/component/animation_component.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/component/parallax_component.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/core/context.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/core/time.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/render/sprite_render_system.h \
@@ -1442,6 +1447,9 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.o: \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../game/route/route_data.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/render/renderer.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/render/render_types.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/render/sdl_renderer.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/render/sprite.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/render/opengl_renderer.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/ecs/components.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../locale/locale_manager.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/utils/math.h \

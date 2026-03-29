@@ -16,10 +16,10 @@ namespace engine::world
                                const glm::ivec2 &tileSize,
                                engine::resource::ResourceManager *resMgr,
                                engine::physics::PhysicsManager *physicsMgr)
-        : m_atlasTextureId(atlasTextureId),
-          m_tileSize(tileSize),
-          m_resMgr(resMgr),
+                : m_resMgr(resMgr),
           m_physicsMgr(physicsMgr)
+                    , m_atlasTextureId(atlasTextureId)
+                    , m_tileSize(tileSize)
     {
     }
 
@@ -164,7 +164,13 @@ namespace engine::world
             int cx = static_cast<int>(key >> 32);
             int cy = static_cast<int>(key & 0xFFFFFFFFu);
             unloadChunk(cx, cy);
+            m_pendingChunkLoadKeys.erase(key);
         }
+
+        std::vector<std::pair<int, int>> desiredLoads;
+        std::unordered_set<uint64_t> desiredKeys;
+        desiredLoads.reserve(static_cast<size_t>((vdX * 2 + 1) * (vdY * 2 + 1)));
+        desiredKeys.reserve(static_cast<size_t>((vdX * 2 + 1) * (vdY * 2 + 1)));
 
         for (int dx = -vdX; dx <= vdX; ++dx)
         {
@@ -173,11 +179,48 @@ namespace engine::world
                 int cx = camChunkX + dx;
                 int cy = camChunkY + dy;
                 uint64_t key = encodeChunkKey(cx, cy);
+                desiredKeys.insert(key);
                 if (m_chunks.find(key) == m_chunks.end())
-                {
-                    loadChunk(cx, cy);
-                }
+                    desiredLoads.emplace_back(cx, cy);
             }
+        }
+
+        if (!m_pendingChunkLoads.empty())
+        {
+            std::deque<std::pair<int, int>> filteredLoads;
+            filteredLoads.swap(m_pendingChunkLoads);
+            m_pendingChunkLoadKeys.clear();
+            for (const auto &[cx, cy] : filteredLoads)
+            {
+                const uint64_t key = encodeChunkKey(cx, cy);
+                if (desiredKeys.contains(key) && m_chunks.find(key) == m_chunks.end())
+                    enqueueChunkLoad(cx, cy);
+            }
+        }
+
+        std::sort(desiredLoads.begin(), desiredLoads.end(),
+                  [camChunkX, camChunkY](const auto &lhs, const auto &rhs) {
+                      const int lhsDist = std::abs(lhs.first - camChunkX) + std::abs(lhs.second - camChunkY);
+                      const int rhsDist = std::abs(rhs.first - camChunkX) + std::abs(rhs.second - camChunkY);
+                      return lhsDist < rhsDist;
+                  });
+
+        for (const auto &[cx, cy] : desiredLoads)
+            enqueueChunkLoad(cx, cy);
+
+        if (m_chunks.empty())
+        {
+            while (!m_pendingChunkLoads.empty())
+            {
+                const auto [chunkX, chunkY] = m_pendingChunkLoads.front();
+                m_pendingChunkLoads.pop_front();
+                m_pendingChunkLoadKeys.erase(encodeChunkKey(chunkX, chunkY));
+                loadChunk(chunkX, chunkY);
+            }
+        }
+        else
+        {
+            processPendingChunkLoads();
         }
 
         // 仅在区块集合发生变化时打印（避免每帧日志）
@@ -189,7 +232,31 @@ namespace engine::world
                 rows.insert(static_cast<int>(static_cast<uint32_t>(key & 0xFFFFFFFFu)));
             std::string rowStr;
             for (int r : rows) rowStr += std::to_string(r) + " ";
-            spdlog::info("[ChunkManager] loaded chunk rows: [{}] total={}", rowStr, m_chunks.size());
+            spdlog::debug("[ChunkManager] loaded chunk rows: [{}] total={}", rowStr, m_chunks.size());
+        }
+    }
+
+    void ChunkManager::enqueueChunkLoad(int chunkX, int chunkY)
+    {
+        const uint64_t key = encodeChunkKey(chunkX, chunkY);
+        if (m_chunks.find(key) != m_chunks.end())
+            return;
+        if (m_pendingChunkLoadKeys.contains(key))
+            return;
+
+        m_pendingChunkLoads.emplace_back(chunkX, chunkY);
+        m_pendingChunkLoadKeys.insert(key);
+    }
+
+    void ChunkManager::processPendingChunkLoads()
+    {
+        int loadsRemaining = m_streamingLoadBudget;
+        while (loadsRemaining-- > 0 && !m_pendingChunkLoads.empty())
+        {
+            const auto [chunkX, chunkY] = m_pendingChunkLoads.front();
+            m_pendingChunkLoads.pop_front();
+            m_pendingChunkLoadKeys.erase(encodeChunkKey(chunkX, chunkY));
+            loadChunk(chunkX, chunkY);
         }
     }
 

@@ -233,6 +233,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_ai_component.cpp.o
   /opt/homebrew/include/glm/./ext/vector_uint2_sized.hpp \
   /opt/homebrew/include/glm/./ext/../ext/vector_uint2.hpp \
   /opt/homebrew/include/glm/./ext/../ext/scalar_uint_sized.hpp \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/monster/../../engine/component/controller_component.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/monster/../../engine/component/physics_component.h \
   /opt/homebrew/include/box2d/box2d.h /opt/homebrew/include/box2d/base.h \
   /opt/homebrew/include/box2d/collision.h \
@@ -1222,4 +1223,5 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/monster/monster_ai_component.cpp.o
   /opt/homebrew/include/SDL3/SDL_surface.h \
   /opt/homebrew/include/SDL3/SDL_blendmode.h \
   /opt/homebrew/include/SDL3/SDL_iostream.h \
-  /opt/homebrew/include/SDL3/SDL_video.h
+  /opt/homebrew/include/SDL3/SDL_video.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/unordered_set
