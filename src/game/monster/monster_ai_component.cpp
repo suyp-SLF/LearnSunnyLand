@@ -66,6 +66,28 @@ namespace game::monster
             }
             return 1;
         }
+
+        float weightedDistance2p5d(const glm::vec2 &delta)
+        {
+            constexpr float kDepthWeight = 0.42f;
+            return std::sqrt(delta.x * delta.x + delta.y * delta.y * kDepthWeight * kDepthWeight);
+        }
+
+        float approach(float current, float target, float delta)
+        {
+            if (current < target)
+                return std::min(current + delta, target);
+            return std::max(current - delta, target);
+        }
+
+        float depthSteerTarget(float depthDelta, float maxSpeed)
+        {
+            constexpr float kDeadZone = 3.5f;
+            constexpr float kGain = 0.065f;
+            if (std::abs(depthDelta) <= kDeadZone)
+                return 0.0f;
+            return std::clamp(depthDelta * kGain, -maxSpeed, maxSpeed);
+        }
     }
 
     MonsterAIComponent::MonsterAIComponent(MonsterType type,
@@ -149,7 +171,7 @@ namespace game::monster
         if (!physics || !sprite) return;
 
         glm::vec2 delta = getTargetDelta();
-        float distance = glm::length(delta);
+        float distance = weightedDistance2p5d(delta);
         float dir = (delta.x == 0.0f) ? m_wanderDir : (delta.x >= 0.0f ? 1.0f : -1.0f);
         bool chasing = m_aiState == AiState::Combat;
         bool retreating = m_aiState == AiState::Retreat;
@@ -169,29 +191,28 @@ namespace game::monster
             if (retreating)
             {
                 vel.x = 3.9f * dir;
-                vel.y = -3.7f;
                 m_actionCooldown = 0.82f;
             }
             else if (chasing)
             {
                 vel.x = 3.6f * dir;
-                vel.y = -3.5f;
                 m_actionCooldown = 0.78f;
             }
             else if (alerting)
             {
                 vel.x = 2.6f * dir;
-                vel.y = -3.0f;
                 m_actionCooldown = 0.96f;
             }
             else
             {
                 vel.x = 2.0f * dir;
-                vel.y = -2.8f;
                 m_actionCooldown = 1.24f;
             }
-            physics->setVelocity(vel);
         }
+
+        const float depthTarget = depthSteerTarget(delta.y, 2.5f);
+        vel.y = approach(vel.y, depthTarget, 10.0f * dt);
+        physics->setVelocity(vel);
     }
 
     void MonsterAIComponent::updateWolf(float dt)
@@ -201,7 +222,7 @@ namespace game::monster
         if (!physics || !sprite) return;
 
         glm::vec2 delta = getTargetDelta();
-        float distance = glm::length(delta);
+        float distance = weightedDistance2p5d(delta);
         float dir = (delta.x == 0.0f) ? m_wanderDir : (delta.x >= 0.0f ? 1.0f : -1.0f);
         const bool chasing = m_aiState == AiState::Combat;
         const bool retreating = m_aiState == AiState::Retreat;
@@ -225,10 +246,12 @@ namespace game::monster
         }
         else if (retreating && isGrounded() && m_actionCooldown <= 0.0f && distance < 110.0f)
         {
-            vel.y = -3.1f;
             vel.x = dir * 6.8f;
             m_actionCooldown = 1.05f;
         }
+
+        const float depthTarget = depthSteerTarget(delta.y, 2.8f);
+        vel.y = approach(vel.y, depthTarget, 11.0f * dt);
 
         physics->setVelocity(vel);
     }
@@ -256,13 +279,11 @@ namespace game::monster
             if (chasing && m_actionCooldown <= 0.0f)
             {
                 vel.x = dir * 8.4f;
-                vel.y = -5.0f;
                 m_actionCooldown = 1.45f;
             }
             else if (retreating && m_actionCooldown <= 0.0f)
             {
                 vel.x = dir * 7.5f;
-                vel.y = -4.4f;
                 m_actionCooldown = 1.22f;
             }
             else if (alerting)
@@ -274,6 +295,9 @@ namespace game::monster
                 vel.x = dir * 1.8f;
             }
         }
+
+        const float depthTarget = depthSteerTarget(delta.y, 2.2f);
+        vel.y = approach(vel.y, depthTarget, 9.5f * dt);
 
         physics->setVelocity(vel);
     }
@@ -303,7 +327,7 @@ namespace game::monster
         }
 
         const glm::vec2 targetDelta = getTargetDelta();
-        refreshAiState(delta_time, glm::length(targetDelta));
+        refreshAiState(delta_time, weightedDistance2p5d(targetDelta));
 
         m_thinkTimer -= delta_time;
         if (m_thinkTimer <= 0.0f)

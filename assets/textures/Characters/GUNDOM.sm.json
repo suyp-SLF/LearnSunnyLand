@@ -41,10 +41,72 @@
       "total_frames": 8,
       "transitions": [
         {
+          "priority": 4,
+          "require_window": false,
+          "target": "JUMP",
+          "trigger": "KEY_JUMP",
+          "window_type": 0
+        },
+        {
           "priority": 1,
           "require_window": false,
           "target": "IDLE",
           "trigger": "NO_INPUT",
+          "window_type": 0
+        }
+      ],
+      "windows": []
+    },
+    "JUMP": {
+      "animation_id": "jump",
+      "frame_events": [],
+      "loop": false,
+      "root_motion": [],
+      "total_frames": 8,
+      "transitions": [
+        {
+          "priority": 5,
+          "require_window": false,
+          "target": "FALL",
+          "trigger": "FALLING",
+          "window_type": 0
+        },
+        {
+          "priority": 2,
+          "require_window": false,
+          "target": "FALL",
+          "trigger": "AIRBORNE",
+          "window_type": 0
+        }
+      ],
+      "windows": []
+    },
+    "FALL": {
+      "animation_id": "fall",
+      "frame_events": [],
+      "loop": true,
+      "root_motion": [],
+      "total_frames": 8,
+      "transitions": [
+        {
+          "priority": 6,
+          "require_window": false,
+          "target": "MOVE",
+          "trigger": "LAND",
+          "window_type": 0
+        },
+        {
+          "priority": 4,
+          "require_window": false,
+          "target": "MOVE",
+          "trigger": "IS_MOVING",
+          "window_type": 0
+        },
+        {
+          "priority": 1,
+          "require_window": false,
+          "target": "IDLE",
+          "trigger": "GROUNDED",
           "window_type": 0
         }
       ],

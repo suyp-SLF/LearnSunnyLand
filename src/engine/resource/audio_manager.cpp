@@ -1,5 +1,6 @@
 #include "audio_manager.h"
 #include <spdlog/spdlog.h>
+#include <SDL3/SDL_audio.h>
 
 namespace engine::resource
 {
@@ -9,18 +10,34 @@ namespace engine::resource
         {
             throw std::runtime_error("AudioManager 初始化失败");
         }
+        _mixer = MIX_CreateMixerDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, nullptr);
+        if (!_mixer)
+        {
+            spdlog::error("AudioManager: 创建默认混音器失败: {}", SDL_GetError());
+        }
         spdlog::trace("TextureManager 构造成功");
     }
 
     AudioManager::~AudioManager()
     {
         clearAudios();
+        if (_mixer)
+        {
+            MIX_DestroyMixer(_mixer);
+            _mixer = nullptr;
+        }
         MIX_Quit();
         spdlog::trace("TextureManager 析构成功");
     }
 
     MIX_Audio *AudioManager::loadAudio(const std::string &path)
     {
+        if (!_mixer)
+        {
+            spdlog::warn("AudioManager: mixer 未初始化，跳过加载音频 {}", path);
+            return nullptr;
+        }
+
         auto it = _audios.find(path);
         if (it != _audios.end())
         {

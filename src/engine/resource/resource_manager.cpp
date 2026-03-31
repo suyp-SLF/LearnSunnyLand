@@ -116,6 +116,11 @@ namespace engine::resource
         return _audio_manager->getAudio(path);
     }
 
+    MIX_Mixer *ResourceManager::getAudioMixer()
+    {
+        return _audio_manager ? _audio_manager->getMixer() : nullptr;
+    }
+
     void ResourceManager::unloadAudio(const std::string &path)
     {
         _audio_manager->unloadAudio(path);

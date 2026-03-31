@@ -39,6 +39,7 @@ namespace game::weather
         float age;         // 已存活时间
         float maxAge;      // 最大寿命
         float alpha;       // 当前透明度
+        bool active = false;
     };
 
     struct ScreenRainDrop
@@ -70,6 +71,18 @@ namespace game::weather
     class WeatherSystem
     {
     public:
+        struct RuntimeState
+        {
+            WeatherType current = WeatherType::Clear;
+            float intensity = 1.0f;
+            float transitionTimer = 0.0f;
+            float transitionDuration = 3.0f;
+            bool isTransitioning = false;
+            float lightningFlash = 0.0f;
+            float lightningNextTime = 8.0f;
+            float autoChangeTimer = 0.0f;
+        };
+
         WeatherSystem();
 
         /** 每帧更新粒子位置、闪电计时、自动切换天气 */
@@ -105,6 +118,8 @@ namespace game::weather
         /** 返回天气中文名 */
         static const char* getWeatherName(WeatherType t);
         const char* getCurrentWeatherName() const { return getWeatherName(m_current); }
+        RuntimeState captureRuntimeState() const;
+        void restoreRuntimeState(const RuntimeState& state);
 
         /** 设置地面在屏幕上的范围（ImGui 显示坐标，像素）
          *  minY = 走廊远端（背景侧），maxY = 走廊前沿（屏幕下方）
@@ -179,6 +194,7 @@ namespace game::weather
         void respawnScreenDrop(ScreenRainDrop &drop, float displayW, float displayH, bool topOnly);
         void spawnLensDrop(float displayW, float displayH);
         void respawnLensDrop(LensRainDrop &drop, float displayW, float displayH, bool topOnly);
+        void emitSplash(float x, float y);
     };
 
 } // namespace game::weather

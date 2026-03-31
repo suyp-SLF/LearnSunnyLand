@@ -42,6 +42,8 @@ namespace engine::resource
         AudioManager(AudioManager &&) = delete;
         AudioManager &operator=(AudioManager &&) = delete;
 
+        MIX_Mixer *getMixer() const { return _mixer; }
+
     private:
         MIX_Audio *loadAudio(const std::string &path);
         MIX_Audio *getAudio(const std::string &path);

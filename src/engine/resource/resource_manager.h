@@ -16,6 +16,7 @@ struct SDL_GPUTexture;
 struct _Mix_Music;
 typedef struct _Mix_Music Mix_Music;
 struct MIX_Audio;
+struct MIX_Mixer;
 
 namespace engine::resource
 {
@@ -93,6 +94,7 @@ namespace engine::resource
 
         /** @brief 获取音效数据 (WAV/Chunk) */
         MIX_Audio *getAudio(const std::string &path);
+        MIX_Mixer *getAudioMixer();
 
         /** @brief 获取音乐数据 (MP3/OGG/Music) */
         Mix_Music *getMusic(const std::string &path);

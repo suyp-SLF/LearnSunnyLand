@@ -116,6 +116,13 @@ namespace game::monster
             };
         }
 
+        float distance2p5d(const glm::vec2 &a, const glm::vec2 &b)
+        {
+            constexpr float kDepthWeight = 0.42f;
+            const glm::vec2 d = a - b;
+            return std::sqrt(d.x * d.x + d.y * d.y * kDepthWeight * kDepthWeight);
+        }
+
         const char *labelForState(MonsterAIComponent::AiState state)
         {
             switch (state)
@@ -324,7 +331,7 @@ namespace game::monster
                 if (!otherTransform)
                     continue;
 
-                if (glm::distance(otherTransform->getPosition(), pos) <= 260.0f)
+                    if (distance2p5d(otherTransform->getPosition(), pos) <= 260.0f)
                     ++nearbyAllies;
             }
 
@@ -363,8 +370,8 @@ namespace game::monster
             if (!transform)
                 continue;
 
-            const glm::vec2 delta = transform->getPosition() - origin;
-            const float distanceSq = glm::dot(delta, delta);
+                const float dist2p5d = distance2p5d(transform->getPosition(), origin);
+                const float distanceSq = dist2p5d * dist2p5d;
             if (distanceSq <= bestDistanceSq)
             {
                 bestDistanceSq = distanceSq;

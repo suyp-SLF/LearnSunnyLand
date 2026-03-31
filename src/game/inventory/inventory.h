@@ -2,10 +2,19 @@
 #include <string>
 #include <vector>
 #include <optional>
+#include <array>
 
 namespace game::inventory
 {
-    enum class ItemCategory { Misc, Weapon, Consumable, Material, StarSkill };
+    enum class ItemCategory { Misc, Weapon, Consumable, Material, StarSkill, Equipment };
+
+    enum class EquipmentSlotType
+    {
+        MechEngine,
+        Armor,
+        AccessoryA,
+        AccessoryB,
+    };
 
     struct Item
     {
@@ -13,6 +22,7 @@ namespace game::inventory
         std::string name;
         int max_stack = 99;
         ItemCategory category = ItemCategory::Misc;
+        EquipmentSlotType equip_slot = EquipmentSlotType::AccessoryA;
     };
 
     struct InventorySlot
@@ -50,6 +60,30 @@ namespace game::inventory
 
     private:
         std::vector<InventorySlot> _slots;
+    };
+
+    class EquipmentLoadout
+    {
+    public:
+        static constexpr int SLOT_COUNT = 4;
+
+        EquipmentLoadout();
+
+        InventorySlot &getSlot(int index) { return _slots[index]; }
+        const InventorySlot &getSlot(int index) const { return _slots[index]; }
+
+        EquipmentSlotType getSlotType(int index) const { return _slotTypes[index]; }
+        static const char *slotTypeLabel(EquipmentSlotType type);
+
+        bool canEquipInSlot(const Item &item, int slotIndex) const;
+        bool equipFromInventory(int slotIndex, int invIndex, Inventory &inv);
+        bool unequipToInventory(int slotIndex, Inventory &inv);
+
+        bool hasItemId(const std::string &itemId) const;
+
+    private:
+        std::array<EquipmentSlotType, SLOT_COUNT> _slotTypes{};
+        std::array<InventorySlot, SLOT_COUNT> _slots{};
     };
 
 } // namespace game::inventory

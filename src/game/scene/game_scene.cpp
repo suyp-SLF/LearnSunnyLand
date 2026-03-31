@@ -37,6 +37,7 @@
 #include <imgui_impl_opengl3.h>
 #include <SDL3/SDL_opengl.h>
 #include <SDL3/SDL_timer.h>
+#include <SDL3_mixer/SDL_mixer.h>
 #include <algorithm>
 #include <cctype>
 #include <cstring>
@@ -49,6 +50,23 @@
 namespace game::scene
 {
 
+enum class InventoryOwner
+{
+    Player = 0,
+    Mech = 1,
+};
+
+struct InventoryDragSlot
+{
+    int owner = 0;
+    int index = 0;
+};
+
+static const char* inventoryOwnerLabel(InventoryOwner owner)
+{
+    return owner == InventoryOwner::Mech ? "机甲" : "人物";
+}
+
 static void recordPerfMetric(PerfMetric& metric, float elapsedMs)
 {
     metric.lastMs = elapsedMs;
@@ -56,11 +74,52 @@ static void recordPerfMetric(PerfMetric& metric, float elapsedMs)
     metric.peakMs = std::max(metric.peakMs * 0.985f, elapsedMs);
 }
 
+static float perfPercent(float partMs, float totalMs)
+{
+    if (totalMs <= 0.0001f)
+        return 0.0f;
+    return std::clamp(partMs / totalMs * 100.0f, 0.0f, 999.0f);
+}
+
 static float elapsedMilliseconds(Uint64 startCounter, Uint64 endCounter, Uint64 frequency)
 {
     if (endCounter <= startCounter || frequency == 0)
         return 0.0f;
     return static_cast<float>(static_cast<double>(endCounter - startCounter) * 1000.0 / static_cast<double>(frequency));
+}
+
+template <typename T, typename FillFn>
+static void acquirePooledSlot(std::vector<T>& pool, size_t maxPoolSize, FillFn&& fill)
+{
+    for (auto& entry : pool)
+    {
+        if (!entry.active)
+        {
+            fill(entry);
+            entry.active = true;
+            return;
+        }
+    }
+
+    if (pool.size() < maxPoolSize)
+    {
+        pool.emplace_back();
+        fill(pool.back());
+        pool.back().active = true;
+        return;
+    }
+
+    auto it = std::max_element(pool.begin(), pool.end(), [](const T& a, const T& b) {
+        const float ar = a.maxAge > 0.0001f ? (a.age / a.maxAge) : a.age;
+        const float br = b.maxAge > 0.0001f ? (b.age / b.maxAge) : b.age;
+        return ar < br;
+    });
+
+    if (it != pool.end())
+    {
+        fill(*it);
+        it->active = true;
+    }
 }
 
 static void drawWorldShadow(engine::core::Context &context,
@@ -175,6 +234,10 @@ static void drawItemIcon(ImDrawList* dl, ImVec2 bmin, ImVec2 bmax,
     case game::inventory::ItemCategory::Weapon:
         col = IM_COL32(200,120, 60,220);
         sym = "\xe5\x88\x80"; // 刀
+        break;
+    case game::inventory::ItemCategory::Equipment:
+        col = IM_COL32(180,170,120,220);
+        sym = "EQ";
         break;
     case game::inventory::ItemCategory::Consumable:
         col = IM_COL32( 80,200,100,220);
@@ -311,6 +374,17 @@ static int loadConfigInt(const char* section, const char* key, int defaultValue)
     return j[section].value(key, defaultValue);
 }
 
+static std::string loadConfigString(const char* section, const char* key, const std::string& defaultValue)
+{
+    const nlohmann::json j = loadConfigJsonObject();
+    if (!j.contains(section) || !j[section].is_object())
+        return defaultValue;
+    const auto& sec = j[section];
+    if (!sec.contains(key) || !sec[key].is_string())
+        return defaultValue;
+    return sec[key].get<std::string>();
+}
+
 template <typename T>
 static void saveConfigValue(const char* section, const char* key, T value)
 {
@@ -413,6 +487,8 @@ static void saveFloatSetting(const char* key, float value)
     {
         Scene::init(); // 设置 _is_initialized = true
 
+        loadActorRoleConfig();
+
         physics_manager = std::make_unique<engine::physics::PhysicsManager>();
         // DNF 2.5D: Y轴为深度方向，由控制器软边界管理，不需要 Box2D 重力
         physics_manager->init({0.0f, 0.0f});
@@ -438,74 +514,31 @@ static void saveFloatSetting(const char* key, float value)
         m_showSkillDebugOverlay = loadBoolSetting("show_skill_debug_overlay");
         m_showActiveChunkHighlights = loadBoolSetting("show_active_chunk_highlights");
         m_invertPlayerFacing = loadBoolSetting("invert_player_facing");
+        m_showEditorToolbar = loadBoolSetting("show_editor_toolbar", true);
+        m_showHierarchyPanel = loadBoolSetting("show_hierarchy_panel", true);
+        m_showInspectorPanel = loadBoolSetting("show_inspector_panel", true);
+        m_toolbarShowPlayControls = loadBoolSetting("toolbar_show_play_controls", true);
+        m_toolbarShowWindowControls = loadBoolSetting("toolbar_show_window_controls", true);
+        m_toolbarShowDebugControls = loadBoolSetting("toolbar_show_debug_controls", false);
+        m_hierarchyGroupByTag = loadBoolSetting("hierarchy_group_by_tag", false);
+        m_hierarchyFavoritesOnly = loadBoolSetting("hierarchy_favorites_only", false);
+        m_enablePlayRollback = loadBoolSetting("enable_play_rollback", true);
         m_screenRainOverlay = loadBoolSetting("screen_rain_overlay");
         m_screenRainOverlayStrength = std::clamp(loadFloatSetting("screen_rain_overlay_strength", 1.0f), 0.2f, 2.0f);
         m_screenRainMotionStrength = std::clamp(loadFloatSetting("screen_rain_motion_strength", 1.0f), 0.2f, 3.0f);
         m_weatherSystem.setScreenRainOverlayEnabled(m_screenRainOverlay);
         m_weatherSystem.setScreenRainOverlayStrength(m_screenRainOverlayStrength);
         m_weatherSystem.setScreenRainMotionScale(m_screenRainMotionStrength);
+        // 编辑器优先：启动后先进入编辑态，点击“启动游戏”才真正推进玩法。
+        m_gameplayRunning = false;
+        m_devMode = true;
+        m_showSettings = true;
 
-        chunk_manager = std::make_unique<engine::world::ChunkManager>(
-            "assets/textures/Tiles/tileset.svg",
-            config.TILE_SIZE,
-            &_context.getResourceManager(),
-            physics_manager.get());
-
-        auto generator = std::make_unique<game::scene::DnfTerrainGenerator>(config);
-
-        // 绑定生物群系查询：根据世界 X 坐标查询当前路线格子的地形类型
-        if (m_routeData.isValid())
-        {
-            auto rd = m_routeData;  // 捕获副本，生成器生命周期内始终有效
-            generator->setBiomeLookup([rd](int tileX) -> int {
-                int zone = tileX / game::route::RouteData::TILES_PER_CELL;
-                if (zone < 0 || zone >= static_cast<int>(rd.path.size()))
-                    return 0;  // 路线外：草原
-                auto cell = rd.path[zone];
-                return static_cast<int>(rd.terrain[cell.y][cell.x]);
-            });
-        }
-
-        chunk_manager->setTerrainGenerator(std::move(generator));
+        setupGroundTileScene(config);
 
         actor_manager = std::make_unique<engine::actor::ActorManager>(_context);
         createPlayer();
-
-        // --- 视差背景层 ---
-        // 坐标系说明：factor.y=0.0 时 screen_y = 2.5*world_Y - 540
-        //  相机锁定在 Y=40 → 地面顶部(wy=1=16px)在 screen_y≈300
-        //  sky/building 的 world_Y 计算:  world_Y = (screen_top + 540) / 2.5
-        //
-        // 天空背景（最远, back.png 384×240, scale 1.2 → screen_h=720填满屏, screen_y=-420..300）
-        {
-            auto *sky = actor_manager->createActor("bg_sky");
-            sky->addComponent<engine::component::TransformComponent>(
-                glm::vec2{0.0f, 48.0f}, glm::vec2{1.2f, 1.2f});
-            sky->addComponent<engine::component::ParallaxComponent>(
-                "assets/textures/Layers/back.png",
-                glm::vec2{0.08f, 0.0f},
-                glm::bvec2{true, false});
-        }
-        // 远景大楼（big-house 170×144, scale{2.0,1.2} → screen_h=432, 底边贴地面顶 screen_y≈280）
-        {
-            auto *bldgFar = actor_manager->createActor("bg_building_far");
-            bldgFar->addComponent<engine::component::TransformComponent>(
-                glm::vec2{0.0f, 155.0f}, glm::vec2{2.0f, 1.2f});
-            bldgFar->addComponent<engine::component::ParallaxComponent>(
-                "assets/textures/Props/big-house.png",
-                glm::vec2{0.30f, 0.0f},
-                glm::bvec2{true, false});
-        }
-        // 中景建筑（tree-house 119×144, scale{1.8,1.0} → screen_h=360, 底边对齐地面顶）
-        {
-            auto *bldgMid = actor_manager->createActor("bg_building_mid");
-            bldgMid->addComponent<engine::component::TransformComponent>(
-                glm::vec2{80.0f, 184.0f}, glm::vec2{1.8f, 1.0f});
-            bldgMid->addComponent<engine::component::ParallaxComponent>(
-                "assets/textures/Props/tree-house.png",
-                glm::vec2{0.55f, 0.0f},
-                glm::bvec2{true, false});
-        }
+        // 专注地面玩法：暂时禁用天空/建筑背景层。
 
         m_monsterManager = std::make_unique<game::monster::MonsterManager>(
             _context,
@@ -562,42 +595,254 @@ static void saveFloatSetting(const char* key, float value)
 
         initTestItems();
 
-        // 预热纹理缓存：首次调用会触发解码，预热后避免怪物/建筑初次出现时卡顿
-        {
-            auto& resMgr = _context.getResourceManager();
-            resMgr.getGLTexture("assets/textures/Tiles/tileset.svg");
-            resMgr.getGLTexture("assets/textures/Characters/player_sheet.svg");
-            // 怪物新 PNG 精灵
-            resMgr.getGLTexture("assets/textures/Actors/eagle-attack.png");
-            resMgr.getGLTexture("assets/textures/Actors/opossum.png");
-            resMgr.getGLTexture("assets/textures/Actors/frog.png");
-            resMgr.getGLTexture("assets/textures/Props/tileset_atlas.svg");
-            resMgr.getGLTexture("assets/textures/Props/rock.png");
-            resMgr.getGLTexture("assets/textures/Props/rock-1.png");
-            resMgr.getGLTexture("assets/textures/Props/rock-2.png");
-            // 背景视差纹理
-            resMgr.getGLTexture("assets/textures/Layers/back.png");
-            resMgr.getGLTexture("assets/textures/Props/big-house.png");
-            resMgr.getGLTexture("assets/textures/Props/tree-house.png");
-            spdlog::info("纹理预热完毕（包含怪物 PNG 和背景建筑）");
-        }
-
-        // 在初始可见区域生成树木（先 updateVisibleChunks 确保区块已加载）
-        // DNF: 横向单行模式，worldY=80 = tile Y=5（地板表面 pixel 80..95），chunk row 0
-        // 固定在 chunk row 0，确保地面走廊行（tile Y 0-7）始终被加载
-        constexpr float DNF_ROW_Y = 80.0f;
-        chunk_manager->setHorizontalOnly(true, DNF_ROW_Y);
-        chunk_manager->updateVisibleChunks({0.0f, DNF_ROW_Y}, 3);
-        for (int cx = -3; cx <= 3; ++cx)
-            for (int cy = 0; cy <= 0; ++cy)  // DNF: 只生成 chunk row 0
-                m_treeManager.generateTreesForChunk(cx, cy, *chunk_manager, m_worldConfig);
-        spdlog::info("TreeManager: 初始区域树木生成完毕（min height={}, max height={}, spacing={})",
-            m_worldConfig.treeMinTrunkHeight, m_worldConfig.treeMaxTrunkHeight, m_worldConfig.treeSpacing);
+        warmupSceneTextures();
+        initializeGroundChunksAndTrees();
+        preallocateRuntimeBuffers();
 
         // 在目标区域注入矿脉（需在区块加载后）
         injectOreVeins();
         generateRockObstacles();
     }
+
+    void GameScene::setupGroundTileScene(const engine::world::WorldConfig& config)
+    {
+        chunk_manager = std::make_unique<engine::world::ChunkManager>(
+            "assets/textures/Tiles/tileset.svg",
+            config.TILE_SIZE,
+            &_context.getResourceManager(),
+            physics_manager.get());
+
+        auto generator = std::make_unique<game::scene::DnfTerrainGenerator>(config);
+        // 地面瓦片按路线地形生成（地面主场景层）。
+        if (m_routeData.isValid())
+        {
+            auto rd = m_routeData;
+            generator->setBiomeLookup([rd](int tileX) -> int {
+                int zone = tileX / game::route::RouteData::TILES_PER_CELL;
+                if (zone < 0 || zone >= static_cast<int>(rd.path.size()))
+                    return 0;
+                auto cell = rd.path[zone];
+                return static_cast<int>(rd.terrain[cell.y][cell.x]);
+            });
+        }
+        chunk_manager->setTerrainGenerator(std::move(generator));
+    }
+
+    void GameScene::setupSkyBackgroundScene()
+    {
+        // 空中场景：天空背景层（最远层，Y 轴视差最小）。
+        auto *sky = actor_manager->createActor("bg_sky");
+        sky->addComponent<engine::component::TransformComponent>(
+            glm::vec2{0.0f, 48.0f}, glm::vec2{1.2f, 1.2f});
+        sky->addComponent<engine::component::ParallaxComponent>(
+            "assets/textures/Layers/back.png",
+            glm::vec2{0.08f, 0.05f},
+            glm::bvec2{true, false});
+    }
+
+    void GameScene::setupGroundBuildingBackgroundScene()
+    {
+        // 地面场景：建筑背景层（远景 / 中景）。
+        auto *bldgFar = actor_manager->createActor("bg_building_far");
+        bldgFar->addComponent<engine::component::TransformComponent>(
+            glm::vec2{0.0f, 155.0f}, glm::vec2{2.0f, 1.2f});
+        bldgFar->addComponent<engine::component::ParallaxComponent>(
+            "assets/textures/Props/big-house.png",
+            glm::vec2{0.30f, 0.22f},
+            glm::bvec2{true, false});
+
+        auto *bldgMid = actor_manager->createActor("bg_building_mid");
+        bldgMid->addComponent<engine::component::TransformComponent>(
+            glm::vec2{80.0f, 184.0f}, glm::vec2{1.8f, 1.0f});
+        bldgMid->addComponent<engine::component::ParallaxComponent>(
+            "assets/textures/Props/tree-house.png",
+            glm::vec2{0.55f, 0.45f},
+            glm::bvec2{true, false});
+    }
+
+    void GameScene::warmupSceneTextures()
+    {
+        auto& resMgr = _context.getResourceManager();
+        resMgr.getGLTexture("assets/textures/Tiles/tileset.svg");
+        resMgr.getGLTexture("assets/textures/Characters/player_sheet.svg");
+        resMgr.getGLTexture("assets/textures/Actors/eagle-attack.png");
+        resMgr.getGLTexture("assets/textures/Actors/opossum.png");
+        resMgr.getGLTexture("assets/textures/Actors/frog.png");
+        resMgr.getGLTexture("assets/textures/Props/tileset_atlas.svg");
+        resMgr.getGLTexture("assets/textures/Props/rock.png");
+        resMgr.getGLTexture("assets/textures/Props/rock-1.png");
+        resMgr.getGLTexture("assets/textures/Props/rock-2.png");
+        // 背景纹理：天空 + 地面建筑。
+        resMgr.getGLTexture("assets/textures/Layers/back.png");
+        resMgr.getGLTexture("assets/textures/Props/big-house.png");
+        resMgr.getGLTexture("assets/textures/Props/tree-house.png");
+        spdlog::info("纹理预热完毕（天空层/地面建筑层/地面瓦片层）");
+    }
+
+    void GameScene::initializeGroundChunksAndTrees()
+    {
+        // 地面瓦片运行区：固定在地面走廊 chunk row。
+        constexpr float DNF_ROW_Y = 80.0f;
+        chunk_manager->setHorizontalOnly(true, DNF_ROW_Y);
+        chunk_manager->updateVisibleChunks({0.0f, DNF_ROW_Y}, 3);
+        for (int cx = -3; cx <= 3; ++cx)
+            for (int cy = 0; cy <= 0; ++cy)
+                m_treeManager.generateTreesForChunk(cx, cy, *chunk_manager, m_worldConfig);
+
+        spdlog::info("TreeManager: 初始区域树木生成完毕（min height={}, max height={}, spacing={})",
+            m_worldConfig.treeMinTrunkHeight, m_worldConfig.treeMaxTrunkHeight, m_worldConfig.treeSpacing);
+    }
+
+    void GameScene::preallocateRuntimeBuffers()
+    {
+        // 减少运行时频繁扩容导致的卡顿尖峰（不是固定内存锁死，只是提前保留容量）。
+        m_skillVfxList.reserve(256);
+        m_skillProjectiles.reserve(128);
+        m_slashVfxList.reserve(128);
+        m_combatFragments.reserve(256);
+    }
+
+    void GameScene::updateFlightAmbientSound(float dt)
+    {
+        constexpr const char* kFlightAmbientPath = "assets/audio/hurry_up_and_run.ogg";
+        constexpr const char* kTakeoffWhooshPath = "assets/audio/cartoon-jump-6462.mp3";
+
+        auto* controlled = getControlledActor();
+        auto* ctrl = controlled ? controlled->getComponent<engine::component::ControllerComponent>() : nullptr;
+        auto* phys = controlled ? controlled->getComponent<engine::component::PhysicsComponent>() : nullptr;
+
+        const bool flyMode = ctrl && ctrl->isFlyModeActive();
+        const float altitudeMeters = ctrl ? std::max(0.0f, ctrl->getPosZ() / 32.0f) : 0.0f;
+        const float verticalSpeed = phys ? std::abs(phys->getVelocity().y) : 0.0f;
+
+        auto smoothstep = [](float edge0, float edge1, float x) {
+            float t = std::clamp((x - edge0) / std::max(edge1 - edge0, 0.0001f), 0.0f, 1.0f);
+            return t * t * (3.0f - 2.0f * t);
+        };
+
+        float targetGain = 0.0f;
+        if (flyMode)
+        {
+            const float altT = smoothstep(60.0f, 900.0f, altitudeMeters);
+            const float speedT = std::clamp(verticalSpeed / 220.0f, 0.0f, 1.0f);
+            targetGain = std::clamp(0.18f + altT * 0.54f + speedT * 0.16f, 0.0f, 0.92f);
+        }
+
+        auto& resourceManager = _context.getResourceManager();
+        MIX_Mixer* mixer = resourceManager.getAudioMixer();
+
+        if (flyMode && !m_flightAmbientWasFlyMode && mixer)
+        {
+            if (MIX_Audio* liftAudio = resourceManager.getAudio(kTakeoffWhooshPath))
+            {
+                if (!MIX_PlayAudio(mixer, liftAudio))
+                    spdlog::debug("起飞瞬态音播放失败: {}", SDL_GetError());
+            }
+        }
+
+        if (!m_flightAmbientReady && mixer)
+        {
+            MIX_Audio* ambientAudio = resourceManager.getAudio(kFlightAmbientPath);
+            if (ambientAudio)
+            {
+                m_flightAmbientTrack = MIX_CreateTrack(mixer);
+                if (m_flightAmbientTrack)
+                {
+                    MIX_SetTrackAudio(m_flightAmbientTrack, ambientAudio);
+                    MIX_SetTrackLoops(m_flightAmbientTrack, -1);
+                    MIX_SetTrackGain(m_flightAmbientTrack, 0.0f);
+                    if (MIX_PlayTrack(m_flightAmbientTrack, 0))
+                    {
+                        m_flightAmbientReady = true;
+                        spdlog::info("飞行环境音已启动");
+                    }
+                    else
+                    {
+                        spdlog::warn("飞行环境音播放失败: {}", SDL_GetError());
+                    }
+                }
+            }
+        }
+
+        const float response = (targetGain > m_flightAmbientGain) ? 2.8f : 2.0f;
+        const float lerpT = std::clamp(dt * response, 0.0f, 1.0f);
+        m_flightAmbientGain += (targetGain - m_flightAmbientGain) * lerpT;
+
+        if (m_flightAmbientTrack)
+            MIX_SetTrackGain(m_flightAmbientTrack, m_flightAmbientGain);
+
+        m_flightAmbientWasFlyMode = flyMode;
+    }
+
+    void GameScene::shutdownFlightAmbientSound()
+    {
+        if (m_flightAmbientTrack)
+        {
+            MIX_StopTrack(m_flightAmbientTrack, 0);
+            MIX_DestroyTrack(m_flightAmbientTrack);
+            m_flightAmbientTrack = nullptr;
+        }
+
+        m_flightAmbientReady = false;
+        m_flightAmbientGain = 0.0f;
+        m_flightAmbientWasFlyMode = false;
+    }
+
+    void GameScene::emitSkillVFX(game::skill::SkillEffect type, glm::vec2 worldPos, float maxAge, float param)
+    {
+        acquirePooledSlot(m_skillVfxList, 512, [&](SkillVFX& vfx) {
+            vfx.type = type;
+            vfx.worldPos = worldPos;
+            vfx.age = 0.0f;
+            vfx.maxAge = maxAge;
+            vfx.param = param;
+        });
+    }
+
+    void GameScene::emitSkillProjectile(game::skill::SkillEffect type,
+                                        glm::vec2 originPos,
+                                        glm::vec2 worldPos,
+                                        glm::vec2 lastWorldPos,
+                                        glm::vec2 targetPos,
+                                        glm::vec2 velocity,
+                                        float maxAge,
+                                        float radius)
+    {
+        acquirePooledSlot(m_skillProjectiles, 192, [&](SkillProjectile& proj) {
+            proj.type = type;
+            proj.originPos = originPos;
+            proj.worldPos = worldPos;
+            proj.lastWorldPos = lastWorldPos;
+            proj.targetPos = targetPos;
+            proj.velocity = velocity;
+            proj.age = 0.0f;
+            proj.maxAge = maxAge;
+            proj.radius = radius;
+        });
+    }
+
+    void GameScene::emitSlashVFX(glm::vec2 worldPos, float facing, float maxAge, float radius)
+    {
+        acquirePooledSlot(m_slashVfxList, 256, [&](SlashVFX& slash) {
+            slash.worldPos = worldPos;
+            slash.facing = facing;
+            slash.age = 0.0f;
+            slash.maxAge = maxAge;
+            slash.radius = radius;
+        });
+    }
+
+    void GameScene::emitCombatFragment(glm::vec2 worldPos, glm::vec2 velocity, float maxAge, float size)
+    {
+        acquirePooledSlot(m_combatFragments, 640, [&](CombatFragment& fragment) {
+            fragment.worldPos = worldPos;
+            fragment.velocity = velocity;
+            fragment.age = 0.0f;
+            fragment.maxAge = maxAge;
+            fragment.size = size;
+        });
+    }
+
     void GameScene::update(float delta_time)
     {
         const Uint64 perfFreq = SDL_GetPerformanceFrequency();
@@ -610,6 +855,28 @@ static void saveFloatSetting(const char* key, float value)
             recordPerfMetric(metric, elapsedMilliseconds(start, SDL_GetPerformanceCounter(), perfFreq));
         };
 
+        const bool runGameplayTick = m_gameplayRunning && (!m_gameplayPaused || m_stepOneFrame);
+        if (!runGameplayTick)
+        {
+            measure(m_frameProfiler.coreLogic, [&] {
+                Scene::update(delta_time);
+                updateSettingsParticles(delta_time);
+            });
+            measure(m_frameProfiler.cameraUpdate, [&] {
+                _context.getCamera().update(delta_time);
+            });
+            measure(m_frameProfiler.chunkStreamUpdate, [&] {
+                if (chunk_manager)
+                    chunk_manager->rebuildDirtyChunks(2);
+            });
+
+            m_frameProfiler.loadedChunks = chunk_manager ? chunk_manager->loadedChunkCount() : 0;
+            m_frameProfiler.pendingChunkLoads = chunk_manager ? chunk_manager->pendingChunkLoadCount() : 0;
+            recordPerfMetric(m_frameProfiler.updateTotal,
+                             elapsedMilliseconds(updateStart, SDL_GetPerformanceCounter(), perfFreq));
+            return;
+        }
+
         measure(m_frameProfiler.coreLogic, [&] {
             Scene::update(delta_time);
 
@@ -619,6 +886,39 @@ static void saveFloatSetting(const char* key, float value)
             m_possessedAttackCooldown = std::max(0.0f, m_possessedAttackCooldown - delta_time);
             m_possessedSkillCooldown = std::max(0.0f, m_possessedSkillCooldown - delta_time);
             m_timeOfDaySystem.update(delta_time);
+            updateMechFlightCapability();
+            updateEquipmentAttributeBonuses();
+
+            // ── 飞行/陆地模式切换提示 ──
+            m_modeSwitchHintTimer = std::max(0.0f, m_modeSwitchHintTimer - delta_time);
+            if (auto *controlled = getControlledActor())
+            {
+                auto* ctrl = controlled->getComponent<engine::component::ControllerComponent>();
+                if (ctrl)
+                {
+                    bool curFly = ctrl->isFlyModeActive();
+                    if (curFly != m_prevFlyModeActive)
+                    {
+                        m_modeSwitchHintText  = curFly ? "飞行模式" : "陆地模式";
+                        m_modeSwitchHintTimer = 1.8f;
+                        m_prevFlyModeActive   = curFly;
+                    }
+                }
+            }
+
+            updateFlightAmbientSound(delta_time);
+
+            // 机甲飞行时解除相机 Y 轴锁定，让视角跟随机甲上升/下降。
+            bool unlockCameraY = false;
+            if (m_isPlayerInMech && m_mech)
+            {
+                if (auto* mechCtrl = m_mech->getComponent<engine::component::ControllerComponent>())
+                    unlockCameraY = mechCtrl->isFlyModeActive() || mechCtrl->getPosZ() > 1.0f;
+
+                if (auto* mechTransform = m_mech->getComponent<engine::component::TransformComponent>())
+                    _context.getCamera().setFollowTarget(&mechTransform->getPosition(), unlockCameraY ? 8.5f : 4.2f);
+            }
+            _context.getCamera().setLockY(!unlockCameraY, 40.0f);
 
             if (m_comboResetTimer > 0.0f)
             {
@@ -712,7 +1012,7 @@ static void saveFloatSetting(const char* key, float value)
             if (transform)
             {
                 float height = transform->getPosition().y;
-                spdlog::info("Player: {} | Height: {:.1f}", m_player->getName(), height);
+                spdlog::debug("Player: {} | Height: {:.1f}", m_player->getName(), height);
             }
             timer = 0.0f;
         }
@@ -774,10 +1074,15 @@ static void saveFloatSetting(const char* key, float value)
                 chunk_manager->updateVisibleChunks({playerPos.x, 0.0f}, 3);
                 m_lastChunkUpdatePos = playerPos;
             }
+
+            // 限额重建脏区块，避免技能批量破坏时单帧重建过多 chunk 导致卡顿
+            chunk_manager->rebuildDirtyChunks(1);
         });
 
         m_frameProfiler.loadedChunks = chunk_manager ? chunk_manager->loadedChunkCount() : 0;
         m_frameProfiler.pendingChunkLoads = chunk_manager ? chunk_manager->pendingChunkLoadCount() : 0;
+        if (m_stepOneFrame)
+            m_stepOneFrame = false;
         recordPerfMetric(m_frameProfiler.updateTotal,
                          elapsedMilliseconds(updateStart, SDL_GetPerformanceCounter(), perfFreq));
     }
@@ -800,10 +1105,8 @@ static void saveFloatSetting(const char* key, float value)
             recordPerfMetric(m_frameProfiler.sceneRender,
                              elapsedMilliseconds(sceneStart, SDL_GetPerformanceCounter(), perfFreq));
 
-            const Uint64 skyStart = SDL_GetPerformanceCounter();
-            m_timeOfDaySystem.renderBackground(_context, m_weatherSystem.getSkyVisibility());
-            recordPerfMetric(m_frameProfiler.skyBackgroundRender,
-                             elapsedMilliseconds(skyStart, SDL_GetPerformanceCounter(), perfFreq));
+            // 专注地面玩法：暂时关闭天空背景渲染。
+            recordPerfMetric(m_frameProfiler.skyBackgroundRender, 0.0f);
 
             recordPerfMetric(m_frameProfiler.backgroundRender,
                              elapsedMilliseconds(backgroundStart, SDL_GetPerformanceCounter(), perfFreq));
@@ -874,77 +1177,41 @@ static void saveFloatSetting(const char* key, float value)
             if (m_showFpsOverlay)
                 renderPerformanceOverlay();
 
+            renderEditorToolbar();
+            renderHierarchyPanel();
+            renderInspectorPanel();
+
             renderSettingsPage();
+            renderMapEditor();
 
             float displayW = ImGui::GetIO().DisplaySize.x;
             float displayH = ImGui::GetIO().DisplaySize.y;
 
-            // ── DNF 洞穴深度背景（ImGui背景层，在天气之前绘制）──
+            // ── 高度驱动环境混合：地面态 -> 高空态 ──
+            float altitudeMeters = 0.0f;
+            float verticalSpeed = 0.0f;
+            bool flyMode = false;
+            if (auto *controlled = getControlledActor())
             {
-                auto* bgDl = ImGui::GetBackgroundDrawList();
-                const float t = static_cast<float>(ImGui::GetTime());
-
-                // 最远景：顶部/底部岩壁厚重暗影
-                bgDl->AddRectFilled(ImVec2(0, 0),
-                    ImVec2(displayW, displayH * 0.095f), IM_COL32(4, 7, 18, 230));
-                bgDl->AddRectFilled(ImVec2(0, 0),
-                    ImVec2(displayW, displayH * 0.055f), IM_COL32(2, 4, 12, 245));
-                bgDl->AddRectFilled(ImVec2(0, displayH * 0.83f),
-                    ImVec2(displayW, displayH), IM_COL32(4, 7, 18, 180));
-                bgDl->AddRectFilled(ImVec2(0, displayH * 0.91f),
-                    ImVec2(displayW, displayH), IM_COL32(2, 4, 12, 210));
-
-                // 中远景：不规则岩壁轮廓（模拟钟乳石轮廓剪影）
-                for (int i = 0; i < 10; ++i)
+                if (auto *ctrl = controlled->getComponent<engine::component::ControllerComponent>())
                 {
-                    float frac = static_cast<float>(i) / 10.0f;
-                    float x    = displayW * frac;
-                    float segW = displayW * 0.12f;
-                    // 顶部岩壁起伏
-                    float hTop = displayH * (0.055f
-                        + std::sin(frac * 8.6f + 1.3f) * 0.022f
-                        + std::cos(frac * 4.5f + 2.1f) * 0.012f);
-                    bgDl->AddRectFilled(ImVec2(x, 0), ImVec2(x + segW + 1.0f, hTop),
-                        IM_COL32(10, 16, 34, 180));
-                    // 底部岩壁起伏
-                    float hBot = displayH * (0.905f
-                        - std::sin(frac * 6.2f + 0.7f) * 0.018f
-                        - std::cos(frac * 3.9f + 1.5f) * 0.010f);
-                    bgDl->AddRectFilled(ImVec2(x, hBot), ImVec2(x + segW + 1.0f, displayH),
-                        IM_COL32(10, 16, 34, 150));
+                    altitudeMeters = std::max(0.0f, ctrl->getPosZ() / 32.0f);
+                    flyMode = ctrl->isFlyModeActive();
                 }
-
-                // 左右边缘渐变暗影（增加空间纵深感）
-                bgDl->AddRectFilled(ImVec2(0, displayH * 0.10f),
-                    ImVec2(displayW * 0.045f, displayH * 0.88f), IM_COL32(6, 10, 24, 70));
-                bgDl->AddRectFilled(ImVec2(displayW * 0.955f, displayH * 0.10f),
-                    ImVec2(displayW, displayH * 0.88f), IM_COL32(6, 10, 24, 70));
-
-                // 远景墙面微弱矿石光点（紫水晶/蓝水晶，DNF 特色）
-                struct GlowSpot { float nx, ny, r; uint8_t rC, gC, bC; float phase; };
-                static constexpr GlowSpot kSpots[] = {
-                    {0.11f, 0.075f, 3.2f, 130, 70, 210, 0.0f},
-                    {0.34f, 0.062f, 2.5f, 100, 55, 190, 1.8f},
-                    {0.58f, 0.080f, 4.0f, 150, 80, 220, 3.5f},
-                    {0.76f, 0.068f, 2.8f, 110, 60, 200, 1.2f},
-                    {0.91f, 0.072f, 3.5f, 140, 78, 215, 2.7f},
-                    {0.22f, 0.920f, 2.8f, 100, 60, 185, 0.9f},
-                    {0.65f, 0.930f, 3.0f, 120, 65, 200, 2.2f},
-                };
-                for (const auto& sp : kSpots)
-                {
-                    float pulse     = 0.5f + 0.5f * std::sin(t * 1.1f + sp.phase);
-                    float innerR    = sp.r * (0.65f + 0.35f * pulse);
-                    int   glowA     = static_cast<int>(20 + 22 * pulse);
-                    int   coreA     = static_cast<int>(55 + 60 * pulse);
-                    // 外发光晕
-                    bgDl->AddCircleFilled(ImVec2(displayW * sp.nx, displayH * sp.ny),
-                        sp.r * 3.2f, IM_COL32(sp.rC, sp.gC, sp.bC, glowA));
-                    // 核心光点
-                    bgDl->AddCircleFilled(ImVec2(displayW * sp.nx, displayH * sp.ny),
-                        innerR, IM_COL32(sp.rC + 50, sp.gC + 30, sp.bC + 30, coreA));
-                }
+                if (auto *phys = controlled->getComponent<engine::component::PhysicsComponent>())
+                    verticalSpeed = phys->getVelocity().y;
             }
+
+            auto smoothstep = [](float edge0, float edge1, float x) {
+                float t = std::clamp((x - edge0) / std::max(edge1 - edge0, 0.0001f), 0.0f, 1.0f);
+                return t * t * (3.0f - 2.0f * t);
+            };
+
+            const float altitudeT = smoothstep(120.0f, 900.0f, altitudeMeters);   // 高度主混合
+            const float cloudT = smoothstep(220.0f, 1400.0f, altitudeMeters);      // 云层增强
+            const float speedT = std::clamp(std::abs(verticalSpeed) / 220.0f, 0.0f, 1.0f);
+
+            // 专注地面玩法：禁用 ImGui 背景氛围层。
 
             // 告知天气系统地面屏幕 Y 波段（整个 GroundDecor 走廊范围）
             {
@@ -955,12 +1222,10 @@ static void saveFloatSetting(const char* key, float value)
                 m_weatherSystem.setGroundScreenBand(dispMin.y, dispMax.y);
             }
 
-            // ── 天气效果（背景层，位于所有ImGui窗口之下）──
-            m_weatherSystem.render(displayW, displayH);
-            m_weatherSystem.renderForeground(displayW, displayH);
+            // 专注地面玩法：禁用天气背景与前景层。
 
             // 天气 / 时间 HUD（右上角常驻，按 ESC 或 ` 打开完整设置）
-            ImGui::SetNextWindowPos(ImVec2(displayW - 230, 20), ImGuiCond_Always);
+            ImGui::SetNextWindowPos(ImVec2(displayW - 16.0f, 20.0f), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
             ImGui::Begin("##weather_hud", nullptr,
                 ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse |
                 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
@@ -969,6 +1234,52 @@ static void saveFloatSetting(const char* key, float value)
                         m_timeOfDaySystem.getMinute(),
                         m_timeOfDaySystem.getPhaseName(),
                         m_weatherSystem.getCurrentWeatherName());
+            if (m_isPlayerInMech)
+            {
+                const std::string mechName = !m_hudMechName.empty()
+                    ? m_hudMechName
+                    : (m_mech ? m_mech->getName() : m_mechActorKey);
+                ImGui::Text("%s%s", m_hudMechPrefix.c_str(), mechName.c_str());
+            }
+            else
+            {
+                ImGui::TextUnformatted(m_hudPlayerText.c_str());
+            }
+
+            constexpr float kAltitudeGaugeMaxMeters = 2000.0f;
+            const float altitudeRatio = std::clamp(altitudeMeters / kAltitudeGaugeMaxMeters, 0.0f, 1.0f);
+            ImGui::Separator();
+            ImGui::Text("高度: %.1f m", altitudeMeters);
+            ImGui::ProgressBar(altitudeRatio, ImVec2(120.0f, 0.0f));
+            ImGui::TextDisabled("%s", flyMode ? "飞行中" : "地面模式");
+
+            if (auto* controlled = getControlledActor())
+            {
+                const glm::vec2 worldPos = getActorWorldPosition(controlled);
+                const int tileX = static_cast<int>(std::floor(worldPos.x / 16.0f));
+                const int tileY = static_cast<int>(std::floor(worldPos.y / 16.0f));
+                if (m_routeData.isValid() && !m_routeData.path.empty())
+                {
+                    int zone = tileX / game::route::RouteData::TILES_PER_CELL;
+                    zone = std::clamp(zone, 0, static_cast<int>(m_routeData.path.size()) - 1);
+                    const glm::ivec2 cell = m_routeData.path[zone];
+                    const int localTileX = tileX - zone * game::route::RouteData::TILES_PER_CELL;
+                    ImGui::Text("位置: %s  区域 %d/%d",
+                                game::route::RouteData::cellLabel(cell).c_str(),
+                                zone + 1,
+                                static_cast<int>(m_routeData.path.size()));
+                    ImGui::TextDisabled("地块: X%d Y%d  区内 %d/%d",
+                                        tileX,
+                                        tileY,
+                                        std::max(localTileX, 0),
+                                        game::route::RouteData::TILES_PER_CELL);
+                }
+                else
+                {
+                    ImGui::Text("位置: X%d  Y%d", tileX, tileY);
+                }
+            }
+
             ImGui::TextDisabled("ESC / ` 设置");
             ImGui::End();
 
@@ -983,6 +1294,8 @@ static void saveFloatSetting(const char* key, float value)
 
             // 玩家头顶状态名
             renderPlayerStateTag();
+            renderModeSwitchHint();
+            renderFlightThrusterFX();
             renderMonsterIFFMarkers();
 
             // 背包界面（E 键开关）
@@ -1027,7 +1340,7 @@ static void saveFloatSetting(const char* key, float value)
             renderCombatEffects();
             renderSkillProjectiles();
             renderSkillVFX();
-            if (m_showSkillDebugOverlay)
+            if (m_devMode && m_showSkillDebugOverlay)
                 renderSkillDebugOverlay();
 
             // ── Chunk 调试红线边框（仅开发模式 + 勾选时显示）────────────────────
@@ -1122,34 +1435,60 @@ static void saveFloatSetting(const char* key, float value)
 
     void GameScene::renderActorGroundShadows()
     {
-        engine::object::GameObject *shadowActor = getControlledActor();
-        if (shadowActor)
+        if (!actor_manager)
+            return;
+
+        const auto &camera = _context.getCamera();
+
+        for (const auto &holder : actor_manager->getActors())
         {
-            auto *transform = shadowActor->getComponent<engine::component::TransformComponent>();
-            auto *ctrl      = shadowActor->getComponent<engine::component::ControllerComponent>();
-            if (transform)
+            auto *actor = holder.get();
+            if (!actor || actor->isNeedRemove())
+                continue;
+
+            auto *transform = actor->getComponent<engine::component::TransformComponent>();
+            auto *sprite = actor->getComponent<engine::component::SpriteComponent>();
+            if (!transform || !sprite || sprite->isHidden())
+                continue;
+
+            const std::string tag = actor->getTag();
+            if (tag.rfind("bg_", 0) == 0 || tag == "sky" || tag == "parallax")
+                continue;
+
+            auto *ctrl = actor->getComponent<engine::component::ControllerComponent>();
+            const float posZ = ctrl ? ctrl->getPosZ() : 0.0f;
+            const glm::vec2 groundPos = transform->getPosition() + glm::vec2(0.0f, posZ);
+
+            glm::vec2 spriteSize = sprite->getSpriteSize();
+            if (spriteSize.x <= 0.0f || spriteSize.y <= 0.0f)
+                spriteSize = glm::vec2{32.0f, 32.0f};
+
+            glm::vec2 baseSize{
+                std::clamp(spriteSize.x * 0.35f, 14.0f, 42.0f),
+                std::clamp(spriteSize.y * 0.11f, 4.5f, 12.0f)
+            };
+            float baseAlpha = 0.16f;
+
+            if (actor == m_mech)
             {
-                float posZ = ctrl ? ctrl->getPosZ() : 0.0f;
-
-                // 阴影始终落在地面（还原 Z 偏移得到真实地面 Y）
-                glm::vec2 groundPos = transform->getPosition() + glm::vec2(0.0f, posZ);
-
-                // 阴影大小和透明度随离地高度衰减（DNF 动态阴影）
-                glm::vec2 baseSize = m_isPlayerInMech ? glm::vec2(38.0f, 11.0f) : glm::vec2(24.0f, 7.0f);
-                float baseAlpha    = m_isPlayerInMech ? 0.20f : 0.17f;
-
-                float zFactor = 1.0f / (1.0f + posZ * 0.007f);  // 越高越小越透
-                glm::vec2 size  = baseSize  * zFactor;
-                float     alpha = baseAlpha * zFactor;
-
-                glm::vec2 shadowCenter = groundPos
-                    + glm::vec2(0.0f, m_isPlayerInMech ? 20.0f : 14.0f);
-                drawWorldShadow(_context, shadowCenter, size, alpha);
+                baseSize = glm::vec2{38.0f, 11.0f};
+                baseAlpha = 0.20f;
             }
-        }
+            else if (tag == "monster")
+            {
+                baseAlpha = 0.15f;
+            }
 
-        if (m_monsterManager)
-            m_monsterManager->renderGroundShadows(_context);
+            const float zFactor = 1.0f / (1.0f + std::max(posZ, 0.0f) * 0.007f);
+            const glm::vec2 size = baseSize * zFactor;
+            const float alpha = baseAlpha * zFactor;
+            const glm::vec2 shadowCenter = groundPos + glm::vec2(0.0f, std::max(10.0f, spriteSize.y * 0.12f));
+
+            if (!camera.isBoxInView(shadowCenter - size * 0.5f, size))
+                continue;
+
+            drawWorldShadow(_context, shadowCenter, size, alpha);
+        }
     }
 
     void GameScene::handleInput()
@@ -1157,6 +1496,37 @@ static void saveFloatSetting(const char* key, float value)
         Scene::handleInput();
 
         auto &input = _context.getInputManager();
+
+        {
+            // F8: 地图编辑器开关
+            const bool* keys = SDL_GetKeyboardState(nullptr);
+            static bool s_mapEditorToggleWas = false;
+            const bool toggleDown = keys && keys[SDL_SCANCODE_F8] != 0;
+            if (toggleDown && !s_mapEditorToggleWas)
+                m_showMapEditor = !m_showMapEditor;
+            s_mapEditorToggleWas = toggleDown;
+
+            // F5: Unity 风格 Play/Stop 切换
+            static bool s_playToggleWas = false;
+            const bool playToggleDown = keys && keys[SDL_SCANCODE_F5] != 0;
+            if (playToggleDown && !s_playToggleWas)
+                setGameplayRunning(!m_gameplayRunning);
+            s_playToggleWas = playToggleDown;
+
+            // F6: 运行态暂停/继续
+            static bool s_pauseToggleWas = false;
+            const bool pauseToggleDown = keys && keys[SDL_SCANCODE_F6] != 0;
+            if (pauseToggleDown && !s_pauseToggleWas && m_gameplayRunning)
+                m_gameplayPaused = !m_gameplayPaused;
+            s_pauseToggleWas = pauseToggleDown;
+
+            // F10: 暂停时单帧推进
+            static bool s_stepToggleWas = false;
+            const bool stepToggleDown = keys && keys[SDL_SCANCODE_F10] != 0;
+            if (stepToggleDown && !s_stepToggleWas && m_gameplayRunning && m_gameplayPaused)
+                m_stepOneFrame = true;
+            s_stepToggleWas = stepToggleDown;
+        }
 
         if (input.isActionPressed("command_mode"))
         {
@@ -1174,6 +1544,28 @@ static void saveFloatSetting(const char* key, float value)
 
         if (m_showSettings)
             return;
+
+        if (!m_gameplayRunning)
+        {
+            if (input.isActionPressed("open_inventory"))
+                m_showInventory = !m_showInventory;
+            if (input.isActionPressed("open_settings") || input.isActionPressed("pause"))
+                m_showSettings = !m_showSettings;
+            if (input.isActionPressed("open_map"))
+                m_missionUI.showWindow = !m_missionUI.showWindow;
+            return;
+        }
+
+        if (m_gameplayPaused)
+        {
+            if (input.isActionPressed("open_inventory"))
+                m_showInventory = !m_showInventory;
+            if (input.isActionPressed("open_settings") || input.isActionPressed("pause"))
+                m_showSettings = !m_showSettings;
+            if (input.isActionPressed("open_map"))
+                m_missionUI.showWindow = !m_missionUI.showWindow;
+            return;
+        }
 
         if (actor_manager)
             actor_manager->handleInput();
@@ -1227,6 +1619,36 @@ static void saveFloatSetting(const char* key, float value)
             + glm::vec2(chunk_manager->getTileSize()) * 0.5f;
         m_lastHoveredTileCenter = hoveredTileCenter;
 
+        if (m_showMapEditor)
+        {
+            const Uint32 mouseButtons = SDL_GetMouseState(nullptr, nullptr);
+            const bool paintDown = (mouseButtons & SDL_BUTTON_LMASK) != 0;
+            const bool eraseDown = (mouseButtons & SDL_BUTTON_RMASK) != 0;
+
+            if (paintDown || eraseDown)
+            {
+                const engine::world::TileType paintType = eraseDown
+                    ? engine::world::TileType::Air
+                    : m_mapEditorPaintTile;
+                const int r = std::max(0, m_mapEditorBrushRadius);
+                for (int dy = -r; dy <= r; ++dy)
+                {
+                    for (int dx = -r; dx <= r; ++dx)
+                    {
+                        if (dx * dx + dy * dy > r * r)
+                            continue;
+                        const int tx = m_hoveredTile.x + dx;
+                        const int ty = m_hoveredTile.y + dy;
+                        chunk_manager->setTileSilent(tx, ty, engine::world::TileData(paintType));
+                    }
+                }
+                chunk_manager->rebuildDirtyChunks(4);
+            }
+
+            // 编辑模式下屏蔽战斗输入，避免左键同时攻击。
+            return;
+        }
+
         if (m_possessedMonster && input.isActionPressed("attack"))
             performPossessedMonsterAttack();
 
@@ -1274,14 +1696,14 @@ static void saveFloatSetting(const char* key, float value)
                         {
                             // 开始新连招序列
                             m_attackComboStep   = 0;
-                            m_attackInputQueued = false;
+                            m_attackQueuedCount = 0;
                             m_attackAnimTimer   = kAttackADur;
                             anim->forcePlay("attack_a");
                         }
                         else
                         {
-                            // 攻击中再按：排队连招（下一段动画在 isFinished 后自动触发）
-                            m_attackInputQueued = true;
+                            // 攻击中再按：缓存后续连招段，支持快速三连按键
+                            m_attackQueuedCount = std::min(m_attackQueuedCount + 1, 2);
                         }
                     }
 
@@ -1303,6 +1725,7 @@ static void saveFloatSetting(const char* key, float value)
         }
 
         // ── DNF 冲刺：Shift 键触发（冲刺方向 = 当前移动方向或朝向）──────
+        if (!m_isPlayerInMech && !m_possessedMonster)
         {
             const bool* keys = SDL_GetKeyboardState(nullptr);
             bool shiftNow = (keys[SDL_SCANCODE_LSHIFT] || keys[SDL_SCANCODE_RSHIFT]) != 0;
@@ -1329,6 +1752,10 @@ static void saveFloatSetting(const char* key, float value)
                 m_dashCooldown = 0.65f;   // 冷却 0.65s
             }
             m_dashKeyWas = shiftNow;
+        }
+        else
+        {
+            m_dashKeyWas = false;
         }
 
 
@@ -1392,7 +1819,7 @@ static void saveFloatSetting(const char* key, float value)
         {
             const bool* keys = SDL_GetKeyboardState(nullptr);
             bool heavyDown = (keys[SDL_SCANCODE_X] || keys[SDL_SCANCODE_LCTRL]) != 0;
-            // 边沿检测借助 m_attackInputQueued 状态（只需要第一帧）
+            // 边沿检测：只在按下首帧触发
             static bool s_heavyWas = false;
             if (heavyDown && !s_heavyWas && m_attackAnimTimer <= 0.0f
                 && m_heavyAttackTimer <= 0.0f && m_ultimateTimer <= 0.0f)
@@ -1436,8 +1863,21 @@ static void saveFloatSetting(const char* key, float value)
     {
         Scene::clean();
 
+        shutdownFlightAmbientSound();
+
+        saveBoolSetting("show_editor_toolbar", m_showEditorToolbar);
+        saveBoolSetting("show_hierarchy_panel", m_showHierarchyPanel);
+        saveBoolSetting("show_inspector_panel", m_showInspectorPanel);
+        saveBoolSetting("toolbar_show_play_controls", m_toolbarShowPlayControls);
+        saveBoolSetting("toolbar_show_window_controls", m_toolbarShowWindowControls);
+        saveBoolSetting("toolbar_show_debug_controls", m_toolbarShowDebugControls);
+        saveBoolSetting("hierarchy_group_by_tag", m_hierarchyGroupByTag);
+        saveBoolSetting("hierarchy_favorites_only", m_hierarchyFavoritesOnly);
+        saveBoolSetting("enable_play_rollback", m_enablePlayRollback);
+
         if (m_glContext)
         {
+            ImGui::SaveIniSettingsToDisk("imgui.ini");
             ImGui_ImplOpenGL3_Shutdown();
             ImGui_ImplSDL3_Shutdown();
             ImGui::DestroyContext();
@@ -1733,12 +2173,9 @@ static void saveFloatSetting(const char* key, float value)
         if (sprite->isFlipped() != shouldFlip)
             sprite->setFlipped(shouldFlip);
 
-        // 状态机接管后，这里只保留朝向同步；动画切换由 tickPlayerSM() 统一负责。
-        if (m_playerSMLoaded)
-            return;
-
         // ── Gundam 攻击动画优先级：攻击/技能动画期间不切换移动动画 ──────
-        if (anim)
+        // 状态机加载时，动画切换交给 tickPlayerSM()，但后续视觉位移逻辑仍需执行。
+        if (anim && !m_playerSMLoaded)
         {
             // 倒计时减少（由 syncPlayerPresentation 每帧统一处理）
             // 注意：delta_time 在 update() 里，此处通过 ImGui framerate 近似
@@ -1760,22 +2197,22 @@ static void saveFloatSetting(const char* key, float value)
             }
             else if (anim->isFinished())
             {
-                // 一次性攻击动画播完：清零所有计时，允许连招输入
-                m_attackAnimTimer   = 0.0f;
-                m_heavyAttackTimer  = 0.0f;
-                m_ultimateTimer     = 0.0f;
-                m_cannonTimer       = 0.0f;
-
                 // 如果攻击期间有连招排队输入，立即触发下一段
-                if (m_attackInputQueued)
+                if (m_attackQueuedCount > 0)
                 {
-                    m_attackInputQueued = false;
+                    --m_attackQueuedCount;
                     m_attackComboStep = (m_attackComboStep + 1) % 3;
                     const char* nextClips[] = {"attack_a", "attack_b", "attack_c"};
                     const float nextDurs[]  = {kAttackADur, kAttackBDur, kAttackCDur};
                     anim->forcePlay(nextClips[m_attackComboStep]);
-                    m_attackAnimTimer = nextDurs[m_attackComboStep];
+                    // 重置辅助计时器，设置新段时长
+                    m_attackAnimTimer   = nextDurs[m_attackComboStep];
+                    m_heavyAttackTimer  = 0.0f;
+                    m_ultimateTimer     = 0.0f;
+                    m_cannonTimer       = 0.0f;
                 }
+                // 无连招输入：等 m_attackAnimTimer 自然倒计至 0 后由 !inAttackAnim 分支切回 idle
+                // （让最后一帧完整展示其 duration，而非提前截断）
             }
         }
 
@@ -1804,6 +2241,8 @@ static void saveFloatSetting(const char* key, float value)
         {
             auto* mechController = m_mech->getComponent<engine::component::ControllerComponent>();
             auto* mechSprite = m_mech->getComponent<engine::component::SpriteComponent>();
+            auto* mechAnim = m_mech->getComponent<engine::component::AnimationComponent>();
+            auto* mechTransform = m_mech->getComponent<engine::component::TransformComponent>();
             if (mechController && mechSprite)
             {
                 // 朝向翻转
@@ -1811,49 +2250,26 @@ static void saveFloatSetting(const char* key, float value)
                 if (mechSprite->isFlipped() != mechFlip)
                     mechSprite->setFlipped(mechFlip);
 
-                // 动画帧驱动（精灵表 172×256，3行）
-                constexpr float MECH_W = 172.0f;
-                constexpr float MECH_H = 256.0f;
-                const float dt = ImGui::GetIO().DeltaTime;
-
-                if (m_mechShootTimer > 0.0f)
-                    m_mechShootTimer = std::max(0.0f, m_mechShootTimer - dt);
-
-                using State = engine::component::ControllerComponent::MovementState;
-                const auto mechState = mechController->getMovementState();
-
-                int targetRow; int maxFrames; float frameDuration;
-                if (m_mechShootTimer > 0.0f)
+                if (mechAnim)
                 {
-                    targetRow = 2; maxFrames = 7; frameDuration = 0.07f;
-                }
-                else if (mechState == State::Run || mechState == State::Jump || mechState == State::Fall)
-                {
-                    targetRow = 0; maxFrames = 8; frameDuration = 0.10f;
-                }
-                else
-                {
-                    targetRow = 1; maxFrames = 6; frameDuration = 0.15f;
+                    const std::string mechMoveKey = mechController->getAnimationStateKey();
+                    mechAnim->play(mechMoveKey);
                 }
 
-                if (targetRow != m_mechAnimRow)
+                if (mechTransform)
                 {
-                    m_mechAnimRow   = targetRow;
-                    m_mechAnimFrame = 0;
-                    m_mechAnimTimer = 0.0f;
-                }
-                m_mechAnimTimer += dt;
-                if (m_mechAnimTimer >= frameDuration)
-                {
-                    m_mechAnimTimer -= frameDuration;
-                    ++m_mechAnimFrame;
-                    if (m_mechAnimFrame >= maxFrames)
-                        m_mechAnimFrame = (targetRow == 2) ? maxFrames - 1 : 0;
-                }
+                    float posZ = mechController->getPosZ();
+                    glm::vec2 pos = mechTransform->getPosition();
+                    if (posZ > 0.0f)
+                        pos.y -= posZ;
+                    mechTransform->setPosition(pos);
 
-                const float srcX = static_cast<float>(m_mechAnimFrame) * MECH_W;
-                const float srcY = static_cast<float>(m_mechAnimRow)   * MECH_H;
-                mechSprite->setSourceRect(engine::utils::FRect{{srcX, srcY}, {MECH_W, MECH_H}});
+                    constexpr float kBaseY   = 56.0f;
+                    constexpr float kFactor  = 0.0008f;
+                    float perspScale = 1.0f + (pos.y - kBaseY) * kFactor;
+                    perspScale = std::clamp(perspScale, 0.92f, 1.08f);
+                    mechTransform->setScale({perspScale, perspScale});
+                }
             }
         }
 
@@ -1882,7 +2298,7 @@ static void saveFloatSetting(const char* key, float value)
         ImGui::SetNextWindowBgAlpha(0.94f);
         ImGui::Begin("指令终端", nullptr,
             ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings);
-        ImGui::TextUnformatted("输入 001 呼叫空投机甲。再次按 R 可退出指令模式。") ;
+        ImGui::TextUnformatted("输入 001 或 r001 呼叫空投机甲。再次按 R 可退出指令模式。");
         ImGui::Spacing();
         if (m_focusCommandInput)
         {
@@ -1896,7 +2312,7 @@ static void saveFloatSetting(const char* key, float value)
         if (ImGui::Button("执行") || submitted)
             executeCommand();
 
-        ImGui::TextDisabled("当前可用指令: 001") ;
+        ImGui::TextDisabled("当前可用指令: 001 / r001");
         ImGui::End();
     }
 
@@ -2235,47 +2651,53 @@ static void saveFloatSetting(const char* key, float value)
             m_frameProfiler.loadedChunks,
             m_frameProfiler.pendingChunkLoads);
 
-        if (ImGui::BeginTable("##perf_breakdown", 4,
+        if (ImGui::BeginTable("##perf_breakdown", 5,
                               ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
                               ImGuiTableFlags_SizingStretchProp))
         {
+            const float frameMs = std::max(m_frameProfiler.frameDeltaMs, 0.0001f);
+            const float updateMs = std::max(m_frameProfiler.updateTotal.lastMs, 0.0001f);
+            const float renderMs = std::max(m_frameProfiler.renderTotal.lastMs, 0.0001f);
+
             ImGui::TableSetupColumn("阶段");
             ImGui::TableSetupColumn("当前(ms)");
             ImGui::TableSetupColumn("均值(ms)");
             ImGui::TableSetupColumn("峰值(ms)");
+            ImGui::TableSetupColumn("占比");
             ImGui::TableHeadersRow();
 
-            auto perfRow = [&](const char* label, const PerfMetric& metric) {
+            auto perfRow = [&](const char* label, const PerfMetric& metric, float basisMs) {
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0); ImGui::TextUnformatted(label);
                 ImGui::TableSetColumnIndex(1); ImGui::Text("%.2f", metric.lastMs);
                 ImGui::TableSetColumnIndex(2); ImGui::Text("%.2f", metric.avgMs);
                 ImGui::TableSetColumnIndex(3); ImGui::Text("%.2f", metric.peakMs);
+                ImGui::TableSetColumnIndex(4); ImGui::Text("%.1f%%", perfPercent(metric.lastMs, basisMs));
             };
 
-            perfRow("Update 总计", m_frameProfiler.updateTotal);
-            perfRow("Update 核心逻辑", m_frameProfiler.coreLogic);
-            perfRow("Update 怪物", m_frameProfiler.monsterUpdate);
-            perfRow("Update 相机", m_frameProfiler.cameraUpdate);
-            perfRow("Update 物理", m_frameProfiler.physicsUpdate);
-            perfRow("Update Actor", m_frameProfiler.actorUpdate);
-            perfRow("Update 状态机", m_frameProfiler.stateMachineUpdate);
-            perfRow("Update 掉落", m_frameProfiler.dropUpdate);
-            perfRow("Update 天气", m_frameProfiler.weatherUpdate);
-            perfRow("Update 任务", m_frameProfiler.missionUpdate);
-            perfRow("Update Chunk流送", m_frameProfiler.chunkStreamUpdate);
-            perfRow("Render 总计", m_frameProfiler.renderTotal);
-            perfRow("Render 背景", m_frameProfiler.backgroundRender);
-            perfRow("Render 场景对象", m_frameProfiler.sceneRender);
-            perfRow("Render 天空背景", m_frameProfiler.skyBackgroundRender);
-            perfRow("Render Chunk", m_frameProfiler.chunkRender);
-            perfRow("Render 视差", m_frameProfiler.parallaxRender);
-            perfRow("Render Sprite", m_frameProfiler.spriteRender);
-            perfRow("Render Tile", m_frameProfiler.tileRender);
-            perfRow("Render 阴影", m_frameProfiler.shadowRender);
-            perfRow("Render Actor", m_frameProfiler.actorRender);
-            perfRow("Render 光照", m_frameProfiler.lightingRender);
-            perfRow("Render ImGui", m_frameProfiler.imguiRender);
+            perfRow("Update 总计", m_frameProfiler.updateTotal, frameMs);
+            perfRow("Update 核心逻辑", m_frameProfiler.coreLogic, updateMs);
+            perfRow("Update 怪物", m_frameProfiler.monsterUpdate, updateMs);
+            perfRow("Update 相机", m_frameProfiler.cameraUpdate, updateMs);
+            perfRow("Update 物理", m_frameProfiler.physicsUpdate, updateMs);
+            perfRow("Update Actor", m_frameProfiler.actorUpdate, updateMs);
+            perfRow("Update 状态机", m_frameProfiler.stateMachineUpdate, updateMs);
+            perfRow("Update 掉落", m_frameProfiler.dropUpdate, updateMs);
+            perfRow("Update 天气", m_frameProfiler.weatherUpdate, updateMs);
+            perfRow("Update 任务", m_frameProfiler.missionUpdate, updateMs);
+            perfRow("Update Chunk流送", m_frameProfiler.chunkStreamUpdate, updateMs);
+            perfRow("Render 总计", m_frameProfiler.renderTotal, frameMs);
+            perfRow("Render 背景", m_frameProfiler.backgroundRender, renderMs);
+            perfRow("Render 场景对象", m_frameProfiler.sceneRender, renderMs);
+            perfRow("Render 天空背景", m_frameProfiler.skyBackgroundRender, renderMs);
+            perfRow("Render Chunk", m_frameProfiler.chunkRender, renderMs);
+            perfRow("Render 视差", m_frameProfiler.parallaxRender, renderMs);
+            perfRow("Render Sprite", m_frameProfiler.spriteRender, renderMs);
+            perfRow("Render Tile", m_frameProfiler.tileRender, renderMs);
+            perfRow("Render 阴影", m_frameProfiler.shadowRender, renderMs);
+            perfRow("Render Actor", m_frameProfiler.actorRender, renderMs);
+            perfRow("Render 光照", m_frameProfiler.lightingRender, renderMs);
+            perfRow("Render ImGui", m_frameProfiler.imguiRender, renderMs);
             ImGui::EndTable();
         }
 
@@ -2448,6 +2870,8 @@ static void saveFloatSetting(const char* key, float value)
         applyRendererVSync(_context.getRenderer(), m_vsyncEnabled);
         saveConfigValue("graphics", "vsync", m_vsyncEnabled);
     }
+
+    // 编辑器 UI 与回滚逻辑已拆分到 game_scene_editor.cpp。
 
     // ─────────────────────────────────────────────────────────────────────────
     //  加载玩家状态机
@@ -2772,9 +3196,46 @@ static void saveFloatSetting(const char* key, float value)
         ImGui::Begin("##fps_game", nullptr,
             ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
             ImGuiWindowFlags_NoNav | ImGuiWindowFlags_AlwaysAutoResize);
+        const float frameMs = std::max(m_frameProfiler.frameDeltaMs, 0.0001f);
         ImGui::Text("FPS: %.1f  Δ: %.2fms", ImGui::GetIO().Framerate, m_frameProfiler.frameDeltaMs);
-        ImGui::Text("Update %.2f | Render %.2f", m_frameProfiler.updateTotal.lastMs, m_frameProfiler.renderTotal.lastMs);
+        ImGui::Text("Update %.2f (%.0f%%) | Render %.2f (%.0f%%)",
+            m_frameProfiler.updateTotal.lastMs,
+            perfPercent(m_frameProfiler.updateTotal.lastMs, frameMs),
+            m_frameProfiler.renderTotal.lastMs,
+            perfPercent(m_frameProfiler.renderTotal.lastMs, frameMs));
         ImGui::Text("Chunk 已加载 %zu | 待加载 %zu", m_frameProfiler.loadedChunks, m_frameProfiler.pendingChunkLoads);
+
+        struct Hotspot { const char* label; float ms; };
+        std::array<Hotspot, 16> hotspots{{
+            {"U 核心逻辑", m_frameProfiler.coreLogic.lastMs},
+            {"U 怪物", m_frameProfiler.monsterUpdate.lastMs},
+            {"U 相机", m_frameProfiler.cameraUpdate.lastMs},
+            {"U 物理", m_frameProfiler.physicsUpdate.lastMs},
+            {"U Actor", m_frameProfiler.actorUpdate.lastMs},
+            {"U 状态机", m_frameProfiler.stateMachineUpdate.lastMs},
+            {"U 掉落", m_frameProfiler.dropUpdate.lastMs},
+            {"U 天气", m_frameProfiler.weatherUpdate.lastMs},
+            {"U 任务", m_frameProfiler.missionUpdate.lastMs},
+            {"U Chunk流送", m_frameProfiler.chunkStreamUpdate.lastMs},
+            {"R Chunk", m_frameProfiler.chunkRender.lastMs},
+            {"R 视差", m_frameProfiler.parallaxRender.lastMs},
+            {"R Sprite", m_frameProfiler.spriteRender.lastMs},
+            {"R Tile", m_frameProfiler.tileRender.lastMs},
+            {"R 阴影", m_frameProfiler.shadowRender.lastMs},
+            {"R 光照", m_frameProfiler.lightingRender.lastMs}
+        }};
+        std::sort(hotspots.begin(), hotspots.end(), [](const Hotspot& a, const Hotspot& b) {
+            return a.ms > b.ms;
+        });
+
+        ImGui::Separator();
+        ImGui::TextUnformatted("热点 Top3（占整帧）");
+        for (int i = 0; i < 3; ++i)
+        {
+            const auto& h = hotspots[static_cast<size_t>(i)];
+            ImGui::Text("%d) %s %.2fms  %.1f%%", i + 1, h.label, h.ms, perfPercent(h.ms, frameMs));
+        }
+
         if (m_devMode)
         {
             ImGui::Separator();
@@ -2840,6 +3301,7 @@ static void saveFloatSetting(const char* key, float value)
                 ImGui::Text("重击冷却: %.2fs", m_mechAttackCooldown);
             else
                 ImGui::TextColored({0.55f, 1.0f, 0.7f, 1.0f}, "重击就绪");
+            ImGui::Text("飞行引擎: %s", m_mechFlightEngineInstalled ? "已安装（空中二段空格可飞行）" : "未安装");
             if (m_mechLastAttackHits > 0)
                 ImGui::Text("上次重击命中: %d", m_mechLastAttackHits);
             else
@@ -2902,9 +3364,9 @@ static void saveFloatSetting(const char* key, float value)
         {
             stateLabel = controller->getMovementStateName();
             if (m_isPlayerInMech)
-                stateLabel = "机甲·" + stateLabel;
+                stateLabel = m_statePrefixMech + stateLabel;
             else if (actor == m_possessedMonster)
-                stateLabel = "接管·" + stateLabel;
+                stateLabel = m_statePrefixPossessed + stateLabel;
         }
         float fuelRatio = controller->getJetpackFuelRatio();
 
@@ -2923,6 +3385,142 @@ static void saveFloatSetting(const char* key, float value)
         float fuelFillX = fuelBarMin.x + (fuelBarMax.x - fuelBarMin.x) * fuelRatio;
         dl->AddRectFilled(fuelBarMin, fuelBarMax, IM_COL32(30, 36, 46, 230), 2.0f);
         dl->AddRectFilled(fuelBarMin, {fuelFillX, fuelBarMax.y}, IM_COL32(255, 190, 60, 230), 2.0f);
+    }
+
+    void GameScene::renderModeSwitchHint()
+    {
+        if (m_modeSwitchHintTimer <= 0.0f || m_modeSwitchHintText.empty())
+            return;
+
+        // 淡入淡出：前 0.25s 渐显，后 0.35s 渐隐
+        static constexpr float kFadeIn  = 0.25f;
+        static constexpr float kFadeOut = 0.35f;
+        static constexpr float kTotal   = 1.8f;
+        const float elapsed = kTotal - m_modeSwitchHintTimer;
+        float alpha = 1.0f;
+        if (elapsed < kFadeIn)
+            alpha = elapsed / kFadeIn;
+        else if (m_modeSwitchHintTimer < kFadeOut)
+            alpha = m_modeSwitchHintTimer / kFadeOut;
+        alpha = std::clamp(alpha, 0.0f, 1.0f);
+
+        const ImVec2 dispSize = ImGui::GetIO().DisplaySize;
+        ImDrawList *dl = ImGui::GetForegroundDrawList();
+
+        // 大字提示
+        ImFont *font = ImGui::GetFont();
+        const float fontSize  = 22.0f;
+        const ImVec2 textSize = font->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, m_modeSwitchHintText.c_str());
+        const ImVec2 textPos  = {(dispSize.x - textSize.x) * 0.5f,
+                                  dispSize.y * 0.30f - textSize.y * 0.5f};
+
+        const bool isFly = (m_modeSwitchHintText == "飞行模式");
+        // 背景胶囊
+        const float padX = 18.0f, padY = 9.0f;
+        ImVec2 bMin{textPos.x - padX, textPos.y - padY};
+        ImVec2 bMax{textPos.x + textSize.x + padX, textPos.y + textSize.y + padY};
+        ImU32 bgCol  = isFly ? IM_COL32(10, 30, 60,  static_cast<int>(190 * alpha))
+                             : IM_COL32(20, 20, 20,  static_cast<int>(190 * alpha));
+        ImU32 bdCol  = isFly ? IM_COL32(80, 160, 255, static_cast<int>(230 * alpha))
+                             : IM_COL32(160, 170, 180, static_cast<int>(200 * alpha));
+        ImU32 txCol  = isFly ? IM_COL32(140, 210, 255, static_cast<int>(255 * alpha))
+                             : IM_COL32(220, 230, 240, static_cast<int>(255 * alpha));
+        const float rounding = (bMax.y - bMin.y) * 0.5f;
+        dl->AddRectFilled(bMin, bMax, bgCol, rounding);
+        dl->AddRect(bMin, bMax, bdCol, rounding, 0, 1.5f);
+        dl->AddText(font, fontSize, textPos, txCol, m_modeSwitchHintText.c_str());
+    }
+
+    void GameScene::renderFlightThrusterFX()
+    {
+        auto *actor = getControlledActor();
+        if (!actor)
+            return;
+
+        auto *transform = actor->getComponent<engine::component::TransformComponent>();
+        auto *controller = actor->getComponent<engine::component::ControllerComponent>();
+        auto *sprite = actor->getComponent<engine::component::SpriteComponent>();
+        if (!transform || !controller)
+            return;
+
+        if (controller->getMovementState() != engine::component::ControllerComponent::MovementState::Jetpack)
+            return;
+
+        glm::vec2 worldPos = transform->getPosition();
+        glm::vec2 screenLogical = _context.getCamera().worldToScreen(worldPos);
+        ImVec2 center = logicalToImGuiScreen(_context, screenLogical);
+
+        const float t = static_cast<float>(ImGui::GetTime());
+        const float pulse = 0.78f + 0.22f * std::sin(t * 18.0f);
+        const float jitter = std::sin(t * 33.0f) * 1.6f;
+        const bool facingLeft = controller->getFacingDirection() == engine::component::ControllerComponent::FacingDirection::Left;
+        const float altitudeMeters = std::max(0.0f, controller->getPosZ() / 32.0f);
+        const float altitudeT = std::clamp((altitudeMeters - 120.0f) / 780.0f, 0.0f, 1.0f);
+
+        float spriteW = 42.0f;
+        float spriteH = 58.0f;
+        if (sprite)
+        {
+            glm::vec2 sz = sprite->getSpriteSize();
+            if (sz.x > 1.0f) spriteW = sz.x * 0.22f;
+            if (sz.y > 1.0f) spriteH = sz.y * 0.45f;
+        }
+
+        ImDrawList *dl = ImGui::GetForegroundDrawList();
+        const float baseY = center.y + spriteH;
+        const float side = facingLeft ? -1.0f : 1.0f;
+
+        for (int i = 0; i < 2; ++i)
+        {
+            const float offsetX = side * (8.0f + i * 10.0f);
+            const float len = (18.0f + i * 5.0f) * pulse * (1.0f + altitudeT * 1.4f);
+            const float width = 7.0f - i * 1.5f;
+
+            ImVec2 nozzle{center.x + offsetX, baseY};
+            ImVec2 tipA{nozzle.x - width, nozzle.y + 4.0f};
+            ImVec2 tipB{nozzle.x + width, nozzle.y + 4.0f};
+            ImVec2 tail{nozzle.x + jitter * 0.25f, nozzle.y + len + jitter};
+
+            dl->AddTriangleFilled(tipA, tipB, tail, IM_COL32(255, 120, 20, 210));
+            dl->AddTriangleFilled(
+                {nozzle.x - width * 0.42f, nozzle.y + 4.0f},
+                {nozzle.x + width * 0.42f, nozzle.y + 4.0f},
+                {tail.x, nozzle.y + len * 0.62f},
+                IM_COL32(255, 225, 90, 220));
+
+            dl->AddCircleFilled(nozzle, 3.0f + 0.5f * pulse, IM_COL32(255, 230, 120, 190));
+            dl->AddCircleFilled(nozzle, 7.0f + i * 2.0f, IM_COL32(255, 120, 20, 55));
+
+            // 高空高速尾迹：让玩家感知“稀薄空气中的高速滑行”
+            if (altitudeT > 0.05f)
+            {
+                const float trailLen = len * (1.5f + altitudeT * 1.8f);
+                const int trailA = static_cast<int>(70.0f + 120.0f * altitudeT);
+                ImVec2 trailTail{nozzle.x + jitter * 0.15f, nozzle.y + trailLen};
+                dl->AddLine(nozzle, trailTail, IM_COL32(255, 210, 120, trailA), 2.6f - i * 0.6f);
+                dl->AddLine(
+                    {nozzle.x - width * 0.25f, nozzle.y + 2.0f},
+                    {trailTail.x - width * 0.18f, trailTail.y + 4.0f},
+                    IM_COL32(180, 220, 255, trailA * 2 / 3),
+                    1.5f - i * 0.25f);
+            }
+        }
+
+        if (altitudeT > 0.20f && controller->isFlyModeActive())
+        {
+            const int streakCount = 5 + static_cast<int>(altitudeT * 5.0f);
+            for (int s = 0; s < streakCount; ++s)
+            {
+                float ph = t * (28.0f + s * 2.0f) + s * 1.7f;
+                float rx = std::sin(ph * 0.63f) * (22.0f + s * 5.0f);
+                float ry = std::cos(ph * 0.42f) * (10.0f + s * 2.5f);
+                float sl = 12.0f + 10.0f * altitudeT;
+                int sa = static_cast<int>(55.0f + 90.0f * altitudeT);
+                ImVec2 a{center.x + rx, center.y + ry};
+                ImVec2 b{center.x + rx - side * sl, center.y + ry + 1.5f};
+                dl->AddLine(a, b, IM_COL32(185, 220, 255, sa), 1.2f);
+            }
+        }
     }
 
     void GameScene::renderMonsterIFFMarkers()
@@ -3063,6 +3661,47 @@ static void saveFloatSetting(const char* key, float value)
             dl->AddLine(pa, pb, lc, 1.5f);
         }
 
+        // ── 当前玩家位置标记（比白边框更明显）─────────────────────────────
+        if (m_currentZone >= 0 && m_currentZone < psize)
+        {
+            const auto &curCell = m_routeData.path[m_currentZone];
+            ImVec2 center{
+                origin.x + curCell.x * CELL_TOT + CELL_PX * 0.5f,
+                origin.y + curCell.y * CELL_TOT + CELL_PX * 0.5f
+            };
+            const float pulse = 0.5f + 0.5f * std::sin(T * 5.5f);
+            const float outerR = 5.0f + pulse * 3.0f;
+
+            if (auto *controlled = getControlledActor())
+            {
+                const glm::vec2 worldPos = getActorWorldPosition(controlled);
+                const int tileX = static_cast<int>(std::floor(worldPos.x / 16.0f));
+                const int zoneStartTileX = m_currentZone * RouteData::TILES_PER_CELL;
+                const float localTileX = static_cast<float>(tileX - zoneStartTileX);
+                const float localRatio = std::clamp(localTileX / static_cast<float>(RouteData::TILES_PER_CELL), 0.0f, 1.0f);
+
+                const float railMargin = 1.2f;
+                const float railY = center.y + CELL_PX * 0.20f;
+                const float railX0 = origin.x + curCell.x * CELL_TOT + railMargin;
+                const float railX1 = origin.x + curCell.x * CELL_TOT + CELL_PX - railMargin;
+                const float markerX = railX0 + (railX1 - railX0) * localRatio;
+
+                dl->AddLine({railX0, railY}, {railX1, railY}, IM_COL32(35, 55, 80, 220), 1.2f);
+                dl->AddLine({railX0, railY}, {markerX, railY}, IM_COL32(120, 220, 255, 235), 1.4f);
+                dl->AddCircleFilled({markerX, railY}, 1.8f + pulse * 0.8f, IM_COL32(255, 250, 200, 255), 12);
+                dl->AddCircle({markerX, railY}, 3.2f + pulse * 1.1f, IM_COL32(110, 220, 255, 180), 12, 1.0f);
+            }
+
+            dl->AddCircleFilled(center, 3.2f, IM_COL32(255, 245, 180, 255), 16);
+            dl->AddCircle(center, outerR, IM_COL32(110, 220, 255, static_cast<int>(180 + 60 * pulse)), 20, 1.8f);
+            dl->AddCircle(center, outerR + 3.0f, IM_COL32(110, 220, 255, static_cast<int>(80 + 40 * pulse)), 24, 1.0f);
+
+            ImVec2 arrowA{center.x, center.y - 9.0f};
+            ImVec2 arrowB{center.x - 4.0f, center.y - 14.0f};
+            ImVec2 arrowC{center.x + 4.0f, center.y - 14.0f};
+            dl->AddTriangleFilled(arrowA, arrowB, arrowC, IM_COL32(255, 240, 150, 240));
+        }
+
         // ── 底部状态文字 ──────────────────────────────────────────────────
         float textY = wp.y + WIN_H - 22.0f;
         dl->AddLine({wp.x + 8, textY - 3}, {wp.x + WIN_W - 8, textY - 3},
@@ -3151,12 +3790,45 @@ static void saveFloatSetting(const char* key, float value)
         m_inventory.addItem({"apple",     "苹果",   20, Cat::Consumable}, 5);
         m_inventory.addItem({"wood",      "木材",   64, Cat::Material},  32);
         m_inventory.addItem({"stone",     "石头",   64, Cat::Material},  24);
+        m_mechInventory.addItem({"mech_flight_engine", "机甲飞行引擎", 1, Cat::Equipment,
+                     game::inventory::EquipmentSlotType::MechEngine}, 1);
+        m_mechInventory.addItem({"exo_armor", "外骨骼装甲", 1, Cat::Equipment,
+                     game::inventory::EquipmentSlotType::Armor}, 1);
+        m_mechInventory.addItem({"kinetic_actuator", "动能执行器", 1, Cat::Equipment,
+                     game::inventory::EquipmentSlotType::AccessoryA}, 1);
+        m_mechInventory.addItem({"gyro_stabilizer", "陀螺稳定器", 1, Cat::Equipment,
+                     game::inventory::EquipmentSlotType::AccessoryB}, 1);
 
         // 星技珠子（StarSkill 类型，可放入星技圆形槽）
         m_inventory.addItem({"star_fire",  "炎焰星技", 1, Cat::StarSkill}, 2);
         m_inventory.addItem({"star_ice",   "寒冰星技", 1, Cat::StarSkill}, 1);
         m_inventory.addItem({"star_wind",  "疾风星技", 1, Cat::StarSkill}, 1);
         m_inventory.addItem({"star_light", "闪光星技", 1, Cat::StarSkill}, 1);
+    }
+
+    void GameScene::loadActorRoleConfig()
+    {
+        m_playerActorKey = loadConfigString("actor_roles", "player_actor_key", m_playerActorKey);
+        m_mechActorKey = loadConfigString("actor_roles", "mech_actor_key", m_mechActorKey);
+        m_controlLabelPlayer = loadConfigString("actor_roles", "control_label_player", m_controlLabelPlayer);
+        m_controlLabelMech = loadConfigString("actor_roles", "control_label_mech", m_controlLabelMech);
+        m_controlLabelPossessed = loadConfigString("actor_roles", "control_label_possessed", m_controlLabelPossessed);
+        m_statePrefixMech = loadConfigString("actor_roles", "state_prefix_mech", m_statePrefixMech);
+        m_statePrefixPossessed = loadConfigString("actor_roles", "state_prefix_possessed", m_statePrefixPossessed);
+        m_hudPlayerText = loadConfigString("actor_roles", "hud_player_text", m_hudPlayerText);
+        m_hudMechPrefix = loadConfigString("actor_roles", "hud_mech_prefix", m_hudMechPrefix);
+        m_hudMechName = loadConfigString("actor_roles", "hud_mech_name", m_hudMechName);
+
+        if (m_playerActorKey.empty()) m_playerActorKey = "player";
+        if (m_mechActorKey.empty()) m_mechActorKey = "mech_drop";
+        if (m_controlLabelPlayer.empty()) m_controlLabelPlayer = "人物";
+        if (m_controlLabelMech.empty()) m_controlLabelMech = "机甲";
+        if (m_controlLabelPossessed.empty()) m_controlLabelPossessed = "接管体";
+        if (m_statePrefixMech.empty()) m_statePrefixMech = "机甲·";
+        if (m_statePrefixPossessed.empty()) m_statePrefixPossessed = "接管·";
+        if (m_hudPlayerText.empty()) m_hudPlayerText = "player";
+        if (m_hudMechPrefix.empty()) m_hudMechPrefix = "机甲：";
+        if (m_hudMechName.empty()) m_hudMechName = "gundom";
     }
 
     // ------------------------------------------------------------------
@@ -3288,10 +3960,11 @@ static void saveFloatSetting(const char* key, float value)
 
             if (ImGui::BeginDragDropTarget())
             {
-                if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("INV_SLOT"))
+                if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("BAG_SLOT"))
                 {
-                    int src_idx = *static_cast<const int *>(payload->Data);
-                    m_weaponBar.equipFromInventory(i, src_idx, m_inventory);
+                    const auto drag = *static_cast<const InventoryDragSlot *>(payload->Data);
+                    if (drag.owner == static_cast<int>(InventoryOwner::Player))
+                        m_weaponBar.equipFromInventory(i, drag.index, m_inventory);
                 }
                 ImGui::EndDragDropTarget();
             }
@@ -3403,19 +4076,22 @@ static void saveFloatSetting(const char* key, float value)
             //           或来自其他星技槽的 STAR_SLOT（调换位置）
             if (ImGui::BeginDragDropTarget())
             {
-                if (const ImGuiPayload* p = ImGui::AcceptDragDropPayload("INV_SLOT"))
+                if (const ImGuiPayload* p = ImGui::AcceptDragDropPayload("BAG_SLOT"))
                 {
-                    int srcIdx = *static_cast<const int*>(p->Data);
-                    auto& src  = m_inventory.getSlot(srcIdx);
-                    if (!src.isEmpty() &&
-                        src.item->category == game::inventory::ItemCategory::StarSkill)
+                    const auto drag = *static_cast<const InventoryDragSlot*>(p->Data);
+                    if (drag.owner == static_cast<int>(InventoryOwner::Player))
                     {
-                        if (occupied)                         // 槽已有珠子：退还到背包
-                            m_inventory.addItem(*slot.item, slot.count);
-                        slot.item  = src.item;
-                        slot.count = 1;
-                        src.item.reset();
-                        src.count = 0;
+                        auto& src  = m_inventory.getSlot(drag.index);
+                        if (!src.isEmpty() &&
+                            src.item->category == game::inventory::ItemCategory::StarSkill)
+                        {
+                            if (occupied)                         // 槽已有珠子：退还到背包
+                                m_inventory.addItem(*slot.item, slot.count);
+                            slot.item  = src.item;
+                            slot.count = 1;
+                            src.item.reset();
+                            src.count = 0;
+                        }
                     }
                 }
                 if (const ImGuiPayload* p = ImGui::AcceptDragDropPayload("STAR_SLOT"))
@@ -3460,6 +4136,110 @@ static void saveFloatSetting(const char* key, float value)
         ImGui::Dummy({avail.x, 1.0f});
     }
 
+    void GameScene::renderEquipmentPage()
+    {
+        constexpr float SLOT = 72.0f;
+        constexpr int COLS = 2;
+
+        ImGui::TextDisabled("拖拽背包装备到槽位，右键可卸下到背包");
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        auto *dl = ImGui::GetWindowDrawList();
+        for (int i = 0; i < game::inventory::EquipmentLoadout::SLOT_COUNT; ++i)
+        {
+            if (i % COLS != 0)
+                ImGui::SameLine();
+
+            auto &slot = m_equipmentLoadout.getSlot(i);
+            const auto slotType = m_equipmentLoadout.getSlotType(i);
+            const bool occupied = !slot.isEmpty();
+
+            ImGui::PushStyleColor(ImGuiCol_Button,
+                occupied ? ImVec4(0.28f, 0.22f, 0.14f, 1.0f)
+                         : ImVec4(0.12f, 0.12f, 0.16f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.36f, 0.30f, 0.20f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.44f, 0.34f, 0.20f, 1.0f));
+
+            char btnId[24];
+            snprintf(btnId, sizeof(btnId), "##eq%d", i);
+            ImGui::Button(btnId, {SLOT, SLOT});
+
+            ImVec2 bmin = ImGui::GetItemRectMin();
+            ImVec2 bmax = ImGui::GetItemRectMax();
+            dl->AddRect(bmin, bmax, IM_COL32(210, 176, 96, 200), 4.0f, 0, 1.3f);
+
+            const char *slotLabel = game::inventory::EquipmentLoadout::slotTypeLabel(slotType);
+            ImVec2 lsz = ImGui::CalcTextSize(slotLabel);
+            dl->AddText({bmin.x + (SLOT - lsz.x) * 0.5f, bmax.y + 3.0f}, IM_COL32(170, 155, 120, 220), slotLabel);
+
+            if (occupied)
+            {
+                drawItemIcon(dl, bmin, bmax, slot.item->category, slot.count);
+            }
+            else
+            {
+                const char* plus = "+";
+                ImVec2 psz = ImGui::CalcTextSize(plus);
+                dl->AddText({bmin.x + (SLOT - psz.x) * 0.5f, bmin.y + (SLOT - psz.y) * 0.5f},
+                            IM_COL32(140, 130, 98, 160), plus);
+            }
+
+            if (occupied && ImGui::IsItemClicked(ImGuiMouseButton_Right))
+                m_equipmentLoadout.unequipToInventory(i, m_mechInventory);
+
+            if (occupied && ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+            {
+                ImGui::SetDragDropPayload("EQUIP_SLOT", &i, sizeof(int));
+                ImGui::TextUnformatted(slot.item->name.c_str());
+                ImGui::TextDisabled("拖到背包取下 | 拖到装备槽换位");
+                ImGui::EndDragDropSource();
+            }
+
+            if (ImGui::BeginDragDropTarget())
+            {
+                if (const ImGuiPayload *p = ImGui::AcceptDragDropPayload("BAG_SLOT"))
+                {
+                    const auto drag = *static_cast<const InventoryDragSlot *>(p->Data);
+                    if (drag.owner == static_cast<int>(InventoryOwner::Mech))
+                        m_equipmentLoadout.equipFromInventory(i, drag.index, m_mechInventory);
+                }
+                if (const ImGuiPayload *p = ImGui::AcceptDragDropPayload("EQUIP_SLOT"))
+                {
+                    int src = *static_cast<const int *>(p->Data);
+                    if (src != i)
+                    {
+                        auto &srcSlot = m_equipmentLoadout.getSlot(src);
+                        bool srcToDstOk = srcSlot.isEmpty() || m_equipmentLoadout.canEquipInSlot(*srcSlot.item, i);
+                        bool dstToSrcOk = slot.isEmpty() || m_equipmentLoadout.canEquipInSlot(*slot.item, src);
+                        if (srcToDstOk && dstToSrcOk)
+                            std::swap(srcSlot, slot);
+                    }
+                }
+                ImGui::EndDragDropTarget();
+            }
+
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::Text("槽位: %s", slotLabel);
+                ImGui::Separator();
+                if (occupied)
+                {
+                    ImGui::TextUnformatted(slot.item->name.c_str());
+                    ImGui::TextDisabled("右键卸下到背包");
+                }
+                else
+                {
+                    ImGui::TextDisabled("仅可放置对应类型装备");
+                }
+                ImGui::EndTooltip();
+            }
+
+            ImGui::PopStyleColor(3);
+        }
+    }
+
     void GameScene::renderInventoryUI()
     {
         if (!m_showInventory) return;
@@ -3475,12 +4255,14 @@ static void saveFloatSetting(const char* key, float value)
         constexpr int   SK_COUNT    = SK_COLS * SK_ROWS;
         constexpr float PANEL_GAP   = 12.0f;  // 背包网格与技能面板之间的间距
 
+        const bool showMechStorage = canAccessMechInventory();
         const float INV_W   = COLS * SLOT + (COLS - 1) * GAP;
         const float SKILL_W = SK_COLS * SLOT + (SK_COLS - 1) * GAP;
-        const float WIN_W   = INV_W + PANEL_GAP + SKILL_W + 16.0f;  // +16 为窗口内边距
-        const float WIN_H   = ROWS * SLOT + (ROWS - 1) * GAP + 76.0f;
+        const float WIN_W   = INV_W + PANEL_GAP + SKILL_W + 20.0f;
 
         ImVec2 disp = ImGui::GetIO().DisplaySize;
+        const float desiredH = showMechStorage ? 760.0f : (ROWS * SLOT + (ROWS - 1) * GAP + 120.0f);
+        const float WIN_H = std::min(desiredH, std::max(520.0f, disp.y - 60.0f));
         ImGui::SetNextWindowPos({(disp.x - WIN_W) * 0.5f, (disp.y - WIN_H) * 0.5f}, ImGuiCond_Always);
         ImGui::SetNextWindowSize({WIN_W, WIN_H}, ImGuiCond_Always);
 
@@ -3495,151 +4277,312 @@ static void saveFloatSetting(const char* key, float value)
             // ── 背包标签 ──────────────────────────────────────────────
             if (ImGui::BeginTabItem("背包"))
             {
-                // ── 左侧：背包网格 ────────────────────────────────────
-                ImGui::BeginChild("##inv_grid", {INV_W, 0.0f}, false,
-                    ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+                const std::string controlLabel = m_isPlayerInMech ? m_controlLabelMech
+                    : (m_possessedMonster ? m_controlLabelPossessed : m_controlLabelPlayer);
+                ImGui::Text("当前控制: %s", controlLabel.c_str());
+                ImGui::SameLine();
+                ImGui::TextDisabled("仓储视图: %s", showMechStorage ? "人物 + 机甲" : "仅人物");
+                ImGui::Separator();
 
-                for (int row = 0; row < ROWS; ++row)
+                auto renderInventoryPanel = [&](const char* childId,
+                                                const char* title,
+                                                game::inventory::Inventory& inventory,
+                                                InventoryOwner owner,
+                                                float height)
                 {
-                    for (int col = 0; col < COLS; ++col)
+                    const bool isMechPanel = owner == InventoryOwner::Mech;
+                    const ImVec4 panelBg    = isMechPanel ? ImVec4(0.15f, 0.11f, 0.07f, 0.96f)
+                                                          : ImVec4(0.08f, 0.12f, 0.20f, 0.96f);
+                    const ImVec4 panelTitle = isMechPanel ? ImVec4(0.96f, 0.84f, 0.62f, 1.0f)
+                                                          : ImVec4(0.75f, 0.90f, 1.0f, 1.0f);
+                    const ImU32 borderCol   = isMechPanel ? IM_COL32(210, 172, 90, 220)
+                                                          : IM_COL32(100, 170, 255, 220);
+                    const ImU32 glowCol     = isMechPanel ? IM_COL32(255, 180, 70, 45)
+                                                          : IM_COL32(90, 170, 255, 38);
+
+                    ImGui::PushStyleColor(ImGuiCol_ChildBg, panelBg);
+                    ImGui::BeginChild(childId, {INV_W, height}, true);
+
+                    ImDrawList* panelDl = ImGui::GetWindowDrawList();
+                    ImVec2 panelMin = ImGui::GetWindowPos();
+                    ImVec2 panelMax = {panelMin.x + ImGui::GetWindowSize().x, panelMin.y + ImGui::GetWindowSize().y};
+                    if (isMechPanel)
                     {
-                        if (col > 0) ImGui::SameLine();
+                        const float bevel = 12.0f;
+                        const ImVec2 mechOuter[] = {
+                            {panelMin.x + bevel, panelMin.y},
+                            {panelMax.x - bevel, panelMin.y},
+                            {panelMax.x, panelMin.y + bevel},
+                            {panelMax.x, panelMax.y - bevel},
+                            {panelMax.x - bevel, panelMax.y},
+                            {panelMin.x + bevel, panelMax.y},
+                            {panelMin.x, panelMax.y - bevel},
+                            {panelMin.x, panelMin.y + bevel},
+                        };
+                        const ImVec2 mechInner[] = {
+                            {panelMin.x + bevel + 6.0f, panelMin.y + 6.0f},
+                            {panelMax.x - bevel - 6.0f, panelMin.y + 6.0f},
+                            {panelMax.x - 6.0f, panelMin.y + bevel + 6.0f},
+                            {panelMax.x - 6.0f, panelMax.y - bevel - 6.0f},
+                            {panelMax.x - bevel - 6.0f, panelMax.y - 6.0f},
+                            {panelMin.x + bevel + 6.0f, panelMax.y - 6.0f},
+                            {panelMin.x + 6.0f, panelMax.y - bevel - 6.0f},
+                            {panelMin.x + 6.0f, panelMin.y + bevel + 6.0f},
+                        };
+                        panelDl->AddPolyline(mechOuter, 8, borderCol, ImDrawFlags_Closed, 2.2f);
+                        panelDl->AddPolyline(mechInner, 8, IM_COL32(120, 88, 42, 210), ImDrawFlags_Closed, 1.1f);
+                        panelDl->AddRectFilled({panelMin.x + 10.0f, panelMin.y + 10.0f}, {panelMax.x - 10.0f, panelMin.y + 38.0f}, glowCol, 0.0f);
+                        panelDl->AddRectFilled({panelMin.x + 14.0f, panelMin.y + 14.0f}, {panelMax.x - 14.0f, panelMin.y + 18.0f}, IM_COL32(255, 214, 120, 30), 0.0f);
 
-                        int idx = row * COLS + col;
-                        auto &slot = m_inventory.getSlot(idx);
-
-                        bool is_weapon = !slot.isEmpty() &&
-                            slot.item->category == game::inventory::ItemCategory::Weapon;
-                        bool is_star = !slot.isEmpty() &&
-                            slot.item->category == game::inventory::ItemCategory::StarSkill;
-
-                        if (is_weapon)
-                            ImGui::PushStyleColor(ImGuiCol_Button, {0.30f, 0.18f, 0.10f, 1.0f});
-                        else if (is_star)
-                            ImGui::PushStyleColor(ImGuiCol_Button, {0.12f, 0.22f, 0.38f, 1.0f});
-                        else
-                            ImGui::PushStyleColor(ImGuiCol_Button, {0.18f, 0.18f, 0.28f, 1.0f});
-                        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, {0.38f, 0.35f, 0.55f, 1.0f});
-
-                        char label[48];
-                        if (slot.isEmpty())
-                            snprintf(label, sizeof(label), "##s%d", idx);
-                        else if (is_weapon)
+                        const ImVec2 rivets[] = {
+                            {panelMin.x + 16.0f, panelMin.y + 16.0f},
+                            {panelMax.x - 16.0f, panelMin.y + 16.0f},
+                            {panelMin.x + 16.0f, panelMax.y - 16.0f},
+                            {panelMax.x - 16.0f, panelMax.y - 16.0f},
+                        };
+                        for (const ImVec2& rivet : rivets)
                         {
-                            const auto *def = game::weapon::getWeaponDef(slot.item->id);
-                            snprintf(label, sizeof(label), "%s##s%d",
-                                def ? def->icon_label.c_str() : "[W]", idx);
+                            panelDl->AddCircleFilled(rivet, 4.0f, IM_COL32(118, 92, 50, 230));
+                            panelDl->AddCircleFilled({rivet.x - 1.0f, rivet.y - 1.0f}, 1.8f, IM_COL32(220, 188, 110, 220));
                         }
-                        else
-                            snprintf(label, sizeof(label), "##s%d", idx);
+                    }
+                    else
+                    {
+                        panelDl->AddRect(panelMin, panelMax, borderCol, 8.0f, 0, 1.5f);
+                        panelDl->AddRectFilled({panelMin.x + 8.0f, panelMin.y + 8.0f}, {panelMax.x - 8.0f, panelMin.y + 34.0f}, glowCol, 6.0f);
+                    }
 
-                        ImGui::Button(label, {SLOT, SLOT});
+                    ImGui::PushStyleColor(ImGuiCol_Text, panelTitle);
+                    ImGui::TextUnformatted(title);
+                    ImGui::PopStyleColor();
+                    ImGui::SameLine();
+                    ImGui::TextDisabled("[%s]", isMechPanel ? "MECH" : "PLAYER");
+                    ImGui::TextDisabled("独立存放，拖拽可在人物与机甲仓之间转移");
+                    ImGui::Separator();
 
-                        // 物品图标（在按钮区域绘制）
-                        if (!slot.isEmpty() && !is_weapon)
+                    for (int row = 0; row < ROWS; ++row)
+                    {
+                        for (int col = 0; col < COLS; ++col)
                         {
-                            auto* idl = ImGui::GetWindowDrawList();
-                            ImVec2 imin = ImGui::GetItemRectMin();
-                            ImVec2 imax = ImGui::GetItemRectMax();
-                            float  icx  = (imin.x + imax.x) * 0.5f;
-                            float  icy  = (imin.y + imax.y) * 0.5f;
-                            if (is_star)
-                            {
-                                drawStarGemSphereIcon(idl, {icx, icy}, SLOT * 0.38f,
-                                                      slot.item->id, 1.0f);
-                            }
+                            if (col > 0) ImGui::SameLine();
+
+                            int idx = row * COLS + col;
+                            auto &slot = inventory.getSlot(idx);
+
+                            bool is_weapon = !slot.isEmpty() &&
+                                slot.item->category == game::inventory::ItemCategory::Weapon;
+                            bool is_star = !slot.isEmpty() &&
+                                slot.item->category == game::inventory::ItemCategory::StarSkill;
+                            bool is_equipment = !slot.isEmpty() &&
+                                slot.item->category == game::inventory::ItemCategory::Equipment;
+
+                            if (is_weapon)
+                                ImGui::PushStyleColor(ImGuiCol_Button, {0.30f, 0.18f, 0.10f, 1.0f});
+                            else if (is_star)
+                                ImGui::PushStyleColor(ImGuiCol_Button,
+                                    isMechPanel ? ImVec4(0.22f, 0.18f, 0.10f, 1.0f)
+                                                : ImVec4(0.12f, 0.22f, 0.38f, 1.0f));
+                            else if (is_equipment)
+                                ImGui::PushStyleColor(ImGuiCol_Button,
+                                    isMechPanel ? ImVec4(0.34f, 0.24f, 0.10f, 1.0f)
+                                                : ImVec4(0.19f, 0.23f, 0.28f, 1.0f));
                             else
-                            {
-                                drawItemIcon(idl, imin, imax,
-                                             slot.item->category, slot.count);
-                            }
-                        }
+                                ImGui::PushStyleColor(ImGuiCol_Button,
+                                    isMechPanel ? ImVec4(0.22f, 0.16f, 0.10f, 1.0f)
+                                                : ImVec4(0.16f, 0.19f, 0.30f, 1.0f));
+                            ImGui::PushStyleColor(ImGuiCol_ButtonHovered,
+                                isMechPanel ? ImVec4(0.48f, 0.34f, 0.16f, 1.0f)
+                                            : ImVec4(0.26f, 0.38f, 0.58f, 1.0f));
 
-                        // 右键星技珠 → 放入第一个空星技槽
-                        if (is_star && ImGui::IsItemClicked(ImGuiMouseButton_Right))
-                        {
-                            for (auto& sk : m_starSockets)
-                            {
-                                if (sk.isEmpty())
-                                {
-                                    sk.item  = slot.item;
-                                    sk.count = 1;
-                                    slot.item.reset();
-                                    slot.count = 0;
-                                    break;
-                                }
-                            }
-                        }
-
-                        // 拖放源：格子不空即可拖
-                        if (!slot.isEmpty() && ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
-                        {
-                            ImGui::SetDragDropPayload("INV_SLOT", &idx, sizeof(int));
-                            ImGui::TextUnformatted(slot.item->name.c_str());
-                            if (is_weapon)
-                                ImGui::TextDisabled("%s", locale::T("weapon_bar.drag_hint").c_str());
-                            if (is_star)
-                                ImGui::TextDisabled("右键快速装备 | 拖入技能格子");
-                            ImGui::EndDragDropSource();
-                        }
-
-                        // 拖放目标：接受来自星技槽的 STAR_SLOT 拖回背包
-                        if (slot.isEmpty() && ImGui::BeginDragDropTarget())
-                        {
-                            if (const ImGuiPayload* p = ImGui::AcceptDragDropPayload("STAR_SLOT"))
-                            {
-                                int srcSocketIdx = *static_cast<const int*>(p->Data);
-                                auto& srcSocket = m_starSockets[srcSocketIdx];
-                                if (!srcSocket.isEmpty())
-                                {
-                                    slot.item  = srcSocket.item;
-                                    slot.count = srcSocket.count;
-                                    srcSocket.item.reset();
-                                    srcSocket.count = 0;
-                                }
-                            }
-                            ImGui::EndDragDropTarget();
-                        }
-
-                        // Tooltip
-                        if (!slot.isEmpty() && ImGui::IsItemHovered())
-                        {
-                            ImGui::BeginTooltip();
-                            ImGui::TextUnformatted(slot.item->name.c_str());
-                            if (is_weapon)
+                            char label[64];
+                            const char* prefix = owner == InventoryOwner::Mech ? "m" : "p";
+                            if (slot.isEmpty())
+                                snprintf(label, sizeof(label), "##%s_s%d", prefix, idx);
+                            else if (is_weapon)
                             {
                                 const auto *def = game::weapon::getWeaponDef(slot.item->id);
-                                if (def)
-                                {
-                                    ImGui::Separator();
-                                    ImGui::TextDisabled("%s: %d", locale::T("weapon.damage").c_str(), def->damage);
-                                    ImGui::TextDisabled("%s: %.1f/s", locale::T("weapon.speed").c_str(), def->attack_speed);
-                                }
-                                ImGui::TextDisabled("%s", locale::T("weapon_bar.drag_hint").c_str());
-                            }
-                            else if (is_star)
-                            {
-                                ImGui::TextDisabled("星技珠子");
-                                ImGui::Separator();
-                                ImGui::TextDisabled("右键 → 装入技能格子");
-                                ImGui::TextDisabled("拖拽 → 放到技能格子指定槽");
+                                snprintf(label, sizeof(label), "%s##%s_s%d",
+                                    def ? def->icon_label.c_str() : "[W]", prefix, idx);
                             }
                             else
-                                ImGui::TextDisabled("%s: %d / %d",
-                                    locale::T("inventory.quantity").c_str(), slot.count, slot.item->max_stack);
-                            ImGui::EndTooltip();
+                                snprintf(label, sizeof(label), "##%s_s%d", prefix, idx);
+
+                            ImGui::Button(label, {SLOT, SLOT});
+
+                            // 物品图标（在按钮区域绘制）
+                            if (!slot.isEmpty() && !is_weapon)
+                            {
+                                auto* idl = ImGui::GetWindowDrawList();
+                                ImVec2 imin = ImGui::GetItemRectMin();
+                                ImVec2 imax = ImGui::GetItemRectMax();
+                                float  icx  = (imin.x + imax.x) * 0.5f;
+                                float  icy  = (imin.y + imax.y) * 0.5f;
+                                if (is_star)
+                                {
+                                    drawStarGemSphereIcon(idl, {icx, icy}, SLOT * 0.38f,
+                                                          slot.item->id, 1.0f);
+                                }
+                                else
+                                {
+                                    drawItemIcon(idl, imin, imax,
+                                                 slot.item->category, slot.count);
+                                }
+                            }
+
+                            // 人物背包右键星技珠 → 放入第一个空星技槽
+                            if (owner == InventoryOwner::Player && is_star && ImGui::IsItemClicked(ImGuiMouseButton_Right))
+                            {
+                                for (auto& sk : m_starSockets)
+                                {
+                                    if (sk.isEmpty())
+                                    {
+                                        sk.item  = slot.item;
+                                        sk.count = 1;
+                                        slot.item.reset();
+                                        slot.count = 0;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            // 拖放源：格子不空即可拖
+                            if (!slot.isEmpty() && ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+                            {
+                                InventoryDragSlot drag{static_cast<int>(owner), idx};
+                                ImGui::SetDragDropPayload("BAG_SLOT", &drag, sizeof(drag));
+                                ImGui::Text("%s背包", inventoryOwnerLabel(owner));
+                                ImGui::TextUnformatted(slot.item->name.c_str());
+                                if (owner == InventoryOwner::Player && is_weapon)
+                                    ImGui::TextDisabled("%s", locale::T("weapon_bar.drag_hint").c_str());
+                                if (owner == InventoryOwner::Player && is_star)
+                                    ImGui::TextDisabled("右键快速装备 | 拖入技能格子");
+                                if (owner == InventoryOwner::Mech && is_equipment)
+                                    ImGui::TextDisabled("拖入右侧机甲装备格子进行装配");
+                                ImGui::EndDragDropSource();
+                            }
+
+                            // 拖放目标：接受背包互转 / 星技槽 / 装备槽
+                            if (ImGui::BeginDragDropTarget())
+                            {
+                                if (const ImGuiPayload* p = ImGui::AcceptDragDropPayload("BAG_SLOT"))
+                                {
+                                    const auto drag = *static_cast<const InventoryDragSlot*>(p->Data);
+                                    InventoryOwner srcOwner = static_cast<InventoryOwner>(drag.owner);
+                                    if (!(srcOwner == owner && drag.index == idx))
+                                    {
+                                        auto& sourceInventory = srcOwner == InventoryOwner::Mech ? m_mechInventory : m_inventory;
+                                        std::swap(slot, sourceInventory.getSlot(drag.index));
+                                    }
+                                }
+                                if (slot.isEmpty() && owner == InventoryOwner::Player)
+                                {
+                                    if (const ImGuiPayload* p = ImGui::AcceptDragDropPayload("STAR_SLOT"))
+                                    {
+                                        int srcSocketIdx = *static_cast<const int*>(p->Data);
+                                        auto& srcSocket = m_starSockets[srcSocketIdx];
+                                        if (!srcSocket.isEmpty())
+                                        {
+                                            slot.item  = srcSocket.item;
+                                            slot.count = srcSocket.count;
+                                            srcSocket.item.reset();
+                                            srcSocket.count = 0;
+                                        }
+                                    }
+                                }
+                                if (slot.isEmpty() && owner == InventoryOwner::Mech)
+                                {
+                                    if (const ImGuiPayload* p = ImGui::AcceptDragDropPayload("EQUIP_SLOT"))
+                                    {
+                                        int srcEquipIdx = *static_cast<const int*>(p->Data);
+                                        auto& srcEquipSlot = m_equipmentLoadout.getSlot(srcEquipIdx);
+                                        if (!srcEquipSlot.isEmpty())
+                                        {
+                                            slot.item = srcEquipSlot.item;
+                                            slot.count = srcEquipSlot.count;
+                                            srcEquipSlot.item.reset();
+                                            srcEquipSlot.count = 0;
+                                        }
+                                    }
+                                }
+                                ImGui::EndDragDropTarget();
+                            }
+
+                            // Tooltip
+                            if (!slot.isEmpty() && ImGui::IsItemHovered())
+                            {
+                                ImGui::BeginTooltip();
+                                ImGui::Text("%s背包", inventoryOwnerLabel(owner));
+                                ImGui::Separator();
+                                ImGui::TextUnformatted(slot.item->name.c_str());
+                                if (is_weapon)
+                                {
+                                    const auto *def = game::weapon::getWeaponDef(slot.item->id);
+                                    if (def)
+                                    {
+                                        ImGui::Separator();
+                                        ImGui::TextDisabled("%s: %d", locale::T("weapon.damage").c_str(), def->damage);
+                                        ImGui::TextDisabled("%s: %.1f/s", locale::T("weapon.speed").c_str(), def->attack_speed);
+                                    }
+                                    ImGui::TextDisabled("%s", locale::T("weapon_bar.drag_hint").c_str());
+                                }
+                                else if (is_star)
+                                {
+                                    ImGui::TextDisabled("星技珠子");
+                                    ImGui::Separator();
+                                    if (owner == InventoryOwner::Player)
+                                    {
+                                        ImGui::TextDisabled("右键 → 装入技能格子");
+                                        ImGui::TextDisabled("拖拽 → 放到技能格子指定槽");
+                                    }
+                                    else
+                                    {
+                                        ImGui::TextDisabled("可拖回人物背包后再装备");
+                                    }
+                                }
+                                else if (is_equipment)
+                                {
+                                    ImGui::TextDisabled("机甲装备");
+                                    ImGui::Separator();
+                                    if (owner == InventoryOwner::Mech)
+                                        ImGui::TextDisabled("拖拽到右侧机甲装备格子进行装配");
+                                    else if (showMechStorage)
+                                        ImGui::TextDisabled("拖拽到机甲背包后再装配");
+                                    else
+                                        ImGui::TextDisabled("靠近机甲后可转移到机甲背包");
+                                }
+                                else
+                                {
+                                    ImGui::TextDisabled("%s: %d / %d",
+                                        locale::T("inventory.quantity").c_str(), slot.count, slot.item->max_stack);
+                                }
+                                ImGui::EndTooltip();
+                            }
+
+                            ImGui::PopStyleColor(2);
                         }
-
-                        ImGui::PopStyleColor(2);
                     }
-                }
+                    ImGui::EndChild();
+                    ImGui::PopStyleColor();
+                };
 
-                ImGui::EndChild(); // ##inv_grid
+                // ── 左侧：人物/机甲双层背包 ────────────────────────────
+                ImVec2 columnsStart = ImGui::GetCursorPos();
+                const float leftAvailH = ImGui::GetContentRegionAvail().y;
+                const float playerPanelH = showMechStorage ? (leftAvailH - PANEL_GAP) * 0.5f : leftAvailH;
+                const float mechPanelH = showMechStorage ? (leftAvailH - PANEL_GAP) - playerPanelH : 0.0f;
+
+                ImGui::BeginGroup();
+                renderInventoryPanel("##player_inv_grid", "人物背包", m_inventory, InventoryOwner::Player, playerPanelH);
+                if (showMechStorage)
+                {
+                    ImGui::Spacing();
+                    renderInventoryPanel("##mech_inv_grid", "机甲背包", m_mechInventory, InventoryOwner::Mech, mechPanelH);
+                }
+                ImGui::EndGroup();
 
                 // ── 右侧：技能格子 ────────────────────────────────────
-                ImGui::SameLine(0.0f, PANEL_GAP);
-                ImGui::BeginChild("##skill_panel", {SKILL_W, 0.0f}, false,
-                    ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+                ImGui::SetCursorPos({columnsStart.x + INV_W + PANEL_GAP, columnsStart.y});
+                ImGui::BeginChild("##skill_panel", {SKILL_W, 0.0f}, false, 0);
 
                 // 面板标题
                 ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.75f, 0.90f, 1.0f, 1.0f));
@@ -3713,19 +4656,22 @@ static void saveFloatSetting(const char* key, float value)
                     //           或来自其他技能槽的 STAR_SLOT（交换位置）
                     if (ImGui::BeginDragDropTarget())
                     {
-                        if (const ImGuiPayload* p = ImGui::AcceptDragDropPayload("INV_SLOT"))
+                        if (const ImGuiPayload* p = ImGui::AcceptDragDropPayload("BAG_SLOT"))
                         {
-                            int srcIdx = *static_cast<const int*>(p->Data);
-                            auto& src  = m_inventory.getSlot(srcIdx);
-                            if (!src.isEmpty() &&
-                                src.item->category == game::inventory::ItemCategory::StarSkill)
+                            const auto drag = *static_cast<const InventoryDragSlot*>(p->Data);
+                            if (drag.owner == static_cast<int>(InventoryOwner::Player))
                             {
-                                if (occupied)
-                                    m_inventory.addItem(*skSlot.item, skSlot.count);
-                                skSlot.item  = src.item;
-                                skSlot.count = 1;
-                                src.item.reset();
-                                src.count = 0;
+                                auto& src  = m_inventory.getSlot(drag.index);
+                                if (!src.isEmpty() &&
+                                    src.item->category == game::inventory::ItemCategory::StarSkill)
+                                {
+                                    if (occupied)
+                                        m_inventory.addItem(*skSlot.item, skSlot.count);
+                                    skSlot.item  = src.item;
+                                    skSlot.count = 1;
+                                    src.item.reset();
+                                    src.count = 0;
+                                }
                             }
                         }
                         if (const ImGuiPayload* p = ImGui::AcceptDragDropPayload("STAR_SLOT"))
@@ -3761,6 +4707,118 @@ static void saveFloatSetting(const char* key, float value)
                     ImGui::PopStyleColor(3);
                 }
 
+                ImGui::Spacing();
+                ImGui::Separator();
+                ImGui::Spacing();
+
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.92f, 0.84f, 0.62f, 1.0f));
+                ImGui::TextUnformatted("◆ 机甲装备格子");
+                ImGui::PopStyleColor();
+                ImGui::Separator();
+                ImGui::Spacing();
+
+                if (!showMechStorage)
+                {
+                    ImGui::TextDisabled("进入机甲或靠近机甲后显示机甲背包与装备槽");
+                }
+                else
+                {
+                    constexpr int EQ_COLS = 2;
+                    constexpr int EQ_COUNT = game::inventory::EquipmentLoadout::SLOT_COUNT;
+                    for (int eq = 0; eq < EQ_COUNT; ++eq)
+                    {
+                        if (eq % EQ_COLS != 0) ImGui::SameLine();
+
+                        auto &eqSlot = m_equipmentLoadout.getSlot(eq);
+                        const auto eqType = m_equipmentLoadout.getSlotType(eq);
+                        const bool occupied = !eqSlot.isEmpty();
+
+                        ImGui::PushStyleColor(ImGuiCol_Button,
+                            occupied ? ImVec4(0.30f, 0.24f, 0.14f, 1.0f)
+                                     : ImVec4(0.12f, 0.10f, 0.08f, 0.95f));
+                        ImGui::PushStyleColor(ImGuiCol_ButtonHovered,
+                            ImVec4(0.42f, 0.32f, 0.20f, 1.0f));
+                        ImGui::PushStyleColor(ImGuiCol_ButtonActive,
+                            ImVec4(0.48f, 0.36f, 0.22f, 1.0f));
+
+                        char eqId[16];
+                        snprintf(eqId, sizeof(eqId), "##eqp%d", eq);
+                        ImGui::Button(eqId, {SLOT, SLOT});
+
+                        ImVec2 bmin = ImGui::GetItemRectMin();
+                        ImVec2 bmax = ImGui::GetItemRectMax();
+                        skillDrawList->AddRect(bmin, bmax, IM_COL32(205, 175, 94, 200), 4.0f, 0, 1.2f);
+
+                        if (occupied)
+                            drawItemIcon(skillDrawList, bmin, bmax, eqSlot.item->category, eqSlot.count);
+                        else
+                        {
+                            const char* plus = "+";
+                            ImVec2 ps = ImGui::CalcTextSize(plus);
+                            skillDrawList->AddText({(bmin.x + bmax.x - ps.x) * 0.5f, (bmin.y + bmax.y - ps.y) * 0.5f},
+                                IM_COL32(150, 130, 90, 180), plus);
+                        }
+
+                        const char* typeLabel = game::inventory::EquipmentLoadout::slotTypeLabel(eqType);
+                        ImVec2 ts = ImGui::CalcTextSize(typeLabel);
+                        skillDrawList->AddText({(bmin.x + bmax.x - ts.x) * 0.5f, bmax.y + 2.0f},
+                            IM_COL32(182, 164, 130, 210), typeLabel);
+
+                        if (occupied && ImGui::IsItemClicked(ImGuiMouseButton_Right))
+                            m_equipmentLoadout.unequipToInventory(eq, m_mechInventory);
+
+                        if (occupied && ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+                        {
+                            ImGui::SetDragDropPayload("EQUIP_SLOT", &eq, sizeof(int));
+                            ImGui::TextUnformatted(eqSlot.item->name.c_str());
+                            ImGui::TextDisabled("右键卸下 | 拖到背包取下 | 拖到装备槽换位");
+                            ImGui::EndDragDropSource();
+                        }
+
+                        if (ImGui::BeginDragDropTarget())
+                        {
+                            if (const ImGuiPayload* p = ImGui::AcceptDragDropPayload("BAG_SLOT"))
+                            {
+                                const auto drag = *static_cast<const InventoryDragSlot*>(p->Data);
+                                if (drag.owner == static_cast<int>(InventoryOwner::Mech))
+                                    m_equipmentLoadout.equipFromInventory(eq, drag.index, m_mechInventory);
+                            }
+                            if (const ImGuiPayload* p = ImGui::AcceptDragDropPayload("EQUIP_SLOT"))
+                            {
+                                int srcEq = *static_cast<const int*>(p->Data);
+                                if (srcEq != eq)
+                                {
+                                    auto &srcSlot = m_equipmentLoadout.getSlot(srcEq);
+                                    bool srcToDstOk = srcSlot.isEmpty() || m_equipmentLoadout.canEquipInSlot(*srcSlot.item, eq);
+                                    bool dstToSrcOk = eqSlot.isEmpty() || m_equipmentLoadout.canEquipInSlot(*eqSlot.item, srcEq);
+                                    if (srcToDstOk && dstToSrcOk)
+                                        std::swap(srcSlot, eqSlot);
+                                }
+                            }
+                            ImGui::EndDragDropTarget();
+                        }
+
+                        if (ImGui::IsItemHovered())
+                        {
+                            ImGui::BeginTooltip();
+                            ImGui::Text("槽位: %s", typeLabel);
+                            ImGui::Separator();
+                            if (occupied)
+                            {
+                                ImGui::TextUnformatted(eqSlot.item->name.c_str());
+                                ImGui::TextDisabled("右键卸下到背包");
+                            }
+                            else
+                            {
+                                ImGui::TextDisabled("仅可放置对应类型装备");
+                            }
+                            ImGui::EndTooltip();
+                        }
+
+                        ImGui::PopStyleColor(3);
+                    }
+                }
+
                 ImGui::EndChild(); // ##skill_panel
 
                 ImGui::EndTabItem();
@@ -3782,7 +4840,7 @@ static void saveFloatSetting(const char* key, float value)
 
     void GameScene::createPlayer()
     {
-        m_player = actor_manager->createActor("player");
+        m_player = actor_manager->createActor(m_playerActorKey);
 
         glm::vec2 startPos = {0.0f, 56.0f};
 
@@ -3809,6 +4867,7 @@ static void saveFloatSetting(const char* key, float value)
         ctrl->setGroundAcceleration(80.0f);
         ctrl->setAirAcceleration(12.0f);
         ctrl->setGroundBand(16.0f, 96.0f);
+        ctrl->setJetpackEnabled(false);
 
         auto* anim = m_player->addComponent<engine::component::AnimationComponent>(241.0f, 125.0f);
 
@@ -3848,6 +4907,12 @@ static void saveFloatSetting(const char* key, float value)
             return std::isspace(c) != 0;
         }), command.end());
 
+        std::transform(command.begin(), command.end(), command.begin(), [](unsigned char c) {
+            return static_cast<char>(std::tolower(c));
+        });
+        if (!command.empty() && command.front() == 'r')
+            command.erase(command.begin());
+
         if (command == "001")
         {
             spawnMechDrop();
@@ -3869,20 +4934,34 @@ static void saveFloatSetting(const char* key, float value)
 
         constexpr float kPixelsPerMeter = 32.0f;
         glm::vec2 playerPos = getActorWorldPosition(m_player);
-        glm::vec2 dropTarget = {playerPos.x + 180.0f, playerPos.y - 32.0f};
-        glm::vec2 spawnPos = {dropTarget.x, dropTarget.y - 640.0f};
+        // 直接生成在玩家右侧，避免高空空投导致“看不到召唤物”。
+        glm::vec2 spawnPos = {playerPos.x + 140.0f, playerPos.y};
 
         if (!m_mech)
         {
-            m_mech = actor_manager->createActor("mech_drop");
-            auto* mechTransform = m_mech->addComponent<engine::component::TransformComponent>(spawnPos, glm::vec2{0.28f, 0.28f});
-            mechTransform->setScale({0.28f, 0.28f});
-            // 初始帧：第1行（待机/瞄准），第0帧
+            m_mech = actor_manager->createActor(m_mechActorKey);
+            auto* mechTransform = m_mech->addComponent<engine::component::TransformComponent>(spawnPos);
+            mechTransform->setScale({1.0f, 1.0f});
+
+            // 机甲展示改为使用 gundom.json 动画资源（与人物同源，动作可配置）。
+            const std::string frameJsonPath = "assets/textures/Characters/gundom.json";
+            game::animation::FrameAnimationSet animationSet;
+            if (!game::animation::loadFrameAnimationSet(frameJsonPath, animationSet))
+                animationSet = game::animation::makeDefaultGundomAnimationSet();
+            if (animationSet.texturePath.empty())
+                animationSet.texturePath = "assets/textures/Characters/gundom.png";
+
+            const auto initialRect = animationSet.initialSourceRect().value_or(
+                engine::utils::FRect{{241.0f, 1625.0f}, {241.0f, 125.0f}});
             m_mech->addComponent<engine::component::SpriteComponent>(
-                "assets/textures/Characters/mech_sheet.png",
+                animationSet.texturePath,
                 engine::utils::Alignment::CENTER,
-                engine::utils::FRect{{0.0f, 256.0f}, {172.0f, 256.0f}});
-            m_mechAnimRow = 1; m_mechAnimFrame = 0; m_mechAnimTimer = 0.0f; m_mechShootTimer = 0.0f;
+                initialRect);
+            auto* mechAnim = m_mech->addComponent<engine::component::AnimationComponent>(241.0f, 125.0f);
+            for (const auto& [clipName, clip] : animationSet.clips)
+                mechAnim->addClip(clipName, clip);
+            mechAnim->play("idle");
+
             auto* mechController = m_mech->addComponent<engine::component::ControllerComponent>(18.0f, 8.0f);
             mechController->setGroundAcceleration(58.0f);
             mechController->setAirAcceleration(28.0f);
@@ -3905,10 +4984,21 @@ static void saveFloatSetting(const char* key, float value)
                 transform->setPosition(spawnPos);
             if (auto* sprite = m_mech->getComponent<engine::component::SpriteComponent>())
                 sprite->setHidden(false);
+            if (!m_mech->getComponent<engine::component::AnimationComponent>())
+            {
+                const std::string frameJsonPath = "assets/textures/Characters/gundom.json";
+                game::animation::FrameAnimationSet animationSet;
+                if (!game::animation::loadFrameAnimationSet(frameJsonPath, animationSet))
+                    animationSet = game::animation::makeDefaultGundomAnimationSet();
+                auto* mechAnim = m_mech->addComponent<engine::component::AnimationComponent>(241.0f, 125.0f);
+                for (const auto& [clipName, clip] : animationSet.clips)
+                    mechAnim->addClip(clipName, clip);
+                mechAnim->play("idle");
+            }
             if (auto* physics = m_mech->getComponent<engine::component::PhysicsComponent>())
             {
                 physics->setWorldPosition(spawnPos);
-                physics->setVelocity({0.0f, 4.0f});
+                physics->setVelocity({0.0f, 0.0f});
             }
             if (auto* controller = m_mech->getComponent<engine::component::ControllerComponent>())
             {
@@ -3925,8 +5015,60 @@ static void saveFloatSetting(const char* key, float value)
 
         m_mechAttackCooldown = 0.0f;
         m_mechLastAttackHits = 0;
+        updateMechFlightCapability();
 
-        spdlog::info("指令 001 已执行：机甲开始空投，目标坐标 ({:.1f}, {:.1f})", dropTarget.x, dropTarget.y);
+        spdlog::info("指令 001 已执行：机甲已生成在玩家旁边，坐标 ({:.1f}, {:.1f})", spawnPos.x, spawnPos.y);
+    }
+
+    void GameScene::updateMechFlightCapability()
+    {
+        if (!m_mech)
+            return;
+
+        auto *mechController = m_mech->getComponent<engine::component::ControllerComponent>();
+        if (!mechController)
+            return;
+
+        m_mechFlightEngineInstalled = m_equipmentLoadout.hasItemId("mech_flight_engine");
+
+        // 仅在“驾驶机甲 + 已安装飞行引擎”时启用飞行能力
+        mechController->setJetpackEnabled(m_isPlayerInMech && m_mechFlightEngineInstalled);
+    }
+
+    void GameScene::updateEquipmentAttributeBonuses()
+    {
+        if (!m_player)
+            return;
+
+        auto *attr = m_player->getComponent<game::component::AttributeComponent>();
+        if (!attr)
+            return;
+
+        // 先清理旧装备词条，再按当前已装备物品重建，避免换装残留。
+        attr->removeAllModifiers("equip_mech_flight_engine");
+        attr->removeAllModifiers("equip_exo_armor");
+        attr->removeAllModifiers("equip_kinetic_actuator");
+        attr->removeAllModifiers("equip_gyro_stabilizer");
+
+        if (m_equipmentLoadout.hasItemId("mech_flight_engine"))
+        {
+            attr->addModifier({"equip_mech_flight_engine", game::component::StatType::MaxStarEnergy, 20.0f, 0.0f, -1.0f});
+        }
+        if (m_equipmentLoadout.hasItemId("exo_armor"))
+        {
+            attr->addModifier({"equip_exo_armor", game::component::StatType::MaxHp, 35.0f, 0.0f, -1.0f});
+            attr->addModifier({"equip_exo_armor", game::component::StatType::Defense, 8.0f, 0.0f, -1.0f});
+        }
+        if (m_equipmentLoadout.hasItemId("kinetic_actuator"))
+        {
+            attr->addModifier({"equip_kinetic_actuator", game::component::StatType::Attack, 12.0f, 0.0f, -1.0f});
+            attr->addModifier({"equip_kinetic_actuator", game::component::StatType::Speed, 0.0f, 0.10f, -1.0f});
+        }
+        if (m_equipmentLoadout.hasItemId("gyro_stabilizer"))
+        {
+            attr->addModifier({"equip_gyro_stabilizer", game::component::StatType::CritRate, 0.08f, 0.0f, -1.0f});
+            attr->addModifier({"equip_gyro_stabilizer", game::component::StatType::JumpPower, 0.0f, 0.08f, -1.0f});
+        }
     }
 
     void GameScene::tryEnterMech()
@@ -3957,6 +5099,7 @@ static void saveFloatSetting(const char* key, float value)
         mechController->setEnabled(true);
         _context.getCamera().setFollowTarget(&mechTransform->getPosition(), 4.2f);
         m_isPlayerInMech = true;
+        updateMechFlightCapability();
         spdlog::info("驾驶员已进入机甲");
     }
 
@@ -3982,6 +5125,7 @@ static void saveFloatSetting(const char* key, float value)
         playerController->setEnabled(true);
         _context.getCamera().setFollowTarget(&playerTransform->getPosition(), 5.0f);
         m_isPlayerInMech = false;
+        updateMechFlightCapability();
         spdlog::info("驾驶员已离开机甲");
     }
 
@@ -4124,20 +5268,19 @@ static void saveFloatSetting(const char* key, float value)
             m_possessedMonster, facing, range, halfHeight, &defeatPositions);
 
         const glm::vec2 slashCenter = origin + glm::vec2{facing * range * 0.56f, -10.0f};
-        m_slashVfxList.push_back({slashCenter, facing, 0.0f, vfxAge, range * 0.9f});
+        emitSlashVFX(slashCenter, facing, vfxAge, range * 0.9f);
         for (const glm::vec2 &pos : defeatPositions)
         {
             for (int i = 0; i < 10; ++i)
             {
                 const float t = static_cast<float>(i) / 9.0f;
                 glm::vec2 dir = glm::normalize(glm::vec2(facing * (1.1f + t), -0.8f + 1.6f * t));
-                m_combatFragments.push_back({
+                emitCombatFragment(
                     pos,
                     dir * (210.0f + 90.0f * t),
-                    0.0f,
                     0.38f + 0.08f * t,
                     3.0f + 2.0f * t
-                });
+                );
             }
         }
 
@@ -4225,20 +5368,19 @@ static void saveFloatSetting(const char* key, float value)
         m_possessionEnergy = std::max(0.0f, m_possessionEnergy - energyCost);
         m_possessedSkillCooldown = cooldown;
         m_possessedLastAttackHits = slain;
-        m_slashVfxList.push_back({effectCenter, facing, 0.0f, vfxAge, vfxRadius});
+        emitSlashVFX(effectCenter, facing, vfxAge, vfxRadius);
         for (const glm::vec2 &pos : defeatPositions)
         {
             for (int i = 0; i < 14; ++i)
             {
                 const float t = static_cast<float>(i) / 13.0f;
                 glm::vec2 dir = glm::normalize(glm::vec2(-1.0f + 2.0f * t, -0.65f + 1.3f * t));
-                m_combatFragments.push_back({
+                emitCombatFragment(
                     pos,
                     dir * (180.0f + 120.0f * t),
-                    0.0f,
                     0.46f + 0.10f * t,
                     3.2f + 2.3f * t
-                });
+                );
             }
         }
     }
@@ -4302,14 +5444,14 @@ static void saveFloatSetting(const char* key, float value)
             }
         }
         if (changedTiles)
-            chunk_manager->rebuildDirtyChunks();
+            chunk_manager->rebuildDirtyChunks(2);
 
         std::vector<glm::vec2> defeatPositions;
         int slain = m_monsterManager
             ? m_monsterManager->slashMonsters(playerPos, facing, weaponDef->range + 20.0f, 72.0f, &defeatPositions)
             : 0;
 
-        m_slashVfxList.push_back({slashCenter, facing, 0.0f, 0.20f, weaponDef->range});
+        emitSlashVFX(slashCenter, facing, 0.20f, weaponDef->range);
         for (const glm::vec2 &pos : defeatPositions)
         {
             for (int i = 0; i < 14; ++i)
@@ -4317,13 +5459,12 @@ static void saveFloatSetting(const char* key, float value)
                 float spread = (-0.9f + 1.8f * (static_cast<float>(i) / 13.0f));
                 glm::vec2 dir = glm::normalize(glm::vec2(facing * (1.5f + std::abs(spread) * 1.8f), spread * 1.2f - 0.35f));
                 float speed = 240.0f + 26.0f * static_cast<float>(i);
-                m_combatFragments.push_back({
+                emitCombatFragment(
                     pos,
                     dir * speed,
-                    0.0f,
                     0.55f + 0.02f * static_cast<float>(i % 4),
                     4.0f + static_cast<float>(i % 3)
-                });
+                );
             }
         }
 
@@ -4397,7 +5538,7 @@ static void saveFloatSetting(const char* key, float value)
         }
 
         if (hasBatchedTileChanges)
-            chunk_manager->rebuildDirtyChunks();
+            chunk_manager->rebuildDirtyChunks(2);
 
         int crushedMonsters = m_monsterManager ? m_monsterManager->crushMonstersInRadius(center, radius + 32.0f) : 0;
         glm::vec2 vel = mechPhysics->getVelocity();
@@ -4456,7 +5597,7 @@ static void saveFloatSetting(const char* key, float value)
                         if (cnt > 0)
                         {
                             m_skillCooldowns[i] = def->cooldown;
-                            m_skillVfxList.push_back({game::skill::SkillEffect::IceAura, ppos, 0.0f, 0.75f, 0.0f});
+                            emitSkillVFX(game::skill::SkillEffect::IceAura, ppos, 0.75f, 0.0f);
                             spdlog::debug("寒冰光环：冻结 {} 个怪物", cnt);
                         }
                         else if (attr)
@@ -4534,18 +5675,17 @@ static void saveFloatSetting(const char* key, float value)
 
             constexpr float kFireProjectileSpeed = 520.0f;
             float flightTime = std::max(distance / kFireProjectileSpeed, 0.12f);
-            m_skillProjectiles.push_back({
+            emitSkillProjectile(
                 game::skill::SkillEffect::FireBlast,
                 origin,
                 origin,
                 origin,
                 attackPos,
                 delta * kFireProjectileSpeed,
-                0.0f,
                 std::min(flightTime + 0.18f, 1.4f),
                 def->range
-            });
-            m_skillVfxList.push_back({game::skill::SkillEffect::FireBlast, origin, 0.0f, 0.18f, -1.0f});
+            );
+            emitSkillVFX(game::skill::SkillEffect::FireBlast, origin, 0.18f, -1.0f);
 
             m_skillCooldowns[i] = def->cooldown;
             spdlog::debug("炎焰星技：投射物发射 ({:.0f},{:.0f}) -> ({:.0f},{:.0f})",
@@ -4595,7 +5735,7 @@ static void saveFloatSetting(const char* key, float value)
         }
 
         if (hasBatchedTileChanges)
-            chunk_manager->rebuildDirtyChunks();
+            chunk_manager->rebuildDirtyChunks(2);
 
         int crushed = m_monsterManager
             ? m_monsterManager->crushMonstersInRadius(attackPos, radius + 18.0f)
@@ -4603,7 +5743,7 @@ static void saveFloatSetting(const char* key, float value)
 
         m_lastAttackSkillTarget = attackPos;
         m_hasLastAttackSkillTarget = true;
-        m_skillVfxList.push_back({game::skill::SkillEffect::FireBlast, attackPos, 0.0f, 0.72f, radius});
+        emitSkillVFX(game::skill::SkillEffect::FireBlast, attackPos, 0.72f, radius);
         spdlog::debug("炎焰星技：爆炸 @({:.0f},{:.0f})  瓦片={} 怪物={}",
                       attackPos.x, attackPos.y, destroyedTiles, crushed);
     }
@@ -4643,7 +5783,7 @@ static void saveFloatSetting(const char* key, float value)
             m_skillCooldowns[i] = def->cooldown;
             {
                 glm::vec2 ppos = getActorWorldPosition(m_player);
-                m_skillVfxList.push_back({game::skill::SkillEffect::LightDash, ppos, 0.0f, 0.45f, facing});
+                emitSkillVFX(game::skill::SkillEffect::LightDash, ppos, 0.45f, facing);
             }
             spdlog::debug("闪光星技：冲刺 {} 方向", facing > 0 ? "右" : "左");
             break;  // 每次Q键只触发一个冲刺星
@@ -4883,7 +6023,7 @@ static void saveFloatSetting(const char* key, float value)
 
         // ── 属性面板（右下角，羊皮纸卷轴风格）──────────────────────────────
         constexpr float PANEL_W = 186.0f;
-        constexpr float PANEL_H = 150.0f;
+        constexpr float PANEL_H = 182.0f;
         ImGui::SetNextWindowPos({disp.x - PANEL_W - 12.0f, disp.y - PANEL_H - 8.0f}, ImGuiCond_Always);
         ImGui::SetNextWindowSize({PANEL_W, PANEL_H}, ImGuiCond_Always);
         ImGui::SetNextWindowBgAlpha(0.0f);
@@ -4983,6 +6123,32 @@ static void saveFloatSetting(const char* key, float value)
                 IM_COL32(150, 120, 255, 180), "✦ 星能不足");
         }
 
+        float equipAtkBonus = 0.0f;
+        float equipDefBonus = 0.0f;
+        float equipSpdBonusPct = 0.0f;
+        float equipJumpBonusPct = 0.0f;
+        if (m_equipmentLoadout.hasItemId("kinetic_actuator"))
+        {
+            equipAtkBonus += 12.0f;
+            equipSpdBonusPct += 10.0f;
+        }
+        if (m_equipmentLoadout.hasItemId("exo_armor"))
+            equipDefBonus += 8.0f;
+        if (m_equipmentLoadout.hasItemId("gyro_stabilizer"))
+            equipJumpBonusPct += 8.0f;
+
+        if (equipAtkBonus > 0.0f || equipDefBonus > 0.0f || equipSpdBonusPct > 0.0f || equipJumpBonusPct > 0.0f)
+        {
+            adl->AddLine({ap.x + 8, ap.y + PANEL_H - 36}, {ap.x + PANEL_W - 8, ap.y + PANEL_H - 36},
+                IM_COL32(160, 132, 60, 110), 1.0f);
+            char bonusLineA[80];
+            char bonusLineB[80];
+            snprintf(bonusLineA, sizeof(bonusLineA), "装备: 攻 +%.0f  防 +%.0f", equipAtkBonus, equipDefBonus);
+            snprintf(bonusLineB, sizeof(bonusLineB), "      速 +%.0f%% 跳 +%.0f%%", equipSpdBonusPct, equipJumpBonusPct);
+            adl->AddText({ap.x + 10, ap.y + PANEL_H - 32}, IM_COL32(230, 205, 130, 230), bonusLineA);
+            adl->AddText({ap.x + 10, ap.y + PANEL_H - 18}, IM_COL32(205, 190, 145, 220), bonusLineB);
+        }
+
         ImGui::End();
     }
 
@@ -4992,11 +6158,13 @@ static void saveFloatSetting(const char* key, float value)
     void GameScene::tickSkillVFX(float dt)
     {
         for (auto& vfx : m_skillVfxList)
+        {
+            if (!vfx.active)
+                continue;
             vfx.age += dt;
-        m_skillVfxList.erase(
-            std::remove_if(m_skillVfxList.begin(), m_skillVfxList.end(),
-                           [](const SkillVFX& v){ return v.age >= v.maxAge; }),
-            m_skillVfxList.end());
+            if (vfx.age >= vfx.maxAge)
+                vfx.active = false;
+        }
     }
 
     void GameScene::tickSkillProjectiles(float dt)
@@ -5006,6 +6174,9 @@ static void saveFloatSetting(const char* key, float value)
 
         for (auto &proj : m_skillProjectiles)
         {
+            if (!proj.active)
+                continue;
+
             proj.age += dt;
             proj.lastWorldPos = proj.worldPos;
             proj.worldPos += proj.velocity * dt;
@@ -5037,36 +6208,36 @@ static void saveFloatSetting(const char* key, float value)
             if (explode)
             {
                 explodeFireBlast(impactPos, proj.radius);
-                proj.age = proj.maxAge;
+                proj.active = false;
             }
-        }
 
-        m_skillProjectiles.erase(
-            std::remove_if(m_skillProjectiles.begin(), m_skillProjectiles.end(),
-                           [](const SkillProjectile &proj) { return proj.age >= proj.maxAge; }),
-            m_skillProjectiles.end());
+            if (proj.age >= proj.maxAge)
+                proj.active = false;
+        }
     }
 
     void GameScene::tickCombatEffects(float dt)
     {
         for (auto &slash : m_slashVfxList)
+        {
+            if (!slash.active)
+                continue;
             slash.age += dt;
-        m_slashVfxList.erase(
-            std::remove_if(m_slashVfxList.begin(), m_slashVfxList.end(),
-                           [](const SlashVFX &slash) { return slash.age >= slash.maxAge; }),
-            m_slashVfxList.end());
+            if (slash.age >= slash.maxAge)
+                slash.active = false;
+        }
 
         for (auto &fragment : m_combatFragments)
         {
+            if (!fragment.active)
+                continue;
             fragment.age += dt;
             fragment.velocity *= std::max(0.0f, 1.0f - dt * 1.6f);
             fragment.velocity.y += 520.0f * dt;
             fragment.worldPos += fragment.velocity * dt;
+            if (fragment.age >= fragment.maxAge)
+                fragment.active = false;
         }
-        m_combatFragments.erase(
-            std::remove_if(m_combatFragments.begin(), m_combatFragments.end(),
-                           [](const CombatFragment &fragment) { return fragment.age >= fragment.maxAge; }),
-            m_combatFragments.end());
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -5081,6 +6252,8 @@ static void saveFloatSetting(const char* key, float value)
 
         for (const auto& vfx : m_skillVfxList)
         {
+            if (!vfx.active)
+                continue;
             float t = vfx.age / vfx.maxAge;         // 0 → 1
             float ease = 1.0f - t * t;               // 二次缓出
             int   alpha = static_cast<int>(ease * 220.0f);
@@ -5237,6 +6410,8 @@ static void saveFloatSetting(const char* key, float value)
 
         for (const auto &proj : m_skillProjectiles)
         {
+            if (!proj.active)
+                continue;
             glm::vec2 curLogical = cam.worldToScreen(proj.worldPos);
             glm::vec2 prevLogical = cam.worldToScreen(proj.lastWorldPos);
             ImVec2 center = logicalToImGuiScreen(_context, curLogical);
@@ -5276,6 +6451,8 @@ static void saveFloatSetting(const char* key, float value)
 
         for (const auto &slash : m_slashVfxList)
         {
+            if (!slash.active)
+                continue;
             float t = slash.age / slash.maxAge;
             float fade = 1.0f - t;
             glm::vec2 screenLogical = cam.worldToScreen(slash.worldPos);
@@ -5303,6 +6480,8 @@ static void saveFloatSetting(const char* key, float value)
 
         for (const auto &fragment : m_combatFragments)
         {
+            if (!fragment.active)
+                continue;
             float fade = 1.0f - fragment.age / fragment.maxAge;
             glm::vec2 screenLogical = cam.worldToScreen(fragment.worldPos);
             ImVec2 center = logicalToImGuiScreen(_context, screenLogical);
@@ -5345,6 +6524,8 @@ static void saveFloatSetting(const char* key, float value)
 
         for (const auto& vfx : m_skillVfxList)
         {
+            if (!vfx.active)
+                continue;
             ImVec2 vfxImGui = logicalToImGuiScreen(
                 _context, _context.getCamera().worldToScreen(vfx.worldPos));
             drawDebugCross(dl, vfxImGui, IM_COL32(120, 255, 120, 220), 6.0f);
@@ -5352,6 +6533,8 @@ static void saveFloatSetting(const char* key, float value)
 
         for (const auto& proj : m_skillProjectiles)
         {
+            if (!proj.active)
+                continue;
             ImVec2 projImGui = logicalToImGuiScreen(
                 _context, _context.getCamera().worldToScreen(proj.worldPos));
             drawDebugCross(dl, projImGui, IM_COL32(255, 150, 40, 220), 7.0f);
@@ -5372,10 +6555,28 @@ static void saveFloatSetting(const char* key, float value)
             ImGui::Text("技能中心: (%.1f, %.1f)", m_lastAttackSkillTarget.x, m_lastAttackSkillTarget.y);
         else
             ImGui::TextUnformatted("技能中心: <尚未触发>");
-        ImGui::Text("活动特效: %d", static_cast<int>(m_skillVfxList.size()));
-        ImGui::Text("飞行投射物: %d", static_cast<int>(m_skillProjectiles.size()));
+        const int activeVfx = static_cast<int>(std::count_if(m_skillVfxList.begin(), m_skillVfxList.end(),
+            [](const SkillVFX& vfx) { return vfx.active; }));
+        const int activeProj = static_cast<int>(std::count_if(m_skillProjectiles.begin(), m_skillProjectiles.end(),
+            [](const SkillProjectile& proj) { return proj.active; }));
+        ImGui::Text("活动特效: %d", activeVfx);
+        ImGui::Text("飞行投射物: %d", activeProj);
         ImGui::TextColored({0.85f, 0.85f, 0.85f, 1.0f}, "白=鼠标屏幕 蓝=鼠标世界 黄=格中心 红=技能 绿=特效 橙=投射物");
         ImGui::End();
+    }
+
+    bool GameScene::canAccessMechInventory() const
+    {
+        if (!m_mech)
+            return false;
+        if (m_isPlayerInMech)
+            return true;
+        if (!m_player || m_possessedMonster)
+            return false;
+
+        glm::vec2 playerPos = getActorWorldPosition(m_player);
+        glm::vec2 mechPos = getActorWorldPosition(m_mech);
+        return glm::distance(playerPos, mechPos) <= 220.0f;
     }
 
     engine::object::GameObject* GameScene::getControlledActor() const

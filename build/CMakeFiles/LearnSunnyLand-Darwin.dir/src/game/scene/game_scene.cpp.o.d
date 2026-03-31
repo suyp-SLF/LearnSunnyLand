@@ -1457,6 +1457,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.o: \
   /Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/backends/imgui_impl_opengl3.h \
   /opt/homebrew/include/SDL3/SDL_opengl.h \
   /opt/homebrew/include/SDL3/SDL_opengl_glext.h \
+  /Users/suyp/C++/Library/build/include/SDL3_mixer/SDL_mixer.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/fstream \
   /opt/homebrew/include/nlohmann/json.hpp \
   /opt/homebrew/include/nlohmann/adl_serializer.hpp \

@@ -22,12 +22,15 @@
 #include <array>
 #include <optional>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 namespace engine::object
 {
     class GameObject;
 }
+
+struct MIX_Track;
 
 namespace game::scene
 {
@@ -137,16 +140,111 @@ namespace game::scene
         bool m_showSkillDebugOverlay = false;
         bool m_showPhysicsDebug = false;
         bool m_showFpsOverlay = true;   // 由 config.json performance.show_fps 控制
+        bool m_showMapEditor = false;
         bool m_invertPlayerFacing = false;
         bool m_screenRainOverlay = false;
         float m_screenRainOverlayStrength = 1.0f;
         float m_screenRainMotionStrength = 1.0f;
+        float m_flightAmbientGain = 0.0f;
+        MIX_Track* m_flightAmbientTrack = nullptr;
+        bool m_flightAmbientReady = false;
+        bool m_flightAmbientWasFlyMode = false;
         bool m_vsyncEnabled = true;
         bool m_showSettings = false;
+        bool m_showEditorToolbar = true;
+        bool m_showHierarchyPanel = true;
+        bool m_showInspectorPanel = true;
+        bool m_gameplayRunning = false;
+        bool m_gameplayPaused = false;
+        bool m_stepOneFrame = false;
+        bool m_toolbarShowPlayControls = true;
+        bool m_toolbarShowWindowControls = true;
+        bool m_toolbarShowDebugControls = false;
+        int m_selectedActorIndex = -1;
+        bool m_hierarchyGroupByTag = false;
+        bool m_hierarchyFavoritesOnly = false;
+        bool m_enablePlayRollback = true;
+        std::array<char, 96> m_hierarchyFilterBuffer{};
+        std::array<char, 64> m_inspectorRenameBuffer{};
+        std::array<char, 64> m_inspectorTagBuffer{};
+        int m_inspectorRenameBufferActorIndex = -1;
+        std::unordered_set<const engine::object::GameObject*> m_hierarchyFavorites;
         bool m_devMode = false;         // 开发模式：显示地形/物理调试覆盖层
+        engine::world::TileType m_mapEditorPaintTile = engine::world::TileType::Stone;
+        int m_mapEditorBrushRadius = 0;
+
+        struct ActorRuntimeSnapshot
+        {
+            std::string name;
+            std::string tag;
+            bool needRemove = false;
+            bool hasTransform = false;
+            glm::vec2 position = {0.0f, 0.0f};
+            glm::vec2 scale = {1.0f, 1.0f};
+            float rotation = 0.0f;
+            bool hasController = false;
+            float controllerSpeed = 0.0f;
+            bool controllerEnabled = true;
+            bool controllerRunMode = false;
+            bool hasPhysics = false;
+            glm::vec2 physicsVelocity = {0.0f, 0.0f};
+            glm::vec2 physicsPosition = {0.0f, 0.0f};
+            bool hasSprite = false;
+            bool spriteHidden = false;
+            bool spriteFlipped = false;
+            bool hasParallax = false;
+            glm::vec2 parallaxFactor = {1.0f, 1.0f};
+            glm::bvec2 parallaxRepeat = {false, false};
+            bool parallaxHidden = false;
+        };
+
+        struct TileRuntimeSnapshot
+        {
+            int x = 0;
+            int y = 0;
+            engine::world::TileData tile{};
+        };
+
+        struct UiRuntimeSnapshot
+        {
+            bool showInventory = false;
+            bool showSettings = false;
+            bool showMapEditor = false;
+            bool showCommandInput = false;
+            bool missionWindow = false;
+            bool showSettlement = false;
+            bool showHierarchyPanel = true;
+            bool showInspectorPanel = true;
+            bool showFpsOverlay = true;
+            bool devMode = false;
+            bool showSkillDebug = false;
+            bool showChunkHighlight = false;
+            int selectedActorIndex = -1;
+            int weaponActiveIndex = 0;
+            game::inventory::Inventory inventory;
+            game::inventory::Inventory mechInventory;
+            game::inventory::EquipmentLoadout equipmentLoadout;
+            std::array<game::inventory::InventorySlot, 6> starSockets{};
+            std::array<float, 6> skillCooldowns{};
+            game::weapon::WeaponBar weaponBar;
+        };
+
+        bool m_hasPlaySnapshot = false;
+        std::vector<ActorRuntimeSnapshot> m_playActorSnapshots;
+        std::vector<TileRuntimeSnapshot> m_playTileSnapshots;
+        UiRuntimeSnapshot m_playUiSnapshot;
+        game::world::TimeOfDaySystem::RuntimeState m_playTimeSnapshot;
+        game::weather::WeatherSystem::RuntimeState m_playWeatherSnapshot;
+        int m_snapshotPlayerIndex = -1;
+        int m_snapshotMechIndex = -1;
+        int m_snapshotPossessedIndex = -1;
+        bool m_snapshotIsPlayerInMech = false;
+        int m_snapshotCurrentZone = 0;
 
         // 背包系统
-        game::inventory::Inventory m_inventory;
+        game::inventory::Inventory m_inventory;      // 人物背包
+        game::inventory::Inventory m_mechInventory;  // 机甲背包
+        game::inventory::EquipmentLoadout m_equipmentLoadout;
         bool m_showInventory = false;
 
         // 星技槽：6 个圆形槽，只接受 StarSkill 类型物品
@@ -155,6 +253,9 @@ namespace game::scene
         // 星技技能状态
         std::array<float, 6> m_skillCooldowns{};   // 各槽冷却计时（秒）
         bool m_windStarEquipped = false;            // 上帧疾风星技装备状态（防止每帧重设）
+        bool m_prevFlyModeActive = false;             // 上帧飞行模式状态（用于检测切换）
+        std::string m_modeSwitchHintText;             // 模式切换提示文字
+        float m_modeSwitchHintTimer = 0.0f;           // 提示显示倒计时（秒）
 
         // 技能特效粒子列表
         struct SkillVFX
@@ -164,6 +265,7 @@ namespace game::scene
             float age    = 0.0f;   // 当前已存在时间（秒）
             float maxAge = 0.6f;   // 总持续时间
             float param  = 0.0f;   // 附加参数（如冲刺方向）
+            bool active = false;
         };
         std::vector<SkillVFX> m_skillVfxList;
 
@@ -178,6 +280,7 @@ namespace game::scene
             float age = 0.0f;
             float maxAge = 0.0f;
             float radius = 0.0f;
+            bool active = false;
         };
         std::vector<SkillProjectile> m_skillProjectiles;
 
@@ -188,6 +291,7 @@ namespace game::scene
             float age = 0.0f;
             float maxAge = 0.18f;
             float radius = 0.0f;
+            bool active = false;
         };
         std::vector<SlashVFX> m_slashVfxList;
 
@@ -198,6 +302,7 @@ namespace game::scene
             float age = 0.0f;
             float maxAge = 0.0f;
             float size = 0.0f;
+            bool active = false;
         };
         std::vector<CombatFragment> m_combatFragments;
 
@@ -230,9 +335,29 @@ namespace game::scene
         void createTestObject();
         void testCamera();
         void createPlayer();
+        void setupGroundTileScene(const engine::world::WorldConfig& config);
+        void setupSkyBackgroundScene();
+        void setupGroundBuildingBackgroundScene();
+        void warmupSceneTextures();
+        void initializeGroundChunksAndTrees();
+        void preallocateRuntimeBuffers();
+        void updateFlightAmbientSound(float dt);
+        void shutdownFlightAmbientSound();
+        void emitSkillVFX(game::skill::SkillEffect type, glm::vec2 worldPos, float maxAge, float param);
+        void emitSkillProjectile(game::skill::SkillEffect type,
+                     glm::vec2 originPos,
+                     glm::vec2 worldPos,
+                     glm::vec2 lastWorldPos,
+                     glm::vec2 targetPos,
+                     glm::vec2 velocity,
+                     float maxAge,
+                     float radius);
+        void emitSlashVFX(glm::vec2 worldPos, float facing, float maxAge, float radius);
+        void emitCombatFragment(glm::vec2 worldPos, glm::vec2 velocity, float maxAge, float size);
         void renderUI();
         void updateTextTexture();
         void renderInventoryUI();
+        void renderEquipmentPage();
         void renderStarSocketPage();
         void renderSkillHUD();           // 屏幕底部技能冷却 HUD
         void renderPlayerStatusHUD();    // 左上角 HP / 星能 / 属性面板
@@ -246,13 +371,22 @@ namespace game::scene
         void renderWeaponBar();
         void renderDropItems();
         void renderPlayerStateTag();
+        void renderFlightThrusterFX();
+        void renderModeSwitchHint();          // 飞行/陆地模式切换屏幕提示
         void renderMonsterIFFMarkers();
         void renderActorGroundShadows();
         void syncPlayerPresentation();
         void renderPerformanceOverlay();
+        void renderEditorToolbar();
+        void renderHierarchyPanel();
+        void renderInspectorPanel();
         void renderCommandTerminal();
         void renderSettingsPage();
+        void renderMapEditor();
         void applyRuntimeGraphicsSettings();
+        void setGameplayRunning(bool running);
+        void capturePlaySnapshot();
+        bool restorePlaySnapshot();
         void updateSettingsParticles(float dt);  // 设置界面粒子更新（每帧调用）
         void renderMechPrompt();
         void renderRouteHUD();    // 左下角路线 HUD
@@ -260,6 +394,9 @@ namespace game::scene
         void injectOreVeins();    // 在目标格区域注入矿脉
         void generateRockObstacles();
         void initTestItems();
+        void loadActorRoleConfig();
+        void updateMechFlightCapability();
+        void updateEquipmentAttributeBonuses();
         void executeCommand();
         void spawnMechDrop();
         void tryEnterMech();
@@ -275,6 +412,7 @@ namespace game::scene
         void triggerAttackStarSkills(glm::vec2 pos);  // 攻击触发型星技
         void triggerActiveStarSkills();               // 主动技能（Q键）
         void explodeFireBlast(glm::vec2 pos, float radius);
+        bool canAccessMechInventory() const;
         engine::object::GameObject* getControlledActor() const;
         glm::vec2 getActorWorldPosition(const engine::object::GameObject* actor) const;
         glm::vec2 getPlayerCastOrigin(glm::vec2 targetPos) const;
@@ -285,6 +423,16 @@ namespace game::scene
         bool m_showCommandInput = false;
         bool m_focusCommandInput = false;
         bool m_isPlayerInMech = false;
+        std::string m_playerActorKey = "player";
+        std::string m_mechActorKey = "mech_drop";
+        std::string m_controlLabelPlayer = "人物";
+        std::string m_controlLabelMech = "机甲";
+        std::string m_controlLabelPossessed = "接管体";
+        std::string m_statePrefixMech = "机甲·";
+        std::string m_statePrefixPossessed = "接管·";
+        std::string m_hudPlayerText = "player";
+        std::string m_hudMechPrefix = "机甲：";
+        std::string m_hudMechName = "gundom";
         std::array<char, 16> m_commandBuffer{};
         engine::object::GameObject* m_mech = nullptr;
         engine::object::GameObject* m_possessedMonster = nullptr;
@@ -296,6 +444,7 @@ namespace game::scene
         float m_mechAttackCooldown = 0.0f;
         float m_mechAttackFlashTimer = 0.0f;
         int m_mechLastAttackHits = 0;
+        bool m_mechFlightEngineInstalled = false;
         // 玩家帧动画由 AnimationComponent 管理，此处不再保留手动计时变量
 
         // 机甲精灵表动画
@@ -323,7 +472,7 @@ namespace game::scene
         // 连招动画队列：Z键/左键鼠标 触发，每轮 attack_a → attack_b → attack_c 循环
         int   m_attackComboStep   = 0;    // 0/1/2 对应 a/b/c 连招
         float m_attackAnimTimer   = 0.0f; // 当前攻击动画剩余时间（>0 表示正在播放攻击动画）
-        bool  m_attackInputQueued = false;// 攻击动画播放中按下攻击，等待连招
+        int   m_attackQueuedCount = 0;    // 攻击动画中缓存的连招输入段数（0-2）
 
         // 重击/大招变量
         float m_heavyAttackTimer  = 0.0f; // >0 = 重击动画播放中

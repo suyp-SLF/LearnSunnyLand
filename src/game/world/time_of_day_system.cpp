@@ -203,6 +203,17 @@ namespace game::world
         return totalMinutes % 60;
     }
 
+    TimeOfDaySystem::RuntimeState TimeOfDaySystem::captureRuntimeState() const
+    {
+        return RuntimeState{m_timeOfDay, dayLengthSeconds};
+    }
+
+    void TimeOfDaySystem::restoreRuntimeState(const RuntimeState& state)
+    {
+        m_timeOfDay = wrap01(state.timeOfDay);
+        dayLengthSeconds = std::max(state.dayLengthSeconds, 0.0f);
+    }
+
     unsigned long long TimeOfDaySystem::nextRand()
     {
         m_rngState ^= m_rngState << 13;

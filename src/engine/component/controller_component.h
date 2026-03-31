@@ -100,13 +100,21 @@ namespace engine::component
         bool m_jetpackEnabled = true;
         bool m_hasReleasedJumpSinceTakeoff = false;
         bool m_jetpackUnlockedThisAir = false;
+        bool m_flyModeActive = false;
 
         float approach(float current, float target, float delta) const;
+    public:
+        bool isFlyModeActive() const { return m_flyModeActive; }
+    private:
         bool isGrounded(const PhysicsComponent& physics) const;
         void updateMovementState(const glm::vec2& velocity, bool grounded, bool jetpacking, float velZ = 0.0f);
 
         void handleInput() override;
         void update(float delta_time) override;
         void render() override {}
+
+        static constexpr float kFlyAscendSpeed = 560.0f; // px/s
+        static constexpr float kFlyMaxHeightPx = 2000.0f * 32.0f; // 2000m
+        static constexpr float kFlyDescendSpeed = 520.0f; // px/s
     };
 }

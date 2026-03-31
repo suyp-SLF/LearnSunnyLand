@@ -3,6 +3,18 @@
         "music_volume": 0.5,
         "sfx_volume": 0.5
     },
+    "actor_roles": {
+        "player_actor_key": "player",
+        "mech_actor_key": "mech_drop",
+        "control_label_player": "人物",
+        "control_label_mech": "机甲",
+        "control_label_possessed": "接管体",
+        "state_prefix_mech": "机甲·",
+        "state_prefix_possessed": "接管·",
+        "hud_player_text": "player",
+        "hud_mech_prefix": "机甲：",
+        "hud_mech_name": "gundom"
+    },
     "game": {
         "chunk_view_distance": 3,
         "player_start_x": 0.0,
@@ -10,7 +22,7 @@
     },
     "graphics": {
         "render_type": 1,
-        "vsync": false
+        "vsync": true
     },
     "input_mapping": {
         "attack": [
@@ -68,7 +80,7 @@
     },
     "performance": {
         "show_fps": true,
-        "target_fps": 60
+        "target_fps": 0
     },
     "window": {
         "camera_height": 720,

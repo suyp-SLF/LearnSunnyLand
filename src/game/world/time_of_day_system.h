@@ -14,6 +14,12 @@ namespace game::world
     class TimeOfDaySystem
     {
     public:
+        struct RuntimeState
+        {
+            float timeOfDay = 0.22f;
+            float dayLengthSeconds = 300.0f;
+        };
+
         TimeOfDaySystem();
 
         void update(float deltaTime);
@@ -26,6 +32,8 @@ namespace game::world
         const char* getPhaseName() const;
         int getHour24() const;
         int getMinute() const;
+        RuntimeState captureRuntimeState() const;
+        void restoreRuntimeState(const RuntimeState& state);
 
         float dayLengthSeconds = 300.0f;
 

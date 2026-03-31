@@ -27,8 +27,8 @@ namespace engine::world
 
         // 批量写入 API：只标脏，不立即重建（适用于树木生成等批量操作）
         void setTileSilent(int worldX, int worldY, TileData tile);
-        // 重建所有脏块（批量修改完成后调用一次）
-        void rebuildDirtyChunks();
+        // 重建脏块。maxChunksToRebuild < 0 表示重建全部；>=0 表示本次最多重建 N 个。
+        void rebuildDirtyChunks(int maxChunksToRebuild = -1);
 
         glm::ivec2 worldToTile(const glm::vec2 &worldPos) const;
         glm::vec2 tileToWorld(const glm::ivec2 &tilePos) const;

@@ -20,6 +20,7 @@ namespace engine::actor
         void handleInput();
         void clear();
         size_t actorCount() const { return m_actors.size(); }
+        const std::vector<std::unique_ptr<engine::object::GameObject>> &getActors() const { return m_actors; }
 
     private:
         engine::core::Context &m_context;

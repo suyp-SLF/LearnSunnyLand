@@ -107,6 +107,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/frame_editor.cpp.o.d"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.o"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene.cpp.o.d"
+  "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene_editor.cpp.o"
+  "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene_editor.cpp.o.d"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/menu_scene.cpp.o"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/menu_scene.cpp.o.d"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/route_select_scene.cpp.o"

@@ -5,6 +5,11 @@
 
 namespace game::weather
 {
+    namespace
+    {
+        constexpr size_t kMaxSplashPoolSize = 256;
+    }
+
     WeatherSystem::WeatherSystem()
         : m_rng(0xDEADBEEF12345678ULL)
     {
@@ -239,6 +244,58 @@ namespace game::weather
         drop.maxAge = 1.6f + randFloat() * 3.0f;
     }
 
+    void WeatherSystem::emitSplash(float x, float y)
+    {
+        for (auto &s : m_splashes)
+        {
+            if (s.active)
+                continue;
+
+            s.x = x;
+            s.y = y;
+            s.radius = 0.0f;
+            s.maxRadius = 4.0f + randFloat() * 9.0f;
+            s.age = 0.0f;
+            s.maxAge = 0.22f + randFloat() * 0.20f;
+            s.alpha = 0.55f + randFloat() * 0.35f;
+            s.active = true;
+            return;
+        }
+
+        if (m_splashes.size() < kMaxSplashPoolSize)
+        {
+            RainSplash s{};
+            s.x = x;
+            s.y = y;
+            s.radius = 0.0f;
+            s.maxRadius = 4.0f + randFloat() * 9.0f;
+            s.age = 0.0f;
+            s.maxAge = 0.22f + randFloat() * 0.20f;
+            s.alpha = 0.55f + randFloat() * 0.35f;
+            s.active = true;
+            m_splashes.push_back(s);
+            return;
+        }
+
+        auto it = std::max_element(m_splashes.begin(), m_splashes.end(), [](const RainSplash &a, const RainSplash &b) {
+            float ar = a.maxAge > 0.0001f ? (a.age / a.maxAge) : a.age;
+            float br = b.maxAge > 0.0001f ? (b.age / b.maxAge) : b.age;
+            return ar < br;
+        });
+
+        if (it != m_splashes.end())
+        {
+            it->x = x;
+            it->y = y;
+            it->radius = 0.0f;
+            it->maxRadius = 4.0f + randFloat() * 9.0f;
+            it->age = 0.0f;
+            it->maxAge = 0.22f + randFloat() * 0.20f;
+            it->alpha = 0.55f + randFloat() * 0.35f;
+            it->active = true;
+        }
+    }
+
     // ──────────────────────────────────────────────
     // 公共接口
     // ──────────────────────────────────────────────
@@ -271,6 +328,32 @@ namespace game::weather
             case WeatherType::Thunderstorm: return "雷雨";
         }
         return "未知";
+    }
+
+    WeatherSystem::RuntimeState WeatherSystem::captureRuntimeState() const
+    {
+        RuntimeState state;
+        state.current = m_current;
+        state.intensity = m_intensity;
+        state.transitionTimer = m_transitionTimer;
+        state.transitionDuration = m_transitionDuration;
+        state.isTransitioning = m_isTransitioning;
+        state.lightningFlash = m_lightningFlash;
+        state.lightningNextTime = m_lightningNextTime;
+        state.autoChangeTimer = m_autoChangeTimer;
+        return state;
+    }
+
+    void WeatherSystem::restoreRuntimeState(const RuntimeState& state)
+    {
+        m_current = state.current;
+        m_intensity = std::clamp(state.intensity, 0.0f, 1.0f);
+        m_transitionTimer = std::max(state.transitionTimer, 0.0f);
+        m_transitionDuration = std::max(state.transitionDuration, 0.0001f);
+        m_isTransitioning = state.isTransitioning;
+        m_lightningFlash = std::max(state.lightningFlash, 0.0f);
+        m_lightningNextTime = std::max(state.lightningNextTime, 0.0f);
+        m_autoChangeTimer = state.autoChangeTimer;
     }
 
     // ──────────────────────────────────────────────
@@ -342,15 +425,9 @@ namespace game::weather
                 float spawnProb = particleAlpha() * m_intensity;
                 if ((nextRand() & 0x7F) < static_cast<uint32_t>(spawnProb * 24))
                 {
-                    RainSplash s;
-                    s.x        = p.x + (static_cast<float>(nextRand() & 0x7) - 3.5f);
-                    s.y        = p.y  + (static_cast<float>(nextRand() & 0x7) - 3.5f) * 0.4f;  // 落点即溅起位置
-                    s.radius   = 0.0f;
-                    s.maxRadius = 4.0f + randFloat() * 9.0f;
-                    s.age      = 0.0f;
-                    s.maxAge   = 0.22f + randFloat() * 0.20f;
-                    s.alpha    = 0.55f + randFloat() * 0.35f;
-                    m_splashes.push_back(s);
+                    const float sx = p.x + (static_cast<float>(nextRand() & 0x7) - 3.5f);
+                    const float sy = p.y + (static_cast<float>(nextRand() & 0x7) - 3.5f) * 0.4f;
+                    emitSplash(sx, sy);
                 }
             }
 
@@ -365,6 +442,8 @@ namespace game::weather
 
         for (auto &s : m_splashes)
         {
+            if (!s.active)
+                continue;
             s.x -= cameraDriftX;
             s.y -= cameraDriftY;
         }
@@ -403,15 +482,15 @@ namespace game::weather
         // ── 水花涟漪更新 ──
         for (auto &s : m_splashes)
         {
+            if (!s.active)
+                continue;
             s.age += dt;
             float t  = s.age / s.maxAge;
             s.radius = s.maxRadius * t;
             s.alpha  = (1.0f - t * t) * 0.85f;
+            if (s.age >= s.maxAge)
+                s.active = false;
         }
-        m_splashes.erase(
-            std::remove_if(m_splashes.begin(), m_splashes.end(),
-                           [](const RainSplash &s){ return s.age >= s.maxAge; }),
-            m_splashes.end());
 
         // ── 雾气时间累计 ──
         m_fogTime += dt;
@@ -586,6 +665,8 @@ namespace game::weather
         // ── 水花涟漪 ──
         for (const auto &s : m_splashes)
         {
+            if (!s.active)
+                continue;
             float effAlpha = s.alpha * m_intensity;
             if (effAlpha <= 0.01f) continue;
             uint8_t a = static_cast<uint8_t>(std::min(effAlpha * 210.0f, 210.0f));

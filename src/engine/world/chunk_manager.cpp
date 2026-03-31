@@ -101,14 +101,18 @@ namespace engine::world
         it->second->setDirty(); // 只标脏，延迟重建
     }
 
-    void ChunkManager::rebuildDirtyChunks()
+    void ChunkManager::rebuildDirtyChunks(int maxChunksToRebuild)
     {
+        int rebuiltCount = 0;
         for (auto &[key, chunk] : m_chunks)
         {
             if (chunk->isDirty())
             {
                 chunk->rebuildPhysicsBodies(m_physicsMgr, WorldConfig::PIXELS_PER_METER);
                 rebuildChunkMesh(*chunk);
+                ++rebuiltCount;
+                if (maxChunksToRebuild >= 0 && rebuiltCount >= maxChunksToRebuild)
+                    break;
             }
         }
     }

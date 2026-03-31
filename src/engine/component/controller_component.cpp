@@ -4,6 +4,7 @@
 #include "../object/game_object.h"
 #include "../core/context.h"
 #include "../input/input_manager.h"
+#include <SDL3/SDL_keyboard.h>
 #include <algorithm>
 #include <cmath>
 
@@ -137,6 +138,7 @@ namespace engine::component
             m_jetpackFuel = m_jetpackEnabled ? m_jetpackFuelMax : 0.0f;
             m_hasReleasedJumpSinceTakeoff = false;
             m_jetpackUnlockedThisAir = false;
+            m_flyModeActive = false;
         }
         else
         {
@@ -144,9 +146,17 @@ namespace engine::component
             if (input.isActionReleased("jump"))
                 m_hasReleasedJumpSinceTakeoff = true;
 
-            // Z轴重力（下落时增大倍率消除飘浮感）
-            float gravMult = (m_velZ < 0.0f) ? m_fallGravityMultiplier : 1.0f;
-            m_velZ -= kZGravity * gravMult * delta_time;
+            // 飞行模式悬空时关闭重力，保持稳定悬停。
+            if (m_flyModeActive)
+            {
+                m_velZ = 0.0f;
+            }
+            else
+            {
+                // Z轴重力（下落时增大倍率消除飘浮感）
+                float gravMult = (m_velZ < 0.0f) ? m_fallGravityMultiplier : 1.0f;
+                m_velZ -= kZGravity * gravMult * delta_time;
+            }
             m_posZ += m_velZ * delta_time;
 
             if (m_posZ <= 0.0f)
@@ -196,27 +206,47 @@ namespace engine::component
             m_coyoteTimer = 0.0f;
             zGrounded = false;
             jumpedThisFrame = true;
+            m_flyModeActive = false;
         }
 
         // 松开跳跃键时缩减上升速度（可变跳高）
-        if (!zGrounded && input.isActionReleased("jump") && m_velZ > 0.0f)
+        if (!zGrounded && !m_flyModeActive && input.isActionReleased("jump") && m_velZ > 0.0f)
             m_velZ *= m_jumpCutFactor;
 
-        // ── 喷气背包（Z轴悬停）──
-        if (m_jetpackEnabled && !zGrounded && !jumpedThisFrame && m_hasReleasedJumpSinceTakeoff &&
-            input.isActionPressed("jump") && m_jetpackFuel > 0.0f)
+        // ── 起跳后，需先松开一次空格，再按空格进入飞行 ──
+        if (m_jetpackEnabled && !zGrounded && !jumpedThisFrame && input.isActionPressed("jump"))
         {
-            m_jetpackUnlockedThisAir = true;
+            if (!m_flyModeActive && m_hasReleasedJumpSinceTakeoff)
+            {
+                m_flyModeActive = true;
+                m_jetpackUnlockedThisAir = true;
+                m_velZ = 0.0f;
+            }
         }
 
         bool jetpacking = false;
-        if (m_jetpackEnabled && !zGrounded && m_jetpackUnlockedThisAir &&
-            input.isActionDown("jump") && m_jetpackFuel > 0.0f)
+        if (m_jetpackEnabled && !zGrounded && m_flyModeActive)
         {
-            // 喷气维持 Z速度
-            m_velZ = std::max(m_velZ, m_jetpackRiseSpeed * 0.5f);
-            m_jetpackFuel = std::max(0.0f, m_jetpackFuel - delta_time);
+            // 飞行高度控制改为：Space 上升、Shift 下降（避免与 W/S 深度移动冲突）。
+            const bool jumpHeld = input.isActionDown("jump");
+            const bool* keys = SDL_GetKeyboardState(nullptr);
+            const bool shiftHeld = keys && (keys[SDL_SCANCODE_LSHIFT] || keys[SDL_SCANCODE_RSHIFT]);
+
+            if (jumpHeld && !shiftHeld)
+                m_velZ = kFlyAscendSpeed;
+            else if (shiftHeld && !jumpHeld)
+                m_velZ = -kFlyDescendSpeed;
+            else
+                m_velZ = 0.0f;
+
+            m_posZ += m_velZ * delta_time;
             jetpacking = true;
+        }
+
+        if (m_posZ >= kFlyMaxHeightPx)
+        {
+            m_posZ = kFlyMaxHeightPx;
+            m_velZ = std::min(m_velZ, 0.0f);
         }
 
         physics->setVelocity(vel);

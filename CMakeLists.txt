@@ -119,6 +119,7 @@ add_executable(
     src/engine/actor/actor_manager.cpp
 
     src/game/scene/game_scene.cpp
+    src/game/scene/game_scene_editor.cpp
     src/game/scene/frame_editor.cpp
     src/game/scene/state_machine_editor.cpp
     src/game/scene/menu_scene.cpp
