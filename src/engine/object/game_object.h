@@ -18,6 +18,8 @@ namespace engine::object
         std::string _tag;
         engine::core::Context* _context = nullptr;
         bool _need_remove = false;
+        bool _visible     = true;
+        bool _enabled     = true;
         std::unordered_map<std::type_index, std::unique_ptr<engine::component::Component>> _components;
 
     public:
@@ -35,11 +37,15 @@ namespace engine::object
         std::string getName() const { return _name; };
         std::string getTag() const { return _tag; };
         bool isNeedRemove() const { return _need_remove; };
+        bool isVisible()    const { return _visible; }
+        bool isEnabled()    const { return _enabled; }
 
         // SETTER
         void setName(const std::string &name) { _name = name; };
         void setTag(const std::string &tag) { _tag = tag; };
         void setNeedRemove(bool need_remove) { _need_remove = need_remove; };
+        void setVisible(bool v) { _visible = v; }
+        void setEnabled(bool e) { _enabled = e; }
 
         // 组件相关
         template <typename T, typename... Args>

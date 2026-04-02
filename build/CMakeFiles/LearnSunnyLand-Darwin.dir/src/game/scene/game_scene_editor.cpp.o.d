@@ -952,8 +952,8 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene_editor.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/path_iterator.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/recursive_directory_iterator.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/u8path.h \
-  /Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/imgui.h \
-  /Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/imconfig.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/third_party/imgui/imgui.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/third_party/imgui/imconfig.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/float.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/float.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/float.h \
@@ -1348,6 +1348,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene_editor.cpp.o: \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../mission/../inventory/inventory.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../route/route_data.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../skill/star_skill.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../world/ground_tile_catalog.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../component/attribute_component.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../component/../../engine/component/component.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/component/animation_component.h \
@@ -1362,6 +1363,7 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene_editor.cpp.o: \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/component/./component.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/component/../utils/alignment.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/component/transform_component.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/core/context.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/object/game_object.h \
   /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/object/../component/component.h \
   /opt/homebrew/include/spdlog/spdlog.h \
@@ -1420,6 +1422,11 @@ CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene_editor.cpp.o: \
   /opt/homebrew/include/spdlog/details/log_msg_buffer.h \
   /opt/homebrew/include/spdlog/details/log_msg.h \
   /opt/homebrew/include/spdlog/version.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/render/camera.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/render/../utils/math.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/render/renderer.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/render/render_types.h \
+  /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/../../engine/resource/resource_manager.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/fstream \
   /opt/homebrew/include/nlohmann/json.hpp \
   /opt/homebrew/include/nlohmann/adl_serializer.hpp \

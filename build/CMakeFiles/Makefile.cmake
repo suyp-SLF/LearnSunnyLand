@@ -105,7 +105,6 @@ set(CMAKE_MAKEFILE_OUTPUTS
 
 # Byproducts of CMake generate step:
 set(CMAKE_MAKEFILE_PRODUCTS
-  "_deps/imgui-subbuild/CMakeLists.txt"
   "_deps/tinygltf-subbuild/CMakeLists.txt"
   "CMakeFiles/CMakeDirectoryInformation.cmake"
   "_deps/tinygltf-build/TinyGLTFConfig.cmake"

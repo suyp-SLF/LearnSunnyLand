@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
 
-CXX_INCLUDES = -I/Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src -I/Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/imgui-src/backends -I/Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/tinygltf-src -isystem /Users/suyp/C++/Library/build/include -isystem /opt/homebrew/include -iframework /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include/freetype2 -isystem /opt/homebrew/include/harfbuzz
+CXX_INCLUDES = -I/Users/suyp/C++/Projects/LearnSunnyLand/third_party/imgui -I/Users/suyp/C++/Projects/LearnSunnyLand/third_party/imgui/backends -I/Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/tinygltf-src -isystem /Users/suyp/C++/Library/build/include -isystem /opt/homebrew/include -iframework /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include/freetype2 -isystem /opt/homebrew/include/harfbuzz
 
 CXX_FLAGSarm64 = -g -std=gnu++20 -arch arm64 -Wall -Wextra -Wpedantic
 

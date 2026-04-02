@@ -19,6 +19,8 @@ namespace engine::actor
         void render();
         void handleInput();
         void clear();
+        /** 将 from 索引的 actor 移动到 to 索引（渲染顺序） */
+        void moveActor(size_t from, size_t to);
         size_t actorCount() const { return m_actors.size(); }
         const std::vector<std::unique_ptr<engine::object::GameObject>> &getActors() const { return m_actors; }
 

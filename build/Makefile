@@ -200,150 +200,6 @@ tinygltf/fast:
 	$(MAKE) $(MAKESILENT) -f _deps/tinygltf-build/CMakeFiles/tinygltf.dir/build.make _deps/tinygltf-build/CMakeFiles/tinygltf.dir/build
 .PHONY : tinygltf/fast
 
-_deps/imgui-src/backends/imgui_impl_opengl3.o: _deps/imgui-src/backends/imgui_impl_opengl3.cpp.o
-.PHONY : _deps/imgui-src/backends/imgui_impl_opengl3.o
-
-# target to build an object file
-_deps/imgui-src/backends/imgui_impl_opengl3.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_opengl3.cpp.o
-.PHONY : _deps/imgui-src/backends/imgui_impl_opengl3.cpp.o
-
-_deps/imgui-src/backends/imgui_impl_opengl3.i: _deps/imgui-src/backends/imgui_impl_opengl3.cpp.i
-.PHONY : _deps/imgui-src/backends/imgui_impl_opengl3.i
-
-# target to preprocess a source file
-_deps/imgui-src/backends/imgui_impl_opengl3.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_opengl3.cpp.i
-.PHONY : _deps/imgui-src/backends/imgui_impl_opengl3.cpp.i
-
-_deps/imgui-src/backends/imgui_impl_opengl3.s: _deps/imgui-src/backends/imgui_impl_opengl3.cpp.s
-.PHONY : _deps/imgui-src/backends/imgui_impl_opengl3.s
-
-# target to generate assembly for a file
-_deps/imgui-src/backends/imgui_impl_opengl3.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_opengl3.cpp.s
-.PHONY : _deps/imgui-src/backends/imgui_impl_opengl3.cpp.s
-
-_deps/imgui-src/backends/imgui_impl_sdl3.o: _deps/imgui-src/backends/imgui_impl_sdl3.cpp.o
-.PHONY : _deps/imgui-src/backends/imgui_impl_sdl3.o
-
-# target to build an object file
-_deps/imgui-src/backends/imgui_impl_sdl3.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_sdl3.cpp.o
-.PHONY : _deps/imgui-src/backends/imgui_impl_sdl3.cpp.o
-
-_deps/imgui-src/backends/imgui_impl_sdl3.i: _deps/imgui-src/backends/imgui_impl_sdl3.cpp.i
-.PHONY : _deps/imgui-src/backends/imgui_impl_sdl3.i
-
-# target to preprocess a source file
-_deps/imgui-src/backends/imgui_impl_sdl3.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_sdl3.cpp.i
-.PHONY : _deps/imgui-src/backends/imgui_impl_sdl3.cpp.i
-
-_deps/imgui-src/backends/imgui_impl_sdl3.s: _deps/imgui-src/backends/imgui_impl_sdl3.cpp.s
-.PHONY : _deps/imgui-src/backends/imgui_impl_sdl3.s
-
-# target to generate assembly for a file
-_deps/imgui-src/backends/imgui_impl_sdl3.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/backends/imgui_impl_sdl3.cpp.s
-.PHONY : _deps/imgui-src/backends/imgui_impl_sdl3.cpp.s
-
-_deps/imgui-src/imgui.o: _deps/imgui-src/imgui.cpp.o
-.PHONY : _deps/imgui-src/imgui.o
-
-# target to build an object file
-_deps/imgui-src/imgui.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui.cpp.o
-.PHONY : _deps/imgui-src/imgui.cpp.o
-
-_deps/imgui-src/imgui.i: _deps/imgui-src/imgui.cpp.i
-.PHONY : _deps/imgui-src/imgui.i
-
-# target to preprocess a source file
-_deps/imgui-src/imgui.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui.cpp.i
-.PHONY : _deps/imgui-src/imgui.cpp.i
-
-_deps/imgui-src/imgui.s: _deps/imgui-src/imgui.cpp.s
-.PHONY : _deps/imgui-src/imgui.s
-
-# target to generate assembly for a file
-_deps/imgui-src/imgui.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui.cpp.s
-.PHONY : _deps/imgui-src/imgui.cpp.s
-
-_deps/imgui-src/imgui_draw.o: _deps/imgui-src/imgui_draw.cpp.o
-.PHONY : _deps/imgui-src/imgui_draw.o
-
-# target to build an object file
-_deps/imgui-src/imgui_draw.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_draw.cpp.o
-.PHONY : _deps/imgui-src/imgui_draw.cpp.o
-
-_deps/imgui-src/imgui_draw.i: _deps/imgui-src/imgui_draw.cpp.i
-.PHONY : _deps/imgui-src/imgui_draw.i
-
-# target to preprocess a source file
-_deps/imgui-src/imgui_draw.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_draw.cpp.i
-.PHONY : _deps/imgui-src/imgui_draw.cpp.i
-
-_deps/imgui-src/imgui_draw.s: _deps/imgui-src/imgui_draw.cpp.s
-.PHONY : _deps/imgui-src/imgui_draw.s
-
-# target to generate assembly for a file
-_deps/imgui-src/imgui_draw.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_draw.cpp.s
-.PHONY : _deps/imgui-src/imgui_draw.cpp.s
-
-_deps/imgui-src/imgui_tables.o: _deps/imgui-src/imgui_tables.cpp.o
-.PHONY : _deps/imgui-src/imgui_tables.o
-
-# target to build an object file
-_deps/imgui-src/imgui_tables.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_tables.cpp.o
-.PHONY : _deps/imgui-src/imgui_tables.cpp.o
-
-_deps/imgui-src/imgui_tables.i: _deps/imgui-src/imgui_tables.cpp.i
-.PHONY : _deps/imgui-src/imgui_tables.i
-
-# target to preprocess a source file
-_deps/imgui-src/imgui_tables.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_tables.cpp.i
-.PHONY : _deps/imgui-src/imgui_tables.cpp.i
-
-_deps/imgui-src/imgui_tables.s: _deps/imgui-src/imgui_tables.cpp.s
-.PHONY : _deps/imgui-src/imgui_tables.s
-
-# target to generate assembly for a file
-_deps/imgui-src/imgui_tables.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_tables.cpp.s
-.PHONY : _deps/imgui-src/imgui_tables.cpp.s
-
-_deps/imgui-src/imgui_widgets.o: _deps/imgui-src/imgui_widgets.cpp.o
-.PHONY : _deps/imgui-src/imgui_widgets.o
-
-# target to build an object file
-_deps/imgui-src/imgui_widgets.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_widgets.cpp.o
-.PHONY : _deps/imgui-src/imgui_widgets.cpp.o
-
-_deps/imgui-src/imgui_widgets.i: _deps/imgui-src/imgui_widgets.cpp.i
-.PHONY : _deps/imgui-src/imgui_widgets.i
-
-# target to preprocess a source file
-_deps/imgui-src/imgui_widgets.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_widgets.cpp.i
-.PHONY : _deps/imgui-src/imgui_widgets.cpp.i
-
-_deps/imgui-src/imgui_widgets.s: _deps/imgui-src/imgui_widgets.cpp.s
-.PHONY : _deps/imgui-src/imgui_widgets.s
-
-# target to generate assembly for a file
-_deps/imgui-src/imgui_widgets.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/_deps/imgui-src/imgui_widgets.cpp.s
-.PHONY : _deps/imgui-src/imgui_widgets.cpp.s
-
 src/engine/actor/actor_manager.o: src/engine/actor/actor_manager.cpp.o
 .PHONY : src/engine/actor/actor_manager.o
 
@@ -1400,6 +1256,30 @@ src/game/route/route_data.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/route/route_data.cpp.s
 .PHONY : src/game/route/route_data.cpp.s
 
+src/game/scene/character_editor_scene.o: src/game/scene/character_editor_scene.cpp.o
+.PHONY : src/game/scene/character_editor_scene.o
+
+# target to build an object file
+src/game/scene/character_editor_scene.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/character_editor_scene.cpp.o
+.PHONY : src/game/scene/character_editor_scene.cpp.o
+
+src/game/scene/character_editor_scene.i: src/game/scene/character_editor_scene.cpp.i
+.PHONY : src/game/scene/character_editor_scene.i
+
+# target to preprocess a source file
+src/game/scene/character_editor_scene.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/character_editor_scene.cpp.i
+.PHONY : src/game/scene/character_editor_scene.cpp.i
+
+src/game/scene/character_editor_scene.s: src/game/scene/character_editor_scene.cpp.s
+.PHONY : src/game/scene/character_editor_scene.s
+
+# target to generate assembly for a file
+src/game/scene/character_editor_scene.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/character_editor_scene.cpp.s
+.PHONY : src/game/scene/character_editor_scene.cpp.s
+
 src/game/scene/dnf_terrain_generator.o: src/game/scene/dnf_terrain_generator.cpp.o
 .PHONY : src/game/scene/dnf_terrain_generator.o
 
@@ -1495,6 +1375,30 @@ src/game/scene/game_scene_editor.s: src/game/scene/game_scene_editor.cpp.s
 src/game/scene/game_scene_editor.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/game_scene_editor.cpp.s
 .PHONY : src/game/scene/game_scene_editor.cpp.s
+
+src/game/scene/loading_scene.o: src/game/scene/loading_scene.cpp.o
+.PHONY : src/game/scene/loading_scene.o
+
+# target to build an object file
+src/game/scene/loading_scene.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/loading_scene.cpp.o
+.PHONY : src/game/scene/loading_scene.cpp.o
+
+src/game/scene/loading_scene.i: src/game/scene/loading_scene.cpp.i
+.PHONY : src/game/scene/loading_scene.i
+
+# target to preprocess a source file
+src/game/scene/loading_scene.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/loading_scene.cpp.i
+.PHONY : src/game/scene/loading_scene.cpp.i
+
+src/game/scene/loading_scene.s: src/game/scene/loading_scene.cpp.s
+.PHONY : src/game/scene/loading_scene.s
+
+# target to generate assembly for a file
+src/game/scene/loading_scene.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/loading_scene.cpp.s
+.PHONY : src/game/scene/loading_scene.cpp.s
 
 src/game/scene/menu_scene.o: src/game/scene/menu_scene.cpp.o
 .PHONY : src/game/scene/menu_scene.o
@@ -1736,6 +1640,30 @@ src/game/weather/weather_system.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/weather/weather_system.cpp.s
 .PHONY : src/game/weather/weather_system.cpp.s
 
+src/game/world/ground_tile_catalog.o: src/game/world/ground_tile_catalog.cpp.o
+.PHONY : src/game/world/ground_tile_catalog.o
+
+# target to build an object file
+src/game/world/ground_tile_catalog.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/ground_tile_catalog.cpp.o
+.PHONY : src/game/world/ground_tile_catalog.cpp.o
+
+src/game/world/ground_tile_catalog.i: src/game/world/ground_tile_catalog.cpp.i
+.PHONY : src/game/world/ground_tile_catalog.i
+
+# target to preprocess a source file
+src/game/world/ground_tile_catalog.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/ground_tile_catalog.cpp.i
+.PHONY : src/game/world/ground_tile_catalog.cpp.i
+
+src/game/world/ground_tile_catalog.s: src/game/world/ground_tile_catalog.cpp.s
+.PHONY : src/game/world/ground_tile_catalog.s
+
+# target to generate assembly for a file
+src/game/world/ground_tile_catalog.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/world/ground_tile_catalog.cpp.s
+.PHONY : src/game/world/ground_tile_catalog.cpp.s
+
 src/game/world/time_of_day_system.o: src/game/world/time_of_day_system.cpp.o
 .PHONY : src/game/world/time_of_day_system.o
 
@@ -1808,6 +1736,150 @@ src/main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/main.cpp.s
 .PHONY : src/main.cpp.s
 
+third_party/imgui/backends/imgui_impl_opengl3.o: third_party/imgui/backends/imgui_impl_opengl3.cpp.o
+.PHONY : third_party/imgui/backends/imgui_impl_opengl3.o
+
+# target to build an object file
+third_party/imgui/backends/imgui_impl_opengl3.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/third_party/imgui/backends/imgui_impl_opengl3.cpp.o
+.PHONY : third_party/imgui/backends/imgui_impl_opengl3.cpp.o
+
+third_party/imgui/backends/imgui_impl_opengl3.i: third_party/imgui/backends/imgui_impl_opengl3.cpp.i
+.PHONY : third_party/imgui/backends/imgui_impl_opengl3.i
+
+# target to preprocess a source file
+third_party/imgui/backends/imgui_impl_opengl3.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/third_party/imgui/backends/imgui_impl_opengl3.cpp.i
+.PHONY : third_party/imgui/backends/imgui_impl_opengl3.cpp.i
+
+third_party/imgui/backends/imgui_impl_opengl3.s: third_party/imgui/backends/imgui_impl_opengl3.cpp.s
+.PHONY : third_party/imgui/backends/imgui_impl_opengl3.s
+
+# target to generate assembly for a file
+third_party/imgui/backends/imgui_impl_opengl3.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/third_party/imgui/backends/imgui_impl_opengl3.cpp.s
+.PHONY : third_party/imgui/backends/imgui_impl_opengl3.cpp.s
+
+third_party/imgui/backends/imgui_impl_sdl3.o: third_party/imgui/backends/imgui_impl_sdl3.cpp.o
+.PHONY : third_party/imgui/backends/imgui_impl_sdl3.o
+
+# target to build an object file
+third_party/imgui/backends/imgui_impl_sdl3.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/third_party/imgui/backends/imgui_impl_sdl3.cpp.o
+.PHONY : third_party/imgui/backends/imgui_impl_sdl3.cpp.o
+
+third_party/imgui/backends/imgui_impl_sdl3.i: third_party/imgui/backends/imgui_impl_sdl3.cpp.i
+.PHONY : third_party/imgui/backends/imgui_impl_sdl3.i
+
+# target to preprocess a source file
+third_party/imgui/backends/imgui_impl_sdl3.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/third_party/imgui/backends/imgui_impl_sdl3.cpp.i
+.PHONY : third_party/imgui/backends/imgui_impl_sdl3.cpp.i
+
+third_party/imgui/backends/imgui_impl_sdl3.s: third_party/imgui/backends/imgui_impl_sdl3.cpp.s
+.PHONY : third_party/imgui/backends/imgui_impl_sdl3.s
+
+# target to generate assembly for a file
+third_party/imgui/backends/imgui_impl_sdl3.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/third_party/imgui/backends/imgui_impl_sdl3.cpp.s
+.PHONY : third_party/imgui/backends/imgui_impl_sdl3.cpp.s
+
+third_party/imgui/imgui.o: third_party/imgui/imgui.cpp.o
+.PHONY : third_party/imgui/imgui.o
+
+# target to build an object file
+third_party/imgui/imgui.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/third_party/imgui/imgui.cpp.o
+.PHONY : third_party/imgui/imgui.cpp.o
+
+third_party/imgui/imgui.i: third_party/imgui/imgui.cpp.i
+.PHONY : third_party/imgui/imgui.i
+
+# target to preprocess a source file
+third_party/imgui/imgui.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/third_party/imgui/imgui.cpp.i
+.PHONY : third_party/imgui/imgui.cpp.i
+
+third_party/imgui/imgui.s: third_party/imgui/imgui.cpp.s
+.PHONY : third_party/imgui/imgui.s
+
+# target to generate assembly for a file
+third_party/imgui/imgui.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/third_party/imgui/imgui.cpp.s
+.PHONY : third_party/imgui/imgui.cpp.s
+
+third_party/imgui/imgui_draw.o: third_party/imgui/imgui_draw.cpp.o
+.PHONY : third_party/imgui/imgui_draw.o
+
+# target to build an object file
+third_party/imgui/imgui_draw.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/third_party/imgui/imgui_draw.cpp.o
+.PHONY : third_party/imgui/imgui_draw.cpp.o
+
+third_party/imgui/imgui_draw.i: third_party/imgui/imgui_draw.cpp.i
+.PHONY : third_party/imgui/imgui_draw.i
+
+# target to preprocess a source file
+third_party/imgui/imgui_draw.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/third_party/imgui/imgui_draw.cpp.i
+.PHONY : third_party/imgui/imgui_draw.cpp.i
+
+third_party/imgui/imgui_draw.s: third_party/imgui/imgui_draw.cpp.s
+.PHONY : third_party/imgui/imgui_draw.s
+
+# target to generate assembly for a file
+third_party/imgui/imgui_draw.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/third_party/imgui/imgui_draw.cpp.s
+.PHONY : third_party/imgui/imgui_draw.cpp.s
+
+third_party/imgui/imgui_tables.o: third_party/imgui/imgui_tables.cpp.o
+.PHONY : third_party/imgui/imgui_tables.o
+
+# target to build an object file
+third_party/imgui/imgui_tables.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/third_party/imgui/imgui_tables.cpp.o
+.PHONY : third_party/imgui/imgui_tables.cpp.o
+
+third_party/imgui/imgui_tables.i: third_party/imgui/imgui_tables.cpp.i
+.PHONY : third_party/imgui/imgui_tables.i
+
+# target to preprocess a source file
+third_party/imgui/imgui_tables.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/third_party/imgui/imgui_tables.cpp.i
+.PHONY : third_party/imgui/imgui_tables.cpp.i
+
+third_party/imgui/imgui_tables.s: third_party/imgui/imgui_tables.cpp.s
+.PHONY : third_party/imgui/imgui_tables.s
+
+# target to generate assembly for a file
+third_party/imgui/imgui_tables.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/third_party/imgui/imgui_tables.cpp.s
+.PHONY : third_party/imgui/imgui_tables.cpp.s
+
+third_party/imgui/imgui_widgets.o: third_party/imgui/imgui_widgets.cpp.o
+.PHONY : third_party/imgui/imgui_widgets.o
+
+# target to build an object file
+third_party/imgui/imgui_widgets.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/third_party/imgui/imgui_widgets.cpp.o
+.PHONY : third_party/imgui/imgui_widgets.cpp.o
+
+third_party/imgui/imgui_widgets.i: third_party/imgui/imgui_widgets.cpp.i
+.PHONY : third_party/imgui/imgui_widgets.i
+
+# target to preprocess a source file
+third_party/imgui/imgui_widgets.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/third_party/imgui/imgui_widgets.cpp.i
+.PHONY : third_party/imgui/imgui_widgets.cpp.i
+
+third_party/imgui/imgui_widgets.s: third_party/imgui/imgui_widgets.cpp.s
+.PHONY : third_party/imgui/imgui_widgets.s
+
+# target to generate assembly for a file
+third_party/imgui/imgui_widgets.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/third_party/imgui/imgui_widgets.cpp.s
+.PHONY : third_party/imgui/imgui_widgets.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -1823,24 +1895,6 @@ help:
 	@echo "... LearnSunnyLand-Darwin"
 	@echo "... loader_example"
 	@echo "... tinygltf"
-	@echo "... _deps/imgui-src/backends/imgui_impl_opengl3.o"
-	@echo "... _deps/imgui-src/backends/imgui_impl_opengl3.i"
-	@echo "... _deps/imgui-src/backends/imgui_impl_opengl3.s"
-	@echo "... _deps/imgui-src/backends/imgui_impl_sdl3.o"
-	@echo "... _deps/imgui-src/backends/imgui_impl_sdl3.i"
-	@echo "... _deps/imgui-src/backends/imgui_impl_sdl3.s"
-	@echo "... _deps/imgui-src/imgui.o"
-	@echo "... _deps/imgui-src/imgui.i"
-	@echo "... _deps/imgui-src/imgui.s"
-	@echo "... _deps/imgui-src/imgui_draw.o"
-	@echo "... _deps/imgui-src/imgui_draw.i"
-	@echo "... _deps/imgui-src/imgui_draw.s"
-	@echo "... _deps/imgui-src/imgui_tables.o"
-	@echo "... _deps/imgui-src/imgui_tables.i"
-	@echo "... _deps/imgui-src/imgui_tables.s"
-	@echo "... _deps/imgui-src/imgui_widgets.o"
-	@echo "... _deps/imgui-src/imgui_widgets.i"
-	@echo "... _deps/imgui-src/imgui_widgets.s"
 	@echo "... src/engine/actor/actor_manager.o"
 	@echo "... src/engine/actor/actor_manager.i"
 	@echo "... src/engine/actor/actor_manager.s"
@@ -1973,6 +2027,9 @@ help:
 	@echo "... src/game/route/route_data.o"
 	@echo "... src/game/route/route_data.i"
 	@echo "... src/game/route/route_data.s"
+	@echo "... src/game/scene/character_editor_scene.o"
+	@echo "... src/game/scene/character_editor_scene.i"
+	@echo "... src/game/scene/character_editor_scene.s"
 	@echo "... src/game/scene/dnf_terrain_generator.o"
 	@echo "... src/game/scene/dnf_terrain_generator.i"
 	@echo "... src/game/scene/dnf_terrain_generator.s"
@@ -1985,6 +2042,9 @@ help:
 	@echo "... src/game/scene/game_scene_editor.o"
 	@echo "... src/game/scene/game_scene_editor.i"
 	@echo "... src/game/scene/game_scene_editor.s"
+	@echo "... src/game/scene/loading_scene.o"
+	@echo "... src/game/scene/loading_scene.i"
+	@echo "... src/game/scene/loading_scene.s"
 	@echo "... src/game/scene/menu_scene.o"
 	@echo "... src/game/scene/menu_scene.i"
 	@echo "... src/game/scene/menu_scene.s"
@@ -2015,6 +2075,9 @@ help:
 	@echo "... src/game/weather/weather_system.o"
 	@echo "... src/game/weather/weather_system.i"
 	@echo "... src/game/weather/weather_system.s"
+	@echo "... src/game/world/ground_tile_catalog.o"
+	@echo "... src/game/world/ground_tile_catalog.i"
+	@echo "... src/game/world/ground_tile_catalog.s"
 	@echo "... src/game/world/time_of_day_system.o"
 	@echo "... src/game/world/time_of_day_system.i"
 	@echo "... src/game/world/time_of_day_system.s"
@@ -2024,6 +2087,24 @@ help:
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
+	@echo "... third_party/imgui/backends/imgui_impl_opengl3.o"
+	@echo "... third_party/imgui/backends/imgui_impl_opengl3.i"
+	@echo "... third_party/imgui/backends/imgui_impl_opengl3.s"
+	@echo "... third_party/imgui/backends/imgui_impl_sdl3.o"
+	@echo "... third_party/imgui/backends/imgui_impl_sdl3.i"
+	@echo "... third_party/imgui/backends/imgui_impl_sdl3.s"
+	@echo "... third_party/imgui/imgui.o"
+	@echo "... third_party/imgui/imgui.i"
+	@echo "... third_party/imgui/imgui.s"
+	@echo "... third_party/imgui/imgui_draw.o"
+	@echo "... third_party/imgui/imgui_draw.i"
+	@echo "... third_party/imgui/imgui_draw.s"
+	@echo "... third_party/imgui/imgui_tables.o"
+	@echo "... third_party/imgui/imgui_tables.i"
+	@echo "... third_party/imgui/imgui_tables.s"
+	@echo "... third_party/imgui/imgui_widgets.o"
+	@echo "... third_party/imgui/imgui_widgets.i"
+	@echo "... third_party/imgui/imgui_widgets.s"
 .PHONY : help
 
 

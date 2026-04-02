@@ -1,0 +1,15 @@
+{
+    "control_label_mech": "机甲",
+    "mech_actor_key": "mech_drop",
+    "mech_name": "gundom",
+    "player_collision_half_d_px": 6.5,
+    "player_collision_half_w_px": 20.600000381469727,
+    "player_collision_offset_px": {
+        "x": 0.0,
+        "y": 34.599998474121094
+    },
+    "player_frame_json_path": "assets/textures/Characters/gundom.json",
+    "player_mech_height_px": 69.19999694824219,
+    "player_sm_path": "",
+    "profile_version": 1
+}

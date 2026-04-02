@@ -1,0 +1,9 @@
+{
+    "id": "verdant",
+    "display_name": "盖娅原野",
+    "map_file": "assets/maps/level0.tmj",
+    "tile_catalog": "assets/ground_tiles/tile_kinds.json",
+    "characters": [
+        "assets/characters/gundom.character.json"
+    ]
+}

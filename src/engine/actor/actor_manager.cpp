@@ -77,4 +77,22 @@ namespace engine::actor
     {
         m_actors.clear();
     }
-}
+
+    void ActorManager::moveActor(size_t from, size_t to)
+    {
+        if (from == to || from >= m_actors.size() || to >= m_actors.size())
+            return;
+        if (from < to)
+        {
+            std::rotate(m_actors.begin() + static_cast<ptrdiff_t>(from),
+                        m_actors.begin() + static_cast<ptrdiff_t>(from) + 1,
+                        m_actors.begin() + static_cast<ptrdiff_t>(to) + 1);
+        }
+        else
+        {
+            std::rotate(m_actors.begin() + static_cast<ptrdiff_t>(to),
+                        m_actors.begin() + static_cast<ptrdiff_t>(from),
+                        m_actors.begin() + static_cast<ptrdiff_t>(from) + 1);
+        }
+    }
+} // namespace engine::actor

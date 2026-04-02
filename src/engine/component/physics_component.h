@@ -20,6 +20,8 @@ namespace engine::component
         void setWorldPosition(const glm::vec2& position);
         void applyForce(const glm::vec2& force);
         void applyImpulse(const glm::vec2& impulse);
+        // 销毁旧碰撞形状并用新的半宽/半深(px)重建，可选局部偏移
+        void reshapeBox(glm::vec2 halfExtentsPx, glm::vec2 localOffsetPx = {0.0f, 0.0f});
 
         glm::vec2 getVelocity() const;
         glm::vec2 getPosition() const;

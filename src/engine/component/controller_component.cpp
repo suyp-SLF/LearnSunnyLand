@@ -127,12 +127,15 @@ namespace engine::component
         auto& input = _context->getInputManager();
         glm::vec2 vel = physics->getVelocity();
 
+        // 脚底方形与瓦片重叠时，瓦片高度作为地面高度；否则回落到 0。
+        const float groundHeightPx = m_footTileOverlapped ? m_footTileHeightPx : 0.0f;
+
         // ── Z轴物理（视觉跳跃，纯逻辑，与 Box2D 无关）── 先算，供深度移动判断
-        bool zGrounded = (m_posZ <= 0.0f && m_velZ <= 0.0f);
+        bool zGrounded = (m_posZ <= groundHeightPx && m_velZ <= 0.0f);
 
         if (zGrounded)
         {
-            m_posZ = 0.0f;
+            m_posZ = groundHeightPx;
             m_velZ = 0.0f;
             m_coyoteTimer = m_coyoteTime;
             m_jetpackFuel = m_jetpackEnabled ? m_jetpackFuelMax : 0.0f;
@@ -159,19 +162,27 @@ namespace engine::component
             }
             m_posZ += m_velZ * delta_time;
 
-            if (m_posZ <= 0.0f)
+            if (m_posZ <= groundHeightPx)
             {
-                m_posZ = 0.0f;
+                m_posZ = groundHeightPx;
                 m_velZ = 0.0f;
                 zGrounded = true;
             }
         }
 
+        // 玩家高度低于瓦片高度：认为卡入地形，立即抬回地面高度。
+        if (m_footTileOverlapped && m_posZ < groundHeightPx - m_groundContactEpsilonPx)
+        {
+            m_posZ = groundHeightPx;
+            if (m_velZ < 0.0f)
+                m_velZ = 0.0f;
+            zGrounded = true;
+            m_flyModeActive = false;
+        }
+
         // ── Y轴深度移动：W/S 在走廊内前后移动（每帧覆盖 Box2D Y 速度）──
         {
-            float posY = 0.0f;
-            if (auto* transform = _owner->getComponent<TransformComponent>())
-                posY = transform->getPosition().y + m_posZ;  // 还原 Z 偏移得到地面 Y
+            float posY = physics->getPosition().y * 32.0f;
 
             float velY = m_inputDir.y * m_depthSpeed;
             // 跳跃空中时深度移动减半（保留轻微空中深度控制）
@@ -180,6 +191,14 @@ namespace engine::component
             if (velY < 0.0f && posY <= m_groundYMin) velY = 0.0f;
             if (velY > 0.0f && posY >= m_groundYMax) velY = 0.0f;
             vel.y = velY;
+
+            // 位置硬钳制：保证碰撞盒中心始终在下半网格带内
+            if (posY < m_groundYMin || posY > m_groundYMax)
+            {
+                const float clampedY = std::clamp(posY, m_groundYMin, m_groundYMax);
+                const glm::vec2 physPos = physics->getPosition();
+                physics->setWorldPosition({physPos.x * 32.0f, clampedY});
+            }
         }
 
         // ── 水平移动（含跑步倍率）──
@@ -202,7 +221,7 @@ namespace engine::component
         if (input.isActionPressed("jump") && m_coyoteTimer > 0.0f)
         {
             m_velZ = kZJumpSpeed;
-            m_posZ = 1.0f;   // 离地一像素，避免立即判定为落地
+            m_posZ = groundHeightPx + 1.0f;   // 离地一像素，避免立即判定为落地
             m_coyoteTimer = 0.0f;
             zGrounded = false;
             jumpedThisFrame = true;

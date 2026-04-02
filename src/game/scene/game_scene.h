@@ -18,6 +18,7 @@
 #include "../mission/planet_mission_ui.h"
 #include "../route/route_data.h"
 #include "../skill/star_skill.h"
+#include "../world/ground_tile_catalog.h"
 #include "../component/attribute_component.h"
 #include <array>
 #include <optional>
@@ -78,7 +79,8 @@ namespace game::scene
         GameScene(const std::string &name,
                   engine::core::Context &context,
                   engine::scene::SceneManager &sceneManager,
-                  game::route::RouteData routeData = {});
+                  game::route::RouteData routeData = {},
+                  bool startInMapEditor = false);
 
         void init() override;
         void update(float delta_time) override;
@@ -142,6 +144,7 @@ namespace game::scene
         bool m_showPhysicsDebug = false;
         bool m_showFpsOverlay = true;   // 由 config.json performance.show_fps 控制
         bool m_showMapEditor = false;
+        bool m_startInMapEditor = false;
         bool m_invertPlayerFacing = false;
         bool m_screenRainOverlay = false;
         float m_screenRainOverlayStrength = 1.0f;
@@ -151,8 +154,20 @@ namespace game::scene
         bool m_flightAmbientReady = false;
         bool m_flightAmbientWasFlyMode = false;
         bool m_vsyncEnabled = true;
+        glm::vec2 m_cameraFollowDeadzonePx = {140.0f, 56.0f};
         bool m_showSettings = false;
+        bool m_cleanStartupUi = true;
+        bool m_showPlayerConfigPanel = true;
+        std::string m_editorLayoutPreset = "default";
         bool m_showEditorToolbar = true;
+        bool m_showMainToolbar = true;
+        unsigned int m_editorDockspaceId = 0;
+        bool m_showResourceExplorerPanel = true;
+        bool m_showSceneViewportPanel = true;
+        bool m_showConsolePanel = true;
+        bool m_showAnimationEditorPanel = false;
+        bool m_showShaderEditorPanel = false;
+        bool m_showProfilerPanel = false;
         bool m_showHierarchyPanel = true;
         bool m_showInspectorPanel = true;
         bool m_gameplayRunning = false;
@@ -161,23 +176,49 @@ namespace game::scene
         bool m_toolbarShowPlayControls = true;
         bool m_toolbarShowWindowControls = true;
         bool m_toolbarShowDebugControls = false;
+        bool m_devOverlayShowEditorTools = true;
+        bool m_devOverlayShowStateMachineDebug = true;
+        bool m_devOverlayShowPlayerRuntimeState = true;
+        bool m_sceneViewportShowGrid = true;
+        bool m_sceneViewportShowAxes = true;
+        bool m_sceneViewportShowCameraInfo = true;
+        bool m_sceneViewportShowLighting = true;
+        bool m_sceneViewportShowGizmo = true;
         int m_selectedActorIndex = -1;
         bool m_hierarchyGroupByTag = false;
         bool m_hierarchyFavoritesOnly = false;
         bool m_enablePlayRollback = true;
+        std::string m_resourceExplorerViewMode = "tree";
+        std::string m_selectedResourcePath;
+        std::array<char, 128> m_resourceExplorerFilterBuffer{};
         std::array<char, 96> m_hierarchyFilterBuffer{};
         std::array<char, 64> m_inspectorRenameBuffer{};
         std::array<char, 64> m_inspectorTagBuffer{};
         std::array<char, 64> m_groundMakerNameBuffer{"ground_platform"};
+        std::array<char, 96>  m_playerConfigNameBuffer{};
+        std::array<char, 96>  m_mechConfigNameBuffer{};
+        std::array<char, 256> m_playerConfigSmPathBuffer{};
+        std::array<char, 256> m_playerConfigFrameJsonBuffer{};
         int m_inspectorRenameBufferActorIndex = -1;
+        // ── 玩家碰撞 & 机甲高度 ──────────────────────────────────────────────
+        float m_playerMechHeightPx   = 0.0f;   // 机甲视觉高度(px)，碰撞矩形 Y 偏移量
+        float m_playerCollisionHalfW = 12.0f;  // 碰撞矩形半宽 (px)
+        float m_playerCollisionHalfD = 3.5f;   // 碰撞矩形半深 (px)
         glm::vec2 m_groundMakerSpawnPos = {0.0f, 96.0f};
         glm::vec2 m_groundMakerScale = {1.0f, 1.0f};
         glm::vec2 m_groundMakerBodyHalfPx = {48.0f, 10.0f};
-        glm::ivec2 m_groundMakerGridSize = {16, 16};
+        int m_backgroundGridRows = 14;
+        float m_backgroundGridStart = 0.0f;
+        float m_backgroundGridEnd   = 0.42f;
+        int m_groundGridRows = 10;
+        float m_groundGridStart = 0.55f;
+        float m_groundGridEnd   = 1.0f;
+        float m_groundGridAspect = 2.5f;
         int m_groundMakerLengthCells = 6;
         int m_groundMakerTextureIndex = 0;
         float m_groundMakerRotation = 0.0f;
         bool m_groundMakerUsePhysics = true;
+        bool m_groundCollisionLowerHalfOnly = true;
         bool m_groundMakerUseGridSnap = true;
         bool m_groundMakerSnapX = true;
         bool m_groundMakerSnapY = true;
@@ -190,12 +231,47 @@ namespace game::scene
         bool m_groundConfigDirty = false;
         glm::vec2 m_groundBoxSelectStartWorld = {0.0f, 0.0f};
         glm::vec2 m_groundBoxSelectEndWorld = {0.0f, 0.0f};
+        bool m_showFootCollisionDebug = true;
+        bool m_showEditorColliderBoxes = false;
+        glm::vec4 m_debugFootRect = {0.0f, 0.0f, 0.0f, 0.0f};
+        std::vector<glm::ivec2> m_debugFootTiles;
+        bool m_debugFootOverlapped = false;
+        float m_debugFootTileHeightPx = 0.0f;
+        float m_debugFootPlayerHeightPx = 0.0f;
+        std::array<float, static_cast<size_t>(engine::world::TileType::WallDecor) + 1> m_tileTypeHeightPx{};
+        game::world::GroundTileCatalog m_groundTileCatalog;
         std::unordered_map<const engine::object::GameObject*, glm::vec2> m_groundColliderHalfByActor;
         std::unordered_set<const engine::object::GameObject*> m_groundSelection;
         std::unordered_set<const engine::object::GameObject*> m_hierarchyFavorites;
         bool m_devMode = false;         // 开发模式：显示地形/物理调试覆盖层
         engine::world::TileType m_mapEditorPaintTile = engine::world::TileType::Stone;
+        std::string m_mapEditorPaintTileKey;
         int m_mapEditorBrushRadius = 0;
+
+        enum class EditorConsoleLevel
+        {
+            Log,
+            Warning,
+            Error,
+        };
+
+        struct EditorConsoleEntry
+        {
+            EditorConsoleLevel level = EditorConsoleLevel::Log;
+            std::string source;
+            std::string message;
+            double timeSeconds = 0.0;
+        };
+
+        std::vector<EditorConsoleEntry> m_consoleEntries;
+        std::array<char, 128> m_consoleSearchBuffer{};
+        bool m_consoleAutoScroll = true;
+        bool m_consoleFilterLog = true;
+        bool m_consoleFilterWarning = true;
+        bool m_consoleFilterError = true;
+        bool m_consoleScrollToBottom = false;
+        bool m_editorLayoutLoadedFromConfig = false;
+        float m_editorLayoutSaveAccumulator = 0.0f;
 
         struct ActorRuntimeSnapshot
         {
@@ -399,15 +475,42 @@ namespace game::scene
         void renderModeSwitchHint();          // 飞行/陆地模式切换屏幕提示
         void renderMonsterIFFMarkers();
         void renderActorGroundShadows();
+        float tileHeightForType(engine::world::TileType type) const;
+        void updateActorFootTileContact(engine::object::GameObject* actor);
         void syncPlayerPresentation();
         void renderPerformanceOverlay();
+        void renderEditorWorkbenchShell();
+        void renderEditorMainMenuBar();
+        void renderEditorMainToolbar();
+        void renderEditorStatusBar();
         void renderEditorToolbar();
         void renderHierarchyPanel();
         void renderInspectorPanel();
+        void renderResourceExplorerPanel();
+        void renderSceneViewportPanel();
+        void renderConsolePanel();
+        void renderAnimationEditorPanel();
+        void renderShaderEditorPanel();
+        void renderProfilerPanel();
+        void appendEditorConsole(EditorConsoleLevel level, const std::string& source, const std::string& message);
+        void ensureEditorConsoleSeeded();
+        void persistEditorUiSettings() const;
+        void applyEditorLayoutPreset(const std::string& presetKey, bool loadImGuiLayout);
+        std::string editorLayoutIniPath(const std::string& presetKey) const;
         void renderCommandTerminal();
         void renderSettingsPage();
+        void renderPlayerConfigPanel();
         void renderMapEditor();
+        void renderPlayerAltitudeMeter();
         void createGroundActor();
+        float backgroundZoneTopWorldY() const;
+        float backgroundZoneBottomWorldY() const;
+        float groundZoneTopWorldY() const;
+        float groundZoneBottomWorldY() const;
+        glm::vec2 backgroundGridCellSizeWorld() const;
+        glm::vec2 groundGridCellSizeWorld() const;
+        bool isGroundZoneAt(glm::vec2 worldPos) const;
+        glm::vec2 groundMakerGridSizeFor(glm::vec2 worldPos) const;
         glm::vec2 snapGroundMakerPosition(glm::vec2 worldPos) const;
         float snapGroundMakerWidth(float widthPx) const;
         float groundMakerWidthFromCells() const;
@@ -429,6 +532,9 @@ namespace game::scene
         void generateRockObstacles();
         void initTestItems();
         void loadActorRoleConfig();
+        void loadMechProfileConfig();
+        void loadSelectedCharacterProfileConfig();
+        void saveMechProfileConfig() const;
         void updateMechFlightCapability();
         void updateEquipmentAttributeBonuses();
         void executeCommand();
@@ -457,6 +563,9 @@ namespace game::scene
         bool m_showCommandInput = false;
         bool m_focusCommandInput = false;
         bool m_isPlayerInMech = false;
+        std::string m_mechProfilePath = "assets/mechs/default_mech.json";
+        std::string m_selectedCharacterProfilePath = "assets/characters/gundom.character.json";
+        std::string m_playerFrameJsonPath = "assets/textures/Characters/gundom.json";
         std::string m_playerActorKey = "player";
         std::string m_mechActorKey = "mech_drop";
         std::string m_controlLabelPlayer = "人物";
@@ -471,6 +580,10 @@ namespace game::scene
         engine::object::GameObject* m_mech = nullptr;
         engine::object::GameObject* m_possessedMonster = nullptr;
         float m_possessionEnergy = 0.0f;
+        float m_playerBaseMoveSpeed = 12.0f;
+        float m_playerBaseJumpSpeed = 8.0f;
+        float m_playerBaseMaxHp = 100.0f;
+        float m_playerBaseMaxEnergy = 100.0f;
         float m_possessionFxTimer = 0.0f;
         float m_possessedAttackCooldown = 0.0f;
         float m_possessedSkillCooldown = 0.0f;

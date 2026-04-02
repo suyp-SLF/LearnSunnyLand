@@ -1,0 +1,31 @@
+{
+    "version": 1,
+    "templates": [
+        {
+            "id": "supply_cache",
+            "label": "野外轮椅补给点",
+            "prompt": "按 E 搜索补给",
+            "interaction_type": "supply_cache",
+            "loot_table": "supply_cache_basic"
+        },
+        {
+            "id": "heal_station",
+            "label": "应急除颤器",
+            "prompt": "按 E 进行急救充能",
+            "interaction_type": "heal_station"
+        },
+        {
+            "id": "aid_pickup",
+            "label": "医疗拐杖",
+            "prompt": "按 E 拾取援助器材",
+            "interaction_type": "pickup_aid"
+        },
+        {
+            "id": "survivor_reward",
+            "label": "幸存者",
+            "prompt": "按 E 交谈并领取补给",
+            "interaction_type": "survivor",
+            "loot_table": "survivor_reward"
+        }
+    ]
+}

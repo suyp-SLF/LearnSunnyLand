@@ -24,6 +24,8 @@ public:
     // ── 控制窗口 ──────────────────────────────────────────────────────────────
     void open();          // 打开（若已在 launcher 则保留 launcher）
     void toggle();
+    void openWithJson(const std::string& path);
+    void renderInline();  // 在当前 ImGui 上下文中内联渲染（嵌入 Tab 使用）
     bool isOpen() const { return m_open; }
 
     // ── 主渲染入口（每帧调用）────────────────────────────────────────────────

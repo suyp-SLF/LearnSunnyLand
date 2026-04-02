@@ -135,7 +135,7 @@ namespace engine::world
         : m_chunkX(chunkX), m_chunkY(chunkY)
     {
         for (auto &tile : m_tiles)
-            tile = TileData(TileType::Stone);
+            tile = TileData(TileType::Air);
     }
 
     Chunk::~Chunk()

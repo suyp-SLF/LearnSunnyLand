@@ -84,6 +84,17 @@ namespace engine::component
         int                currentFrame()  const { return m_frame;   }
         float              currentTimer()  const { return m_timer;   }
 
+        // --- 编辑器接口 ---
+        float getFrameWidth()  const { return m_frame_w; }
+        float getFrameHeight() const { return m_frame_h; }
+        void  setFrameSize(float w, float h) { m_frame_w = w; m_frame_h = h; }
+        const std::unordered_map<std::string, AnimationClip>& getClips() const { return m_clips; }
+        void removeClip(const std::string& name)
+        {
+            m_clips.erase(name);
+            if (m_current == name) { m_current.clear(); m_frame = 0; m_timer = 0.0f; }
+        }
+
     protected:
         void init()   override;
         void update(float dt) override;

@@ -1,5 +1,5 @@
 #include "route_select_scene.h"
-#include "game_scene.h"
+#include "loading_scene.h"
 #include "menu_scene.h"
 #include "ship_scene.h"
 #include "../../engine/core/context.h"
@@ -131,7 +131,7 @@ namespace game::scene
             RouteData::cellLabel(m_route.evacCell()),
             RouteData::cellLabel(m_route.objectiveCell),
             m_route.objectiveZone);
-        auto gs = std::make_unique<GameScene>("GameScene", _context, _scene_manager, m_route);
+        auto gs = std::make_unique<LoadingScene>("LoadingScene", _context, _scene_manager, m_route);
         _scene_manager.requestReplaceScene(std::move(gs));
     }
 

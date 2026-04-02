@@ -67,6 +67,30 @@ namespace engine::component
         return {0.0f, 0.0f};
     }
 
+    void PhysicsComponent::reshapeBox(glm::vec2 halfExtentsPx, glm::vec2 localOffsetPx)
+    {
+        if (!B2_IS_NON_NULL(m_bodyId))
+            return;
+        constexpr float PPM = 32.0f;
+        const int count = b2Body_GetShapeCount(m_bodyId);
+        if (count > 0)
+        {
+            b2ShapeId shapes[16];
+            const int actual = b2Body_GetShapes(m_bodyId, shapes, 16);
+            for (int i = 0; i < actual; i++)
+                b2DestroyShape(shapes[i], false);
+        }
+        const float halfW = std::max(0.01f, halfExtentsPx.x / PPM);
+        const float halfH = std::max(0.01f, halfExtentsPx.y / PPM);
+        const b2Vec2 localCenter = {localOffsetPx.x / PPM, localOffsetPx.y / PPM};
+        b2Polygon box = b2MakeOffsetBox(halfW, halfH, localCenter, b2MakeRot(0.0f));
+        b2ShapeDef shapeDef = b2DefaultShapeDef();
+        shapeDef.material.friction    = 0.0f;
+        shapeDef.material.restitution = 0.0f;
+        shapeDef.density              = 1.0f;
+        b2CreatePolygonShape(m_bodyId, &shapeDef, &box);
+    }
+
     void PhysicsComponent::update(float /*delta_time*/)
     {
         if (!_owner || B2_IS_NULL(m_bodyId))

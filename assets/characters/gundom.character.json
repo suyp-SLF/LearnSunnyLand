@@ -1,0 +1,19 @@
+{
+    "collision": {
+        "half_d_px": 10.0,
+        "half_w_px": 35.0,
+        "mech_height_px": 20.0
+    },
+    "display_name": "高达1",
+    "frame_json": "assets/textures/Characters/gundom.json",
+    "id": "gundom_1",
+    "map_role": "player",
+    "state_machine_json": "assets/textures/Characters/GUNDOM.sm.json",
+    "stats": {
+        "jump_velocity": -400.0,
+        "max_energy": 100,
+        "max_hp": 100,
+        "move_speed": 220.0
+    },
+    "texture": "assets/textures/Characters/gundom.png"
+}

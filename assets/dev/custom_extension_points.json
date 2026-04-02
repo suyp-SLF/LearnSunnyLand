@@ -1,0 +1,86 @@
+{
+    "version": 1,
+    "extension_points": [
+        {
+            "id": "ground_tile_catalog",
+            "category": "terrain",
+            "config_file": "assets/ground_tiles/tile_kinds.json",
+            "cpp_api": [
+                "game::world::GroundTileCatalog::loadFromFile",
+                "game::world::GroundTileCatalog::placeTileByKey",
+                "game::world::GroundTileCatalog::fillRectByKey"
+            ],
+            "description": "自定义地面瓦片种类、高度映射与程序化铺设接口。"
+        },
+        {
+            "id": "tile_height_fallback",
+            "category": "collision",
+            "config_file": "assets/config.json:gameplay.tile_height_px",
+            "cpp_api": [
+                "game::scene::GameScene::tileHeightForType"
+            ],
+            "description": "当 catalog 未声明高度时，使用通用瓦片高度映射。"
+        },
+        {
+            "id": "grid_layout",
+            "category": "editor",
+            "config_file": "assets/config.json:editor.grid_layout",
+            "cpp_api": [
+                "game::scene::GameScene::backgroundGridCellSizeWorld",
+                "game::scene::GameScene::groundGridCellSizeWorld"
+            ],
+            "description": "控制背景贴顶网格与地形贴底网格的占屏比例、竖排格数和长宽比。"
+        },
+        {
+            "id": "foot_collision_logic",
+            "category": "gameplay",
+            "config_file": "assets/config.json:gameplay.tile_height_px",
+            "cpp_api": [
+                "game::scene::GameScene::updateActorFootTileContact",
+                "engine::component::ControllerComponent::setFootTileContact"
+            ],
+            "description": "玩家脚底方形与瓦片重叠后的同高/高于/低于判定流程。"
+        },
+        {
+            "id": "monster_spawn_rules",
+            "category": "monster",
+            "config_file": "assets/dev/monster_spawn_rules.json",
+            "cpp_api": [
+                "game::monster::MonsterManager::pickMonsterType",
+                "game::monster::MonsterManager::findSpawnPosition",
+                "game::monster::MonsterManager::spawnMonster"
+            ],
+            "description": "把怪物刷新间隔、刷新半径、最大数量和候选类型抽离为独立规则文件。"
+        },
+        {
+            "id": "loot_tables",
+            "category": "inventory",
+            "config_file": "assets/dev/loot_tables.json",
+            "cpp_api": [
+                "game::inventory::Inventory::addItem",
+                "game::inventory::Inventory::removeItem"
+            ],
+            "description": "把补给、掉落和奖励物品池整理成可直接复用的表驱动配置。"
+        },
+        {
+            "id": "weather_presets",
+            "category": "weather",
+            "config_file": "assets/dev/weather_presets.json",
+            "cpp_api": [
+                "game::weather::WeatherSystem::setWeather",
+                "game::weather::WeatherSystem::update"
+            ],
+            "description": "将天气类型、过渡时长、自动切换周期和屏幕雨效预设独立出来。"
+        },
+        {
+            "id": "interaction_templates",
+            "category": "interaction",
+            "config_file": "assets/dev/interaction_templates.json",
+            "cpp_api": [
+                "VoxelScene::findNearbyInteractableModel",
+                "VoxelScene::interactWithModel"
+            ],
+            "description": "把交互点的标签、提示文案、行为类型和奖励模板做成独立模板库。"
+        }
+    ]
+}

@@ -21,9 +21,12 @@ namespace game::scene
         SDL_GLContext m_glContext = nullptr;
 
         bool m_showSettings = false;
+        bool m_showDevMenu = false;
         int m_selectedLangIndex = 0;
 
         void startGame();
+        void openCharacterEditor();
+        void openMapEditor();
         void renderMainMenu();
         void renderSettings();
         void renderPerformanceOverlay() const;

@@ -1,0 +1,9 @@
+{
+    "id": "emberfall",
+    "display_name": "余烬断层",
+    "map_file": "assets/maps/level1.tmj",
+    "tile_catalog": "assets/ground_tiles/tile_kinds.json",
+    "characters": [
+        "assets/characters/gundom.character.json"
+    ]
+}

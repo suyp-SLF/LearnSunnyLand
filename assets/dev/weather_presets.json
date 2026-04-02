@@ -1,0 +1,17 @@
+{
+    "version": 1,
+    "defaults": {
+        "auto_change_period": 50.0,
+        "transition_sec": 3.0,
+        "screen_rain_overlay_enabled": true,
+        "screen_rain_overlay_strength": 1.0,
+        "screen_rain_motion_scale": 1.0
+    },
+    "presets": [
+        {"id": "clear", "weather": "Clear", "transition_sec": 1.0},
+        {"id": "light_rain", "weather": "LightRain", "transition_sec": 2.0},
+        {"id": "medium_rain", "weather": "MediumRain", "transition_sec": 2.5},
+        {"id": "heavy_rain", "weather": "HeavyRain", "transition_sec": 3.0},
+        {"id": "thunderstorm", "weather": "Thunderstorm", "transition_sec": 4.0}
+    ]
+}

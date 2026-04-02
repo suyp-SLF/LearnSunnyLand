@@ -1,5 +1,7 @@
 #include "camera.h"
 #include <spdlog/spdlog.h>
+#include <algorithm>
+#include <cmath>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -21,6 +23,24 @@ namespace engine::render
         if (_follow_target)
         {
             glm::vec2 target_pos = *_follow_target - _viewport_size * 0.5f;
+            const glm::vec2 cameraCenter = _position + _viewport_size * 0.5f;
+            const glm::vec2 toTarget = *_follow_target - cameraCenter;
+
+            if (_follow_deadzone.x > 0.0f)
+            {
+                if (std::abs(toTarget.x) <= _follow_deadzone.x)
+                    target_pos.x = _position.x;
+                else
+                    target_pos.x = _follow_target->x - _viewport_size.x * 0.5f - std::copysign(_follow_deadzone.x, toTarget.x);
+            }
+            if (_follow_deadzone.y > 0.0f)
+            {
+                if (std::abs(toTarget.y) <= _follow_deadzone.y)
+                    target_pos.y = _position.y;
+                else
+                    target_pos.y = _follow_target->y - _viewport_size.y * 0.5f - std::copysign(_follow_deadzone.y, toTarget.y);
+            }
+
             if (_lock_y)
                 target_pos.y = _locked_y;  // DNF：Y 轴锁定
             _position = glm::mix(_position, target_pos, _follow_smoothness * delta_timer);
@@ -32,6 +52,14 @@ namespace engine::render
     {
         _follow_target = const_cast<glm::vec2*>(target);
         _follow_smoothness = smoothness;
+    }
+
+    void Camera::setFollowDeadzone(const glm::vec2& deadzone)
+    {
+        _follow_deadzone = {
+            std::max(0.0f, deadzone.x),
+            std::max(0.0f, deadzone.y)
+        };
     }
 
     void Camera::setLockY(bool lock, float worldY)

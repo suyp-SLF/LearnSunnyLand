@@ -2,6 +2,7 @@
 #include "ship_scene.h"
 #include "route_select_scene.h"
 #include "game_scene.h"
+#include "character_editor_scene.h"
 #include "voxel_scene.h"
 #include "../../engine/core/context.h"
 #include "../../engine/scene/scene_manager.h"
@@ -88,18 +89,27 @@ namespace game::scene
     void MenuScene::renderMainMenu()
     {
         ImGui::SetNextWindowPos(ImVec2(540, 280), ImGuiCond_Always);
-        ImGui::SetNextWindowSize(ImVec2(200, 155), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(260, 300), ImGuiCond_Always);
         ImGui::Begin(locale::T("menu.title").c_str(), nullptr,
             ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove);
 
-        if (ImGui::Button(locale::T("menu.start_game").c_str(), ImVec2(180, 40)))
+        if (ImGui::Button("开始游戏", ImVec2(230, 40)))
             startGame();
 
-        if (ImGui::Button(locale::T("menu.settings").c_str(), ImVec2(180, 40)))
+        if (ImGui::Button("设置", ImVec2(230, 40)))
             m_showSettings = true;
 
-        if (ImGui::Button(locale::T("menu.quit").c_str(), ImVec2(180, 40)))
+        if (ImGui::Button("结束游戏", ImVec2(230, 40)))
             _context.getInputManager().setShouldQuit(true);
+
+        ImGui::Separator();
+        ImGui::TextDisabled("开发功能");
+
+        if (ImGui::Button("角色编辑器", ImVec2(230, 36)))
+            openCharacterEditor();
+
+        if (ImGui::Button("地图编辑器", ImVec2(230, 36)))
+            openMapEditor();
 
         ImGui::End();
     }
@@ -165,14 +175,26 @@ namespace game::scene
 
     void MenuScene::startGame()
     {
-        spdlog::info("开始游戏 → DNF 走廊场景");
+        spdlog::info("开始游戏 → 星球选择");
+        auto scene = std::make_unique<RouteSelectScene>("RouteSelectScene", _context, _scene_manager);
+        _scene_manager.requestReplaceScene(std::move(scene));
+    }
+
+    void MenuScene::openCharacterEditor()
+    {
+        auto scene = std::make_unique<CharacterEditorScene>("CharacterEditorScene", _context, _scene_manager);
+        _scene_manager.requestReplaceScene(std::move(scene));
+    }
+
+    void MenuScene::openMapEditor()
+    {
         game::route::RouteData rd;
-        rd.path = { {0,0}, {1,0}, {2,0} };  // 最简路线
+        rd.path = {{0, 0}, {1, 0}, {2, 0}};
         rd.terrain[0][0] = game::route::CellTerrain::Plains;
         rd.terrain[0][1] = game::route::CellTerrain::Plains;
         rd.terrain[0][2] = game::route::CellTerrain::Plains;
         rd.objectiveZone = -1;
-        auto scene = std::make_unique<GameScene>("GameScene", _context, _scene_manager, rd);
+        auto scene = std::make_unique<GameScene>("GameScene", _context, _scene_manager, rd, true);
         _scene_manager.requestReplaceScene(std::move(scene));
     }
 

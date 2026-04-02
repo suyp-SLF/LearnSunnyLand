@@ -1,6 +1,7 @@
 #pragma once
 #include "component.h"
 #include <glm/vec2.hpp>
+#include <algorithm>
 
 namespace engine::component
 {
@@ -45,16 +46,44 @@ namespace engine::component
             m_jetpackForce = force;
         }
         bool isEnabled() const { return m_enabled; }
-        float getSpeed() const { return m_speed; }
+        float getSpeed()         const { return m_speed; }
+        float getJumpSpeed()     const { return m_jumpSpeed; }
+        float getGroundAccel()   const { return m_groundAccel; }
+        float getAirAccel()      const { return m_airAccel; }
+        float getCoyoteTime()    const { return m_coyoteTime; }
+        float getJetpackForce()  const { return m_jetpackForce; }
+        float getJetpackFuelMax() const { return m_jetpackFuelMax; }
+        bool  isJetpackEnabled() const { return m_jetpackEnabled; }
         MovementState getMovementState() const { return m_state; }
         FacingDirection getFacingDirection() const { return m_facing; }
         const char* getMovementStateName() const;
         const char* getAnimationStateKey() const;
         float getJetpackFuelRatio() const;
 
+        // 脚底方形碰撞（2.5D 影子碰撞）：
+        // - halfSizePx: 方形半边长（像素）
+        // - epsilonPx: 与瓦片高度比较的容差
+        void setFootCollisionBox(float halfSizePx, float epsilonPx = 2.0f)
+        {
+            m_footHalfSizePx = std::max(1.0f, halfSizePx);
+            m_groundContactEpsilonPx = std::max(0.1f, epsilonPx);
+        }
+        float getFootCollisionHalfSize() const { return m_footHalfSizePx; }
+        void setFootTileContact(bool overlapped, float tileHeightPx)
+        {
+            m_footTileOverlapped = overlapped;
+            m_footTileHeightPx = tileHeightPx;
+        }
+
         // DNF Z轴：视觉跳跃高度（不影响 Box2D 物理）
         float getPosZ()     const { return m_posZ; }
         bool  isZGrounded() const { return m_posZ <= 0.0f && m_velZ <= 0.0f; }
+        void setPosZ(float posZ, bool clearVel = true)
+        {
+            m_posZ = std::max(0.0f, posZ);
+            if (clearVel)
+                m_velZ = 0.0f;
+        }
 
         // 跑步模式（双击方向键触发）：速度 ×1.5
         void setRunMode(bool run) { m_isRunMode = run; }
@@ -101,6 +130,11 @@ namespace engine::component
         bool m_hasReleasedJumpSinceTakeoff = false;
         bool m_jetpackUnlockedThisAir = false;
         bool m_flyModeActive = false;
+
+        float m_footHalfSizePx = 9.0f;
+        float m_groundContactEpsilonPx = 2.0f;
+        bool m_footTileOverlapped = false;
+        float m_footTileHeightPx = 0.0f;
 
         float approach(float current, float target, float delta) const;
     public:

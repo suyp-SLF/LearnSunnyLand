@@ -110,6 +110,151 @@ namespace
 // ─────────────────────────────────────────────────────────────────────────────
 //  公共入口
 // ─────────────────────────────────────────────────────────────────────────────
+void FrameEditor::openWithJson(const std::string &jsonPath, const std::string &texturePath)
+{
+    open();
+    if (!jsonPath.empty())
+    {
+        loadJSONFrom(jsonPath);
+        m_showLauncher = false;
+    }
+    if (!texturePath.empty())
+        std::snprintf(m_texturePath, sizeof(m_texturePath), "%s", texturePath.c_str());
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  内联渲染（嵌入 Tab，无独立浮动窗口）
+// ─────────────────────────────────────────────────────────────────────────────
+void FrameEditor::renderInline(engine::resource::ResourceManager &resMgr)
+{
+    pushDevEditorTheme();
+
+    if (!m_open)
+    {
+        m_open = true;
+        m_showLauncher = true;
+        if (m_jsonFiles.empty()) scanJsonFiles();
+    }
+
+    // ── 内联启动页 ─────────────────────────────────────────────────────────
+    if (m_showLauncher)
+    {
+        ImGui::SeparatorText("选择帧动画文件");
+        ImGui::TextUnformatted("选择已有动画 JSON，或新建：");
+
+        const float listH = ImGui::GetContentRegionAvail().y - 70.0f;
+        ImGui::BeginChild("##feil_files", ImVec2(0, std::max(40.0f, listH)), ImGuiChildFlags_Borders);
+        for (const auto &je : m_jsonFiles)
+        {
+            ImGui::PushID(je.path.c_str());
+            const std::string lbl = je.displayName + "##feil_item";
+            if (ImGui::Button(lbl.c_str(), ImVec2(-1, 26)))
+            {
+                loadJSONFrom(je.path);
+                if (m_texturePath[0] != '\0') { m_glTex = 0; loadTexture(resMgr); }
+                m_showLauncher = false;
+            }
+            ImGui::PopID();
+        }
+        if (m_jsonFiles.empty())
+            ImGui::TextDisabled("（暂无 .json 帧动画文件）");
+        ImGui::EndChild();
+
+        if (ImGui::Button("扫描文件##feil_scan")) scanJsonFiles();
+        ImGui::SameLine();
+        if (ImGui::Button("新建##feil_new"))
+        {
+            m_actions.clear(); m_selAction = -1; m_selFrame = -1;
+            ensureDefaultActions(); m_selAction = 0;
+            m_showLauncher = false;
+        }
+        popDevEditorTheme();
+        return;
+    }
+
+    // ── 内联工具栏 ─────────────────────────────────────────────────────────
+    ImGui::SetNextItemWidth(260.0f);
+    ImGui::InputText("##feil_texpath", m_texturePath, sizeof(m_texturePath));
+    ImGui::SameLine();
+    if (ImGui::Button("载入纹理##feil")) { m_glTex = 0; loadTexture(resMgr); }
+    ImGui::SameLine();
+    if (ImGui::Button("保存##feil")) saveJSON();
+    ImGui::SameLine();
+    if (ImGui::Button("返回##feil")) { scanJsonFiles(); m_showLauncher = true; }
+    ImGui::SameLine();
+    if (ImGui::Button("\xe2\x86\x92\xe7\x8a\xb6\xe6\x80\x81\xe6\x9c\xba##feil")) m_wantsSmEditor = true;
+    ImGui::SameLine();
+    if (ImGui::Checkbox("画格子切帧##feil_gc", &m_gridCutMode))
+    {
+        if (m_gridCutMode)
+            m_anchorMode = false;
+    }
+
+    if (m_glTex == 0 && m_texturePath[0] != '\0')
+        loadTexture(resMgr);
+
+    // ── 内容布局 ──────────────────────────────────────────────────────────
+    const float availH  = ImGui::GetContentRegionAvail().y;
+    const float tlH     = 150.0f;
+    const float statusH = 22.0f;
+    const float midH    = std::max(80.0f, availH - tlH - statusH);
+
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(2, 2));
+
+    // 左侧面板
+    ImGui::BeginChild("##feil_lp", ImVec2(180, midH), ImGuiChildFlags_Borders);
+    renderLeftPanel();
+    ImGui::EndChild();
+    ImGui::SameLine();
+
+    // 画布
+    const float rpW = 220.0f;
+    const float cvW = std::max(60.0f, ImGui::GetContentRegionAvail().x - rpW - 4.0f);
+    ImGui::BeginChild("##feil_cv", ImVec2(cvW, midH), ImGuiChildFlags_Borders,
+        ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+    m_cvPos  = ImGui::GetCursorScreenPos();
+    m_cvSize = ImGui::GetContentRegionAvail();
+    renderCanvas();
+    ImGui::EndChild();
+    ImGui::SameLine();
+
+    // 右侧面板
+    ImGui::BeginChild("##feil_rp", ImVec2(rpW, midH), ImGuiChildFlags_Borders);
+    renderRightPanel();
+    ImGui::EndChild();
+
+    ImGui::PopStyleVar();
+
+    // 时间轴
+    const float actualTlH = std::min(tlH, std::max(10.0f, ImGui::GetContentRegionAvail().y - statusH - 4.0f));
+    ImGui::BeginChild("##feil_tl", ImVec2(0, actualTlH), ImGuiChildFlags_Borders);
+    renderPreview();
+    ImGui::EndChild();
+
+    renderStatusBar();
+    popDevEditorTheme();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  返回当前帧的贴图区域和锚点（供右侧预览面板实时使用）
+// ─────────────────────────────────────────────────────────────────────────────
+FrameEditor::FrameViewInfo FrameEditor::peekCurrentFrame() const
+{
+    FrameViewInfo info;
+    if (m_glTex == 0 || m_texW <= 0.0f || m_texH <= 0.0f) return info;
+    if (m_selAction < 0 || m_selAction >= static_cast<int>(m_actions.size())) return info;
+    const ActionData &a = m_actions[static_cast<size_t>(m_selAction)];
+    if (a.frames.empty()) return info;
+    const int fi = (m_selFrame >= 0 && m_selFrame < static_cast<int>(a.frames.size()))
+                   ? m_selFrame : 0;
+    const FrameData &f = a.frames[static_cast<size_t>(fi)];
+    info.glTex  = m_glTex; info.texW = m_texW; info.texH = m_texH;
+    info.sx     = f.sx; info.sy = f.sy; info.sw = f.sw; info.sh = f.sh;
+    info.anchorX = f.anchor_x; info.anchorY = f.anchor_y;
+    info.valid  = true;
+    return info;
+}
+
 void FrameEditor::render(engine::resource::ResourceManager &resMgr)
 {
     if (!m_open) return;

@@ -1,0 +1,30 @@
+{
+    "version": 1,
+    "global": {
+        "spawn_interval_sec": 1.6,
+        "max_monsters": 10,
+        "spawn_inner_radius": 420.0,
+        "spawn_outer_radius": 960.0,
+        "cleanup_radius": 1500.0
+    },
+    "monster_types": [
+        {
+            "id": "slime",
+            "weight": 1.0,
+            "spawn_name": "slime",
+            "texture": "assets/textures/Actors/frog.png"
+        },
+        {
+            "id": "wolf",
+            "weight": 1.0,
+            "spawn_name": "wolf",
+            "texture": "assets/textures/Actors/opossum.png"
+        },
+        {
+            "id": "white_ape",
+            "weight": 1.0,
+            "spawn_name": "white_ape",
+            "texture": "assets/textures/Actors/eagle-attack.png"
+        }
+    ]
+}

@@ -117,6 +117,122 @@ void StateMachineEditor::toggle()
         open();
 }
 
+    void StateMachineEditor::openWithJson(const std::string& path)
+    {
+        open();
+        if (!path.empty())
+        {
+            loadJsonFrom(path);
+            m_showLauncher = false;
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    //  内联渲染（无独立浮动窗口，嵌入 Tab 使用）
+    // ─────────────────────────────────────────────────────────────────────────────
+    void StateMachineEditor::renderInline()
+    {
+        ensureTriggersMeta();
+        pushDevEditorTheme();
+
+        // 确保一旦进入 Tab 就"开启"
+        if (!m_open)
+        {
+            m_open = true;
+            m_showLauncher = true;
+            if (m_smFiles.empty()) scanSmFiles();
+        }
+
+        // ── 内联启动页 ─────────────────────────────────────────────────────────
+        if (m_showLauncher)
+        {
+            ImGui::SeparatorText("选择状态机文件");
+            ImGui::TextUnformatted("选择已有 *.sm.json，或新建：");
+
+            const float listH = ImGui::GetContentRegionAvail().y - 70.0f;
+            ImGui::BeginChild("##smeil_files", ImVec2(0, std::max(40.0f, listH)), ImGuiChildFlags_Borders);
+            for (const auto &entry : m_smFiles)
+            {
+                ImGui::PushID(entry.path.c_str());
+                if (ImGui::Selectable(entry.displayName.c_str()))
+                {
+                    loadJsonFrom(entry.path);
+                    m_justLoaded = true;
+                    m_showLauncher = false;
+                }
+                ImGui::PopID();
+            }
+            if (m_smFiles.empty())
+                ImGui::TextDisabled("（暂无 *.sm.json 文件）");
+            ImGui::EndChild();
+
+            if (ImGui::Button("刷新列表##smeil")) scanSmFiles();
+            ImGui::SameLine();
+            if (ImGui::Button("新建状态机##smeil")) ImGui::OpenPopup("SME_NewFile_IL");
+
+            if (ImGui::BeginPopup("SME_NewFile_IL"))
+            {
+                ImGui::TextUnformatted("角色 ID:");
+                ImGui::SetNextItemWidth(160.0f);
+                ImGui::InputText("##smeil_id", m_newFileIdBuf, sizeof(m_newFileIdBuf));
+                const bool valid = m_newFileIdBuf[0] != '\0';
+                if (!valid) ImGui::BeginDisabled();
+                if (ImGui::Button("创建##smeil_cr")) { newFile(m_newFileIdBuf); m_showLauncher = false; ImGui::CloseCurrentPopup(); }
+                if (!valid) ImGui::EndDisabled();
+                ImGui::SameLine();
+                if (ImGui::Button("取消##smeil_ca")) ImGui::CloseCurrentPopup();
+                ImGui::EndPopup();
+            }
+
+            popDevEditorTheme();
+            return;
+        }
+
+        // ── 内联工具栏（替代菜单栏）─────────────────────────────────────────────
+        if (ImGui::Button("保存##smeil")) saveJson();
+        ImGui::SameLine();
+        if (ImGui::Button("返回选择##smeil")) { m_showLauncher = true; scanSmFiles(); }
+        ImGui::SameLine();
+        ImGui::TextDisabled("%s", m_savePath.empty() ? "<未保存>" : m_savePath.c_str());
+        ImGui::SameLine(0.0f, 16.0f);
+        ImGui::TextDisabled("初始:");
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(100.0f);
+        if (ImGui::BeginCombo("##smeil_init", m_data.initialState.empty() ? "---" : m_data.initialState.c_str()))
+        {
+            for (auto &[name, _] : m_data.states)
+            {
+                bool sel = (name == m_data.initialState);
+                if (ImGui::Selectable(name.c_str(), sel)) m_data.initialState = name;
+                if (sel) ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+
+        // ── 内容布局 ──────────────────────────────────────────────────────────
+        const float toolbarH = ImGui::GetTextLineHeightWithSpacing() + 10.0f;
+        const float timelineH = 78.0f;
+        const float availH  = ImGui::GetContentRegionAvail().y;
+        const float contentH = std::max(50.0f, availH - timelineH - toolbarH - 8.0f);
+        const float leftW   = 220.0f;
+
+        ImGui::BeginChild("##smeil_left", ImVec2(leftW, contentH), ImGuiChildFlags_Borders);
+        renderStateList(contentH);
+        ImGui::EndChild();
+        ImGui::SameLine();
+
+        ImGui::BeginChild("##smeil_right", ImVec2(0, contentH), false);
+        renderStateDetails();
+        ImGui::EndChild();
+
+        const float tlH = std::min(timelineH, std::max(10.0f, ImGui::GetContentRegionAvail().y - 4.0f));
+        ImGui::BeginChild("##smeil_tl", ImVec2(0, tlH), ImGuiChildFlags_Borders);
+        renderTimeline();
+        ImGui::EndChild();
+
+        popDevEditorTheme();
+    }
+
 // ─────────────────────────────────────────────────────────────────────────────
 //  主渲染入口
 // ─────────────────────────────────────────────────────────────────────────────

@@ -41,19 +41,31 @@ find_package(OpenGL REQUIRED)
 find_package(Freetype REQUIRED)
 find_package(harfbuzz REQUIRED)
 
-# 添加ImGui
+# 添加ImGui（优先使用本地源码，离线可构建）
+set(IMGUI_LOCAL_SOURCE_DIR "${CMAKE_SOURCE_DIR}/third_party/imgui")
+
 include(FetchContent)
-FetchContent_Declare(
-    imgui
-    GIT_REPOSITORY https://github.com/ocornut/imgui.git
-    GIT_TAG docking
-)
+if (EXISTS "${IMGUI_LOCAL_SOURCE_DIR}/imgui.cpp" AND
+    EXISTS "${IMGUI_LOCAL_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp" AND
+    EXISTS "${IMGUI_LOCAL_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp")
+    set(imgui_SOURCE_DIR "${IMGUI_LOCAL_SOURCE_DIR}")
+    message(STATUS "Use local ImGui source: ${imgui_SOURCE_DIR}")
+else()
+    FetchContent_Declare(
+        imgui
+        GIT_REPOSITORY https://github.com/ocornut/imgui.git
+        GIT_TAG docking
+    )
+endif()
+
 FetchContent_Declare(
     tinygltf
     GIT_REPOSITORY https://github.com/syoyo/tinygltf.git
     GIT_TAG v2.9.5
 )
-FetchContent_MakeAvailable(imgui)
+if (NOT DEFINED imgui_SOURCE_DIR)
+    FetchContent_MakeAvailable(imgui)
+endif()
 FetchContent_MakeAvailable(tinygltf)
 
 # 添加可执行文件
@@ -122,6 +134,8 @@ add_executable(
     src/game/scene/game_scene_editor.cpp
     src/game/scene/frame_editor.cpp
     src/game/scene/state_machine_editor.cpp
+    src/game/scene/character_editor_scene.cpp
+    src/game/scene/loading_scene.cpp
     src/game/scene/menu_scene.cpp
     src/game/animation/frame_animation_loader.cpp
 
@@ -142,6 +156,7 @@ add_executable(
 
     src/game/world/tree_manager.cpp
     src/game/world/time_of_day_system.cpp
+    src/game/world/ground_tile_catalog.cpp
 
     src/game/weather/weather_system.cpp
 

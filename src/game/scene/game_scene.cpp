@@ -24,6 +24,7 @@
 #include "../../engine/core/config.h"
 #include "../../engine/world/perlin_noise_generator.h"
 #include "../../engine/world/chunk_manager.h"
+#include "../../engine/world/tile_info.h"
 #include "dnf_terrain_generator.h"
 #include "../../engine/render/renderer.h"
 #include "../../engine/render/sdl_renderer.h"
@@ -51,6 +52,18 @@
 
 namespace game::scene
 {
+struct GroundActorRecord
+{
+    std::string name = "ground_platform";
+    std::string texture = "assets/textures/Props/platform-long.png";
+    glm::vec2 position = {0.0f, 96.0f};
+    glm::vec2 scale = {1.0f, 1.0f};
+    glm::vec2 colliderHalf = {48.0f, 10.0f};
+    float rotation = 0.0f;
+    bool usePhysics = true;
+    std::string zone = "ground";
+    std::string gridType = "ground_2_5";
+};
 
 enum class InventoryOwner
 {
@@ -61,19 +74,29 @@ enum class InventoryOwner
 struct InventoryDragSlot
 {
     int owner = 0;
-    int index = 0;
+    int index = -1;
 };
 
-struct GroundActorRecord
+static ImVec2 logicalToImGuiScreen(const engine::core::Context& context, const glm::vec2& logicalPos)
 {
-    std::string name;
-    std::string texture;
-    glm::vec2 position = {0.0f, 0.0f};
-    glm::vec2 scale = {1.0f, 1.0f};
-    glm::vec2 colliderHalf = {48.0f, 10.0f};
-    float rotation = 0.0f;
-    bool usePhysics = true;
-};
+    glm::vec2 logicalSize = context.getRenderer().getLogicalSize();
+    ImVec2 displaySize = ImGui::GetIO().DisplaySize;
+
+    if (logicalSize.x <= 0.0f || logicalSize.y <= 0.0f)
+        return {logicalPos.x, logicalPos.y};
+
+    return {
+        logicalPos.x * (displaySize.x / logicalSize.x),
+        logicalPos.y * (displaySize.y / logicalSize.y)
+    };
+}
+
+static void drawDebugCross(ImDrawList* dl, ImVec2 center, ImU32 color, float size = 8.0f)
+{
+    dl->AddLine({center.x - size, center.y}, {center.x + size, center.y}, color, 1.5f);
+    dl->AddLine({center.x, center.y - size}, {center.x, center.y + size}, color, 1.5f);
+    dl->AddCircle(center, size * 0.7f, color, 16, 1.0f);
+}
 
 static glm::vec2 readJsonVec2(const nlohmann::json& json, const char* key, const glm::vec2& fallback)
 {
@@ -105,6 +128,8 @@ static GroundActorRecord readGroundActorRecord(const nlohmann::json& json)
     record.colliderHalf = readJsonVec2(json, "collider_half", {48.0f, 10.0f});
     record.rotation = json.value("rotation", 0.0f);
     record.usePhysics = json.value("use_physics", true);
+    record.zone = json.value("zone", std::string{"ground"});
+    record.gridType = json.value("grid_type", std::string{"ground_2_5"});
     return record;
 }
 
@@ -117,7 +142,9 @@ static nlohmann::json writeGroundActorRecord(const GroundActorRecord& record)
         {"scale", writeJsonVec2(record.scale)},
         {"collider_half", writeJsonVec2(record.colliderHalf)},
         {"rotation", record.rotation},
-        {"use_physics", record.usePhysics}
+        {"use_physics", record.usePhysics},
+        {"zone", record.zone},
+        {"grid_type", record.gridType}
     };
 }
 
@@ -126,9 +153,60 @@ static bool rectIntersects(const glm::vec4& a, const glm::vec4& b)
     return !(a.z < b.x || b.z < a.x || a.w < b.y || b.w < a.y);
 }
 
+static bool isStandableFootTile(engine::world::TileType type)
+{
+    return type != engine::world::TileType::Air && type != engine::world::TileType::WallDecor;
+}
+
+static size_t tileTypeToIndex(engine::world::TileType type)
+{
+    return static_cast<size_t>(type);
+}
+
 static const char* inventoryOwnerLabel(InventoryOwner owner)
 {
     return owner == InventoryOwner::Mech ? "机甲" : "人物";
+}
+
+struct BodyPrimaryShapeMetrics
+{
+    float localCenterYPx = 0.0f;
+    float halfHeightPx = 0.0f;
+    bool valid = false;
+};
+
+static BodyPrimaryShapeMetrics readBodyPrimaryShapeMetrics(b2BodyId bodyId)
+{
+    BodyPrimaryShapeMetrics metrics;
+    if (!B2_IS_NON_NULL(bodyId))
+        return metrics;
+
+    b2ShapeId shapes[4];
+    const int shapeCount = b2Body_GetShapes(bodyId, shapes, 4);
+    if (shapeCount <= 0)
+        return metrics;
+
+    // 约定玩家碰撞体为第一个 box，中心点即可反映局部偏移。
+    const b2Polygon polygon = b2Shape_GetPolygon(shapes[0]);
+    if (polygon.count <= 0)
+        return metrics;
+
+    float centerY = 0.0f;
+    float minY = std::numeric_limits<float>::max();
+    float maxY = std::numeric_limits<float>::lowest();
+    for (int i = 0; i < polygon.count; ++i)
+    {
+        centerY += polygon.vertices[i].y;
+        minY = std::min(minY, polygon.vertices[i].y);
+        maxY = std::max(maxY, polygon.vertices[i].y);
+    }
+    centerY /= static_cast<float>(polygon.count);
+
+    constexpr float kPixelsPerMeter = 32.0f;
+    metrics.localCenterYPx = centerY * kPixelsPerMeter;
+    metrics.halfHeightPx = std::max(0.0f, (maxY - minY) * 0.5f * kPixelsPerMeter);
+    metrics.valid = true;
+    return metrics;
 }
 
 static void recordPerfMetric(PerfMetric& metric, float elapsedMs)
@@ -206,6 +284,28 @@ static void drawWorldShadow(engine::core::Context &context,
                       size.x * 0.70f,
                       size.y * 0.76f,
                       glm::vec4(0.0f, 0.0f, 0.0f, alpha * 0.55f));
+}
+
+static void drawWorldGroundMarker(engine::core::Context &context,
+                                  const glm::vec2 &center,
+                                  const glm::vec2 &size,
+                                  float alpha)
+{
+    auto &renderer = context.getRenderer();
+    const auto &camera = context.getCamera();
+
+    renderer.drawRect(camera,
+                      center.x - size.x * 0.5f,
+                      center.y - size.y * 0.5f,
+                      size.x,
+                      size.y,
+                      glm::vec4(0.10f, 0.95f, 0.30f, alpha));
+    renderer.drawRect(camera,
+                      center.x - size.x * 0.33f,
+                      center.y - size.y * 0.35f,
+                      size.x * 0.66f,
+                      size.y * 0.70f,
+                      glm::vec4(0.02f, 0.10f, 0.04f, alpha * 0.65f));
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -335,32 +435,13 @@ static void drawItemIcon(ImDrawList* dl, ImVec2 bmin, ImVec2 bmax,
     if (count > 1)
     {
         char buf[8];
-        snprintf(buf, sizeof(buf), "%d", count);
+        std::snprintf(buf, sizeof(buf), "%d", count);
         ImVec2 ts = ImGui::CalcTextSize(buf);
-        dl->AddText({bmax.x - ts.x - 2.0f, bmax.y - ts.y - 1.0f},
-                    IM_COL32(220,220,220,230), buf);
+        ImVec2 pmin = {bmax.x - ts.x - 8.0f, bmax.y - ts.y - 5.0f};
+        ImVec2 pmax = {bmax.x - 3.0f,        bmax.y - 2.0f};
+        dl->AddRectFilled(pmin, pmax, IM_COL32(0,0,0,180), 3.0f);
+        dl->AddText({pmin.x + 2.0f, pmin.y + 1.0f}, IM_COL32(255,255,255,220), buf);
     }
-}
-
-static ImVec2 logicalToImGuiScreen(const engine::core::Context& context, const glm::vec2& logicalPos)
-{
-    glm::vec2 logicalSize = context.getRenderer().getLogicalSize();
-    ImVec2 displaySize = ImGui::GetIO().DisplaySize;
-
-    if (logicalSize.x <= 0.0f || logicalSize.y <= 0.0f)
-        return {logicalPos.x, logicalPos.y};
-
-    return {
-        logicalPos.x * (displaySize.x / logicalSize.x),
-        logicalPos.y * (displaySize.y / logicalSize.y)
-    };
-}
-
-static void drawDebugCross(ImDrawList* dl, ImVec2 center, ImU32 color, float size = 8.0f)
-{
-    dl->AddLine({center.x - size, center.y}, {center.x + size, center.y}, color, 1.5f);
-    dl->AddLine({center.x, center.y - size}, {center.x, center.y + size}, color, 1.5f);
-    dl->AddCircle(center, size * 0.7f, color, 16, 1.0f);
 }
 
 static bool isProjectileBlockingTile(engine::world::TileType type)
@@ -404,6 +485,26 @@ static float loadFloatSetting(const char* key, float defaultValue = 0.0f)
     }
 }
 
+static std::string loadStringSetting(const char* key, const std::string& defaultValue = {})
+{
+    std::ifstream file("assets/settings.json");
+    if (!file.is_open())
+        return defaultValue;
+
+    try
+    {
+        nlohmann::json j;
+        file >> j;
+        if (!j.contains(key) || !j[key].is_string())
+            return defaultValue;
+        return j[key].get<std::string>();
+    }
+    catch (const std::exception&)
+    {
+        return defaultValue;
+    }
+}
+
 static nlohmann::json loadConfigJsonObject()
 {
     std::ifstream file("assets/config.json");
@@ -420,6 +521,41 @@ static nlohmann::json loadConfigJsonObject()
     {
         return nlohmann::json::object();
     }
+}
+
+static nlohmann::json loadJsonObjectFromFile(const std::string& path)
+{
+    std::ifstream file(path);
+    if (!file.is_open())
+        return nlohmann::json::object();
+
+    try
+    {
+        nlohmann::json j;
+        file >> j;
+        return j.is_object() ? j : nlohmann::json::object();
+    }
+    catch (const std::exception&)
+    {
+        return nlohmann::json::object();
+    }
+}
+
+static bool saveJsonObjectToFile(const std::string& path, const nlohmann::json& object)
+{
+    std::filesystem::path filePath(path);
+    if (filePath.has_parent_path())
+    {
+        std::error_code ec;
+        std::filesystem::create_directories(filePath.parent_path(), ec);
+    }
+
+    std::ofstream file(path);
+    if (!file.is_open())
+        return false;
+
+    file << object.dump(4);
+    return true;
 }
 
 static bool loadConfigBool(const char* section, const char* key, bool defaultValue)
@@ -536,9 +672,44 @@ static void saveFloatSetting(const char* key, float value)
     file << j.dump(4);
 }
 
+static void saveStringSetting(const char* key, const std::string& value)
+{
+    nlohmann::json j = nlohmann::json::object();
+
+    {
+        std::ifstream file("assets/settings.json");
+        if (file.is_open())
+        {
+            try
+            {
+                file >> j;
+            }
+            catch (const std::exception&)
+            {
+                j = nlohmann::json::object();
+            }
+        }
+    }
+
+    j[key] = value;
+
+    std::ofstream file("assets/settings.json");
+    if (!file.is_open())
+        return;
+    file << j.dump(4);
+}
+
 bool GameScene::isGroundActor(const engine::object::GameObject* actor) const
 {
     return actor && actor->getTag() == "Ground";
+}
+
+static bool isEditorGridActor(const engine::object::GameObject* actor)
+{
+    if (!actor)
+        return false;
+    const std::string& tag = actor->getTag();
+    return tag == "Ground" || tag == "Background";
 }
 
 void GameScene::pruneGroundSelection()
@@ -583,7 +754,7 @@ void GameScene::clearPersistedGroundActors()
     for (const auto& holder : actor_manager->getActors())
     {
         auto* actor = holder.get();
-        if (isGroundActor(actor))
+        if (isEditorGridActor(actor))
             actor->setNeedRemove(true);
     }
 
@@ -617,7 +788,8 @@ void GameScene::loadGroundActorsFromConfig(bool clearExisting)
         if (!ground)
             continue;
 
-        ground->setTag("Ground");
+        const bool useGroundZone = record.zone != "background";
+        ground->setTag(useGroundZone ? "Ground" : "Background");
         auto* transform = ground->addComponent<engine::component::TransformComponent>(record.position, record.scale, record.rotation);
         transform->setRotation(record.rotation);
         ground->addComponent<engine::component::SpriteComponent>(record.texture, engine::utils::Alignment::CENTER);
@@ -658,7 +830,7 @@ void GameScene::saveGroundActorsToConfig()
     for (const auto& holder : actor_manager->getActors())
     {
         const auto* actor = holder.get();
-        if (!isGroundActor(actor) || actor->isNeedRemove())
+        if (!isEditorGridActor(actor) || actor->isNeedRemove())
             continue;
 
         const auto* transform = actor->getComponent<engine::component::TransformComponent>();
@@ -673,6 +845,8 @@ void GameScene::saveGroundActorsToConfig()
         record.scale = transform->getScale();
         record.rotation = transform->getRotation();
         record.usePhysics = actor->hasComponent<engine::component::PhysicsComponent>();
+        record.zone = isGroundActor(actor) ? "ground" : "background";
+        record.gridType = isGroundActor(actor) ? "ground_2_5" : "fine";
         record.colliderHalf = m_groundColliderHalfByActor.contains(actor)
             ? m_groundColliderHalfByActor.at(actor)
             : glm::vec2{
@@ -684,6 +858,19 @@ void GameScene::saveGroundActorsToConfig()
     }
 
     config["editor"]["ground_actors"] = std::move(records);
+    config["editor"]["grid_layout"] = {
+        {"background", {
+            {"rows", m_backgroundGridRows},
+            {"start", m_backgroundGridStart},
+            {"end",   m_backgroundGridEnd}
+        }},
+        {"ground", {
+            {"rows", m_groundGridRows},
+            {"start", m_groundGridStart},
+            {"end",   m_groundGridEnd},
+            {"aspect", m_groundGridAspect}
+        }}
+    };
 
     std::ofstream file("assets/config.json");
     if (!file.is_open())
@@ -719,12 +906,119 @@ void GameScene::snapSelectedGroundActorsToGrid()
         m_groundConfigDirty = true;
 }
 
+float GameScene::tileHeightForType(engine::world::TileType type) const
+{
+    if (const auto customHeight = m_groundTileCatalog.heightForType(type); customHeight.has_value())
+        return customHeight.value();
+
+    const size_t index = tileTypeToIndex(type);
+    if (index >= m_tileTypeHeightPx.size())
+        return 0.0f;
+    return m_tileTypeHeightPx[index];
+}
+
+void GameScene::updateActorFootTileContact(engine::object::GameObject* actor)
+{
+    if (!actor || !chunk_manager)
+        return;
+
+    auto* controller = actor->getComponent<engine::component::ControllerComponent>();
+    auto* transform = actor->getComponent<engine::component::TransformComponent>();
+    if (!controller || !transform)
+        return;
+
+    float effectiveCollisionYOff = 0.0f;
+    float effectiveCollisionHalfH = 0.0f;
+    if (auto* physics = actor->getComponent<engine::component::PhysicsComponent>())
+    {
+        const BodyPrimaryShapeMetrics metrics = readBodyPrimaryShapeMetrics(physics->getBodyId());
+        if (metrics.valid)
+        {
+            effectiveCollisionYOff = metrics.localCenterYPx;
+            effectiveCollisionHalfH = metrics.halfHeightPx;
+        }
+    }
+    else if (actor == m_player)
+    {
+        effectiveCollisionYOff = m_playerMechHeightPx * 0.5f;
+        effectiveCollisionHalfH = m_playerCollisionHalfD;
+    }
+
+    const glm::vec2 center = transform->getPosition() + glm::vec2(0.0f, controller->getPosZ() + effectiveCollisionYOff);
+    const float half = std::max(1.0f, controller->getFootCollisionHalfSize());
+    const glm::vec4 footRect = {
+        center.x - half,
+        center.y - half,
+        center.x + half,
+        center.y + half
+    };
+
+    const glm::ivec2 minTile = chunk_manager->worldToTile({footRect.x, footRect.y});
+    const glm::ivec2 maxTile = chunk_manager->worldToTile({footRect.z, footRect.w});
+    const float groundTopWorldY = groundZoneTopWorldY();
+    const float groundBottomWorldY = _context.getCamera().screenToWorld({0.0f, ImGui::GetIO().DisplaySize.y}).y;
+
+    // 限制的是角色中心位移，但要确保“整个碰撞盒”都在可移动区域内。
+    const float bandMinY = groundTopWorldY - effectiveCollisionYOff + effectiveCollisionHalfH;
+    const float bandMaxY = groundBottomWorldY - effectiveCollisionYOff - effectiveCollisionHalfH;
+    if (bandMaxY >= bandMinY)
+        controller->setGroundBand(bandMinY, bandMaxY);
+    else
+        controller->setGroundBand((groundTopWorldY + groundBottomWorldY) * 0.5f,
+                                  (groundTopWorldY + groundBottomWorldY) * 0.5f);
+
+    bool overlapped = false;
+    float tileHeightPx = 0.0f;
+    const glm::ivec2 tileSize = chunk_manager->getTileSize();
+    const bool captureDebug = (actor == getControlledActor());
+    if (captureDebug)
+        m_debugFootTiles.clear();
+    for (int ty = minTile.y; ty <= maxTile.y; ++ty)
+    {
+        for (int tx = minTile.x; tx <= maxTile.x; ++tx)
+        {
+            const auto& tile = chunk_manager->tileAt(tx, ty);
+            if (!isStandableFootTile(tile.type))
+                continue;
+
+            const glm::vec2 tileWorld = chunk_manager->tileToWorld({tx, ty});
+            if (m_groundCollisionLowerHalfOnly && (tileWorld.y < groundTopWorldY || tileWorld.y > groundBottomWorldY))
+                continue;
+            const glm::vec4 tileRect = {
+                tileWorld.x,
+                tileWorld.y,
+                tileWorld.x + static_cast<float>(tileSize.x),
+                tileWorld.y + static_cast<float>(tileSize.y)
+            };
+            if (!rectIntersects(footRect, tileRect))
+                continue;
+
+            overlapped = true;
+            tileHeightPx = std::max(tileHeightPx, tileHeightForType(tile.type));
+            if (captureDebug)
+                m_debugFootTiles.push_back({tx, ty});
+        }
+    }
+
+    controller->setFootTileContact(overlapped, tileHeightPx);
+
+    if (captureDebug)
+    {
+        m_debugFootRect = footRect;
+        m_debugFootOverlapped = overlapped;
+        m_debugFootTileHeightPx = tileHeightPx;
+        m_debugFootPlayerHeightPx = controller->getPosZ();
+    }
+}
+
     GameScene::GameScene(const std::string &name,
                          engine::core::Context &context,
                          engine::scene::SceneManager &sceneManager,
-                         game::route::RouteData routeData)
+                         game::route::RouteData routeData,
+                         bool startInMapEditor)
         : Scene(name, context, sceneManager)
         , m_routeData(std::move(routeData))
+        , m_startInMapEditor(startInMapEditor)
     {
         spdlog::debug("GameScene '{}' 构造完成（路线 {} 步）",
                       name, m_routeData.path.size());
@@ -761,25 +1055,145 @@ void GameScene::snapSelectedGroundActorsToGrid()
         m_showSkillDebugOverlay = loadBoolSetting("show_skill_debug_overlay");
         m_showActiveChunkHighlights = loadBoolSetting("show_active_chunk_highlights");
         m_invertPlayerFacing = loadBoolSetting("invert_player_facing");
+        m_cleanStartupUi = loadBoolSetting("clean_startup_ui", true);
+        m_showPlayerConfigPanel = loadBoolSetting("show_player_config_panel", true);
+        m_editorLayoutPreset = loadStringSetting("editor_layout_preset", "default");
         m_showEditorToolbar = loadBoolSetting("show_editor_toolbar", true);
+        m_showMainToolbar = loadBoolSetting("show_main_toolbar", true);
+        m_showResourceExplorerPanel = loadBoolSetting("show_resource_explorer_panel", true);
+        m_showSceneViewportPanel = loadBoolSetting("show_scene_viewport_panel", true);
+        m_showConsolePanel = loadBoolSetting("show_console_panel", true);
+        m_showAnimationEditorPanel = loadBoolSetting("show_animation_editor_panel", false);
+        m_showShaderEditorPanel = loadBoolSetting("show_shader_editor_panel", false);
+        m_showProfilerPanel = loadBoolSetting("show_profiler_panel", false);
         m_showHierarchyPanel = loadBoolSetting("show_hierarchy_panel", true);
         m_showInspectorPanel = loadBoolSetting("show_inspector_panel", true);
         m_toolbarShowPlayControls = loadBoolSetting("toolbar_show_play_controls", true);
         m_toolbarShowWindowControls = loadBoolSetting("toolbar_show_window_controls", true);
         m_toolbarShowDebugControls = loadBoolSetting("toolbar_show_debug_controls", false);
+        m_devOverlayShowEditorTools = loadBoolSetting("dev_overlay_show_editor_tools", true);
+        m_devOverlayShowStateMachineDebug = loadBoolSetting("dev_overlay_show_sm_debug", true);
+        m_devOverlayShowPlayerRuntimeState = loadBoolSetting("dev_overlay_show_player_state", true);
+        m_showEditorColliderBoxes = loadBoolSetting("show_editor_collider_boxes", false);
+        m_showFootCollisionDebug = loadBoolSetting("show_foot_collision_debug", true);
         m_hierarchyGroupByTag = loadBoolSetting("hierarchy_group_by_tag", false);
         m_hierarchyFavoritesOnly = loadBoolSetting("hierarchy_favorites_only", false);
         m_enablePlayRollback = loadBoolSetting("enable_play_rollback", true);
+        m_sceneViewportShowGrid = loadBoolSetting("scene_viewport_show_grid", true);
+        m_sceneViewportShowAxes = loadBoolSetting("scene_viewport_show_axes", true);
+        m_sceneViewportShowCameraInfo = loadBoolSetting("scene_viewport_show_camera_info", true);
+        m_sceneViewportShowLighting = loadBoolSetting("scene_viewport_show_lighting", true);
+        m_sceneViewportShowGizmo = loadBoolSetting("scene_viewport_show_gizmo", true);
+        m_resourceExplorerViewMode = loadStringSetting("resource_explorer_view", "tree");
+
+        if (m_startInMapEditor)
+        {
+            m_devMode = true;
+            m_gameplayRunning = false;
+            m_showMapEditor = true;
+            m_cleanStartupUi = false;
+            m_showSceneViewportPanel = true;
+            m_showHierarchyPanel = true;
+            m_showInspectorPanel = true;
+            m_showPlayerConfigPanel = false;
+        }
         m_screenRainOverlay = loadBoolSetting("screen_rain_overlay");
         m_screenRainOverlayStrength = std::clamp(loadFloatSetting("screen_rain_overlay_strength", 1.0f), 0.2f, 2.0f);
         m_screenRainMotionStrength = std::clamp(loadFloatSetting("screen_rain_motion_strength", 1.0f), 0.2f, 3.0f);
+        {
+            const nlohmann::json cfg = loadConfigJsonObject();
+            if (cfg.contains("editor") && cfg["editor"].is_object())
+            {
+                const auto& editor = cfg["editor"];
+                if (editor.contains("grid_layout") && editor["grid_layout"].is_object())
+                {
+                    const auto& layout = editor["grid_layout"];
+                    if (layout.contains("background") && layout["background"].is_object())
+                    {
+                        const auto& bg = layout["background"];
+                        m_backgroundGridRows = std::max(1, bg.value("rows", m_backgroundGridRows));
+                        m_backgroundGridStart = std::clamp(bg.value("start", m_backgroundGridStart), 0.0f, 0.99f);
+                        // backward compat: old format stored "screen_ratio" which was the end position
+                        const float bgEndFallback = bg.contains("end") ? bg.value("end", m_backgroundGridEnd) : bg.value("screen_ratio", m_backgroundGridEnd);
+                        m_backgroundGridEnd = std::clamp(bgEndFallback, 0.01f, 1.0f);
+                        if (m_backgroundGridEnd <= m_backgroundGridStart)
+                            m_backgroundGridEnd = std::clamp(m_backgroundGridStart + 0.1f, 0.01f, 1.0f);
+                    }
+                    if (layout.contains("ground") && layout["ground"].is_object())
+                    {
+                        const auto& ground = layout["ground"];
+                        m_groundGridRows = std::max(1, ground.value("rows", m_groundGridRows));
+                        // backward compat: old "screen_ratio" was ratio from bottom, so start = 1.0 - screen_ratio
+                        float groundStartFallback = m_groundGridStart;
+                        if (ground.contains("start"))
+                            groundStartFallback = ground.value("start", m_groundGridStart);
+                        else if (ground.contains("screen_ratio"))
+                            groundStartFallback = 1.0f - ground.value("screen_ratio", 0.45f);
+                        m_groundGridStart = std::clamp(groundStartFallback, 0.0f, 0.99f);
+                        m_groundGridEnd = std::clamp(ground.value("end", m_groundGridEnd), 0.01f, 1.0f);
+                        if (m_groundGridEnd <= m_groundGridStart)
+                            m_groundGridEnd = std::clamp(m_groundGridStart + 0.1f, 0.01f, 1.0f);
+                        m_groundGridAspect = std::clamp(ground.value("aspect", m_groundGridAspect), 0.5f, 8.0f);
+                    }
+                }
+            }
+
+            m_groundTileCatalog.loadFromFile("assets/ground_tiles/tile_kinds.json");
+            if (const auto* defaultKind = m_groundTileCatalog.kindForType(m_mapEditorPaintTile))
+                m_mapEditorPaintTileKey = defaultKind->key;
+            else if (!m_groundTileCatalog.kinds().empty())
+            {
+                const auto& firstKind = m_groundTileCatalog.kinds().front();
+                m_mapEditorPaintTile = firstKind.tileType;
+                m_mapEditorPaintTileKey = firstKind.key;
+            }
+
+            m_tileTypeHeightPx.fill(0.0f);
+            if (cfg.contains("gameplay") && cfg["gameplay"].is_object())
+            {
+                const auto& gameplay = cfg["gameplay"];
+                if (gameplay.contains("tile_height_px") && gameplay["tile_height_px"].is_object())
+                {
+                    const auto& heights = gameplay["tile_height_px"];
+                    m_tileTypeHeightPx[tileTypeToIndex(engine::world::TileType::Stone)] = heights.value("stone", 0.0f);
+                    m_tileTypeHeightPx[tileTypeToIndex(engine::world::TileType::Dirt)] = heights.value("dirt", 0.0f);
+                    m_tileTypeHeightPx[tileTypeToIndex(engine::world::TileType::Grass)] = heights.value("grass", 0.0f);
+                    m_tileTypeHeightPx[tileTypeToIndex(engine::world::TileType::Wood)] = heights.value("wood", 0.0f);
+                    m_tileTypeHeightPx[tileTypeToIndex(engine::world::TileType::Leaves)] = heights.value("leaves", 0.0f);
+                    m_tileTypeHeightPx[tileTypeToIndex(engine::world::TileType::Ore)] = heights.value("ore", 0.0f);
+                    m_tileTypeHeightPx[tileTypeToIndex(engine::world::TileType::Gravel)] = heights.value("gravel", 0.0f);
+                    m_tileTypeHeightPx[tileTypeToIndex(engine::world::TileType::GroundDecor)] = heights.value("ground_decor", 0.0f);
+                    m_tileTypeHeightPx[tileTypeToIndex(engine::world::TileType::WallDecor)] = heights.value("wall_decor", 0.0f);
+                }
+                if (gameplay.contains("camera_follow_deadzone_px") && gameplay["camera_follow_deadzone_px"].is_object())
+                {
+                    m_cameraFollowDeadzonePx = readJsonVec2(gameplay, "camera_follow_deadzone_px", m_cameraFollowDeadzonePx);
+                    m_cameraFollowDeadzonePx.x = std::max(0.0f, m_cameraFollowDeadzonePx.x);
+                    m_cameraFollowDeadzonePx.y = std::max(0.0f, m_cameraFollowDeadzonePx.y);
+                }
+                m_groundCollisionLowerHalfOnly = gameplay.value("ground_collision_lower_half_only", true);
+                m_selectedCharacterProfilePath = gameplay.value("selected_character_profile_path", m_selectedCharacterProfilePath);
+                m_playerFrameJsonPath = gameplay.value("player_frame_json_path", m_playerFrameJsonPath);
+                m_playerSMPath = gameplay.value("player_sm_path", m_playerSMPath);
+                m_playerMechHeightPx    = std::max(0.0f, gameplay.value("player_mech_height_px",      m_playerMechHeightPx));
+                m_playerCollisionHalfW  = std::max(1.0f, gameplay.value("player_collision_half_w_px", m_playerCollisionHalfW));
+                m_playerCollisionHalfD  = std::max(0.5f, gameplay.value("player_collision_half_d_px", m_playerCollisionHalfD));
+                m_playerBaseMoveSpeed = std::max(1.0f, gameplay.value("player_base_move_speed", m_playerBaseMoveSpeed));
+                m_playerBaseJumpSpeed = std::max(1.0f, gameplay.value("player_base_jump_speed", m_playerBaseJumpSpeed));
+                m_playerBaseMaxHp = std::max(1.0f, gameplay.value("player_base_max_hp", m_playerBaseMaxHp));
+                m_playerBaseMaxEnergy = std::max(1.0f, gameplay.value("player_base_max_energy", m_playerBaseMaxEnergy));
+            }
+        }
+
+        loadMechProfileConfig();
+        loadSelectedCharacterProfileConfig();
         m_weatherSystem.setScreenRainOverlayEnabled(m_screenRainOverlay);
         m_weatherSystem.setScreenRainOverlayStrength(m_screenRainOverlayStrength);
         m_weatherSystem.setScreenRainMotionScale(m_screenRainMotionStrength);
         // 编辑器优先：启动后先进入编辑态，点击“启动游戏”才真正推进玩法。
         m_gameplayRunning = false;
         m_devMode = true;
-        m_showSettings = true;
+        m_showSettings = false;
 
         setupGroundTileScene(config);
 
@@ -815,6 +1229,7 @@ void GameScene::snapSelectedGroundActorsToGrid()
             ImGui::CreateContext();
             ImGuiIO &io = ImGui::GetIO();
             (void)io;
+            io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
             ImGui::StyleColorsDark();
 
             if (!io.Fonts->AddFontFromFileTTF(
@@ -830,6 +1245,8 @@ void GameScene::snapSelectedGroundActorsToGrid()
                 spdlog::error("Failed to init ImGui SDL3 backend");
             if (!ImGui_ImplOpenGL3_Init("#version 330"))
                 spdlog::error("Failed to init ImGui OpenGL3 backend");
+
+            applyEditorLayoutPreset(m_editorLayoutPreset, true);
         }
 
         // ECS测试
@@ -846,10 +1263,6 @@ void GameScene::snapSelectedGroundActorsToGrid()
         warmupSceneTextures();
         initializeGroundChunksAndTrees();
         preallocateRuntimeBuffers();
-
-        // 在目标区域注入矿脉（需在区块加载后）
-        injectOreVeins();
-        generateRockObstacles();
     }
 
     void GameScene::setupGroundTileScene(const engine::world::WorldConfig& config)
@@ -858,22 +1271,7 @@ void GameScene::snapSelectedGroundActorsToGrid()
             "assets/textures/Tiles/tileset.svg",
             config.TILE_SIZE,
             &_context.getResourceManager(),
-            physics_manager.get());
-
-        auto generator = std::make_unique<game::scene::DnfTerrainGenerator>(config);
-        // 地面瓦片按路线地形生成（地面主场景层）。
-        if (m_routeData.isValid())
-        {
-            auto rd = m_routeData;
-            generator->setBiomeLookup([rd](int tileX) -> int {
-                int zone = tileX / game::route::RouteData::TILES_PER_CELL;
-                if (zone < 0 || zone >= static_cast<int>(rd.path.size()))
-                    return 0;
-                auto cell = rd.path[zone];
-                return static_cast<int>(rd.terrain[cell.y][cell.x]);
-            });
-        }
-        chunk_manager->setTerrainGenerator(std::move(generator));
+            nullptr);
     }
 
     void GameScene::setupSkyBackgroundScene()
@@ -1164,7 +1562,10 @@ void GameScene::snapSelectedGroundActorsToGrid()
                     unlockCameraY = mechCtrl->isFlyModeActive() || mechCtrl->getPosZ() > 1.0f;
 
                 if (auto* mechTransform = m_mech->getComponent<engine::component::TransformComponent>())
+                {
                     _context.getCamera().setFollowTarget(&mechTransform->getPosition(), unlockCameraY ? 8.5f : 4.2f);
+                    _context.getCamera().setFollowDeadzone(m_cameraFollowDeadzonePx);
+                }
             }
             _context.getCamera().setLockY(!unlockCameraY, 40.0f);
 
@@ -1241,7 +1642,11 @@ void GameScene::snapSelectedGroundActorsToGrid()
 
         measure(m_frameProfiler.actorUpdate, [&] {
             if (actor_manager)
+            {
+                for (const auto& holder : actor_manager->getActors())
+                    updateActorFootTileContact(holder.get());
                 actor_manager->update(delta_time);
+            }
         });
 
         updatePossession(delta_time);
@@ -1425,12 +1830,29 @@ void GameScene::snapSelectedGroundActorsToGrid()
             if (m_showFpsOverlay)
                 renderPerformanceOverlay();
 
-            renderEditorToolbar();
-            renderHierarchyPanel();
-            renderInspectorPanel();
+            const bool allowEditorWindows = !m_gameplayRunning;
+            const bool showIntegratedWorkbench = allowEditorWindows && !m_cleanStartupUi;
+            if (showIntegratedWorkbench)
+            {
+                renderEditorWorkbenchShell();
 
-            renderSettingsPage();
-            renderMapEditor();
+                renderEditorToolbar();
+                renderHierarchyPanel();
+                renderInspectorPanel();
+                renderResourceExplorerPanel();
+                renderSceneViewportPanel();
+                renderConsolePanel();
+                renderAnimationEditorPanel();
+                renderShaderEditorPanel();
+                renderProfilerPanel();
+            }
+
+            if (allowEditorWindows && (showIntegratedWorkbench || m_showSettings))
+                renderSettingsPage();
+            if (allowEditorWindows && (showIntegratedWorkbench || m_showMapEditor))
+                renderMapEditor();
+            if (allowEditorWindows)
+                renderPlayerConfigPanel();
 
             float displayW = ImGui::GetIO().DisplaySize.x;
             float displayH = ImGui::GetIO().DisplaySize.y;
@@ -1531,17 +1953,21 @@ void GameScene::snapSelectedGroundActorsToGrid()
             ImGui::TextDisabled("ESC / ` 设置");
             ImGui::End();
 
-            // 左侧武器栏（常显示）
-            renderWeaponBar();
+            if (!m_cleanStartupUi)
+            {
+                // 左侧武器栏（常显示）
+                renderWeaponBar();
 
-            // 左上角属性面板（血量 / 星能 / 属性）
-            renderPlayerStatusHUD();
+                // 左上角属性面板（血量 / 星能 / 属性）
+                renderPlayerStatusHUD();
+            }
 
             // 底部居中星技 HUD
             renderSkillHUD();
 
             // 玩家头顶状态名
             renderPlayerStateTag();
+            renderPlayerAltitudeMeter();
             renderModeSwitchHint();
             renderFlightThrusterFX();
             renderMonsterIFFMarkers();
@@ -1552,8 +1978,11 @@ void GameScene::snapSelectedGroundActorsToGrid()
             // 掉落物标注（悬浮文字）
             renderDropItems();
 
-            // 左下角路线 HUD
-            renderRouteHUD();
+            if (!m_cleanStartupUi)
+            {
+                // 左下角路线 HUD
+                renderRouteHUD();
+            }
 
             // 撤离结算界面
             renderSettlementUI();
@@ -1672,6 +2101,95 @@ void GameScene::snapSelectedGroundActorsToGrid()
                     IM_COL32(255, 240, 100, static_cast<int>(100 + 80 * pulse)), 1.2f);
             }
 
+            if (m_devMode && m_showFootCollisionDebug && chunk_manager)
+            {
+                auto* fg = ImGui::GetForegroundDrawList();
+                const auto& cam = _context.getCamera();
+                const glm::ivec2 tileSize = chunk_manager->getTileSize();
+
+                const glm::vec2 footMin = {m_debugFootRect.x, m_debugFootRect.y};
+                const glm::vec2 footMax = {m_debugFootRect.z, m_debugFootRect.w};
+                const ImVec2 footTL = logicalToImGuiScreen(_context, cam.worldToScreen(footMin));
+                const ImVec2 footBR = logicalToImGuiScreen(_context, cam.worldToScreen(footMax));
+                const ImU32 footCol = m_debugFootOverlapped ? IM_COL32(80, 230, 140, 220) : IM_COL32(255, 120, 80, 220);
+                fg->AddRect(footTL, footBR, footCol, 2.0f, 0, 2.0f);
+                fg->AddRectFilled(footTL, footBR, IM_COL32(80, 230, 140, 24), 2.0f);
+
+                for (const glm::ivec2& tile : m_debugFootTiles)
+                {
+                    const glm::vec2 world = chunk_manager->tileToWorld(tile);
+                    const ImVec2 sTL = logicalToImGuiScreen(_context, cam.worldToScreen(world));
+                    const ImVec2 sBR = logicalToImGuiScreen(_context, cam.worldToScreen(world + glm::vec2(tileSize)));
+                    fg->AddRect(sTL, sBR, IM_COL32(255, 200, 80, 220), 0.0f, 0, 1.6f);
+                }
+
+                const char* stateLabel = "离地";
+                if (m_debugFootOverlapped)
+                {
+                    const float diff = m_debugFootPlayerHeightPx - m_debugFootTileHeightPx;
+                    if (std::abs(diff) <= 2.0f)
+                        stateLabel = "在地面";
+                    else if (diff < 0.0f)
+                        stateLabel = "卡入地形";
+                }
+                char debugText[160];
+                snprintf(debugText, sizeof(debugText), "脚底碰撞: %s | playerZ=%.1f tileZ=%.1f", stateLabel, m_debugFootPlayerHeightPx, m_debugFootTileHeightPx);
+                fg->AddText(ImVec2(footTL.x, footTL.y - 18.0f), IM_COL32(255, 245, 180, 235), debugText);
+            }
+
+            if (m_devMode && m_player)
+            {
+                auto* fg = ImGui::GetForegroundDrawList();
+                const auto& cam = _context.getCamera();
+
+                const ImVec2 displaySize = ImGui::GetIO().DisplaySize;
+                const glm::vec2 worldMin = cam.screenToWorld({0.0f, 0.0f});
+                const glm::vec2 worldMax = cam.screenToWorld({displaySize.x, displaySize.y});
+                const float minX = std::min(worldMin.x, worldMax.x);
+                const float maxX = std::max(worldMin.x, worldMax.x);
+
+                // 与控制器 setGroundBand 一致：上边界取地形带上缘，下边界取当前可视底边。
+                const float moveTopY = groundZoneTopWorldY();
+                const float moveBottomY = cam.screenToWorld({0.0f, displaySize.y}).y;
+
+                const ImVec2 sTL = logicalToImGuiScreen(_context, cam.worldToScreen({minX, moveTopY}));
+                const ImVec2 sBR = logicalToImGuiScreen(_context, cam.worldToScreen({maxX, moveBottomY}));
+                fg->AddRect(sTL, sBR, IM_COL32(255, 70, 70, 230), 0.0f, 0, 2.4f);
+                fg->AddText(ImVec2(sTL.x + 8.0f, sTL.y + 6.0f), IM_COL32(255, 110, 110, 235), "玩家可移动区域");
+            }
+
+            if (m_devMode && m_showEditorColliderBoxes && actor_manager)
+            {
+                auto* fg = ImGui::GetForegroundDrawList();
+                const auto& cam = _context.getCamera();
+                for (const auto& holder : actor_manager->getActors())
+                {
+                    const auto* actor = holder.get();
+                    if (!actor || actor->isNeedRemove())
+                        continue;
+                    const std::string& tag = actor->getTag();
+                    if (tag != "Ground" && tag != "Background")
+                        continue;
+                    if (!actor->hasComponent<engine::component::PhysicsComponent>())
+                        continue;
+
+                    const auto* transform = actor->getComponent<engine::component::TransformComponent>();
+                    if (!transform)
+                        continue;
+
+                    const glm::vec2 half = m_groundColliderHalfByActor.contains(actor)
+                        ? m_groundColliderHalfByActor.at(actor)
+                        : glm::vec2{48.0f, 10.0f};
+                    const glm::vec2 center = transform->getPosition();
+                    const ImVec2 sTL = logicalToImGuiScreen(_context, cam.worldToScreen({center.x - half.x, center.y - half.y}));
+                    const ImVec2 sBR = logicalToImGuiScreen(_context, cam.worldToScreen({center.x + half.x, center.y + half.y}));
+                    const bool selected = m_groundSelection.contains(actor);
+                    const ImU32 col = selected ? IM_COL32(80, 220, 255, 230) : IM_COL32(255, 170, 80, 220);
+                    fg->AddRect(sTL, sBR, col, 2.0f, 0, selected ? 2.4f : 1.6f);
+                    fg->AddRectFilled(sTL, sBR, IM_COL32(255, 170, 80, 22), 2.0f);
+                }
+            }
+
             pruneGroundSelection();
 
             if (!m_groundSelection.empty())
@@ -1763,32 +2281,92 @@ void GameScene::snapSelectedGroundActorsToGrid()
                 const ImVec2 displaySize = ImGui::GetIO().DisplaySize;
                 const glm::vec2 worldMin = cam.screenToWorld({0.0f, 0.0f});
                 const glm::vec2 worldMax = cam.screenToWorld({displaySize.x, displaySize.y});
-                const float gridX = static_cast<float>(std::max(1, m_groundMakerGridSize.x));
-                const float gridY = static_cast<float>(std::max(1, m_groundMakerGridSize.y));
+                const glm::vec2 bgGrid = backgroundGridCellSizeWorld();
+                const glm::vec2 groundGrid = groundGridCellSizeWorld();
                 const float minX = std::min(worldMin.x, worldMax.x);
                 const float maxX = std::max(worldMin.x, worldMax.x);
                 const float minY = std::min(worldMin.y, worldMax.y);
                 const float maxY = std::max(worldMin.y, worldMax.y);
+                const float bgBottomY = backgroundZoneBottomWorldY();
+                const float groundTopY = groundZoneTopWorldY();
 
-                if (m_groundMakerSnapX)
+                const ImVec2 bgS0 = logicalToImGuiScreen(_context, cam.worldToScreen({minX, bgBottomY}));
+                const ImVec2 bgS1 = logicalToImGuiScreen(_context, cam.worldToScreen({maxX, bgBottomY}));
+                fg->AddLine(bgS0, bgS1, IM_COL32(120, 180, 255, 220), 1.8f);
+                fg->AddText(ImVec2(bgS0.x + 8.0f, bgS0.y - 18.0f), IM_COL32(165, 210, 255, 220), "背景网格下边界");
+
+                const ImVec2 groundS0 = logicalToImGuiScreen(_context, cam.worldToScreen({minX, groundTopY}));
+                const ImVec2 groundS1 = logicalToImGuiScreen(_context, cam.worldToScreen({maxX, groundTopY}));
+                fg->AddLine(groundS0, groundS1, IM_COL32(130, 235, 150, 230), 2.0f);
+                fg->AddText(ImVec2(groundS0.x + 8.0f, groundS0.y + 4.0f), IM_COL32(175, 245, 180, 220), "地形网格上边界");
+
+                // ── 背景区域上边界 ───────────────────────────────────────────
+                const float bgTopY = backgroundZoneTopWorldY();
+                const float groundBottomY = groundZoneBottomWorldY();
                 {
-                    const float startX = std::floor(minX / gridX) * gridX;
-                    for (float x = startX; x <= maxX + gridX; x += gridX)
+                    const ImVec2 s0 = logicalToImGuiScreen(_context, cam.worldToScreen({minX, bgTopY}));
+                    const ImVec2 s1 = logicalToImGuiScreen(_context, cam.worldToScreen({maxX, bgTopY}));
+                    fg->AddLine(s0, s1, IM_COL32(120, 180, 255, 160), 1.4f);
+                    fg->AddText(ImVec2(s0.x + 8.0f, s0.y + 3.0f), IM_COL32(165, 210, 255, 180), "背景网格上边界");
+                }
+                // ── 地形区域下边界 ────────────────────────────────────────────
+                {
+                    const ImVec2 s0 = logicalToImGuiScreen(_context, cam.worldToScreen({minX, groundBottomY}));
+                    const ImVec2 s1 = logicalToImGuiScreen(_context, cam.worldToScreen({maxX, groundBottomY}));
+                    fg->AddLine(s0, s1, IM_COL32(130, 235, 150, 160), 1.4f);
+                    fg->AddText(ImVec2(s0.x + 8.0f, s0.y - 18.0f), IM_COL32(175, 245, 180, 180), "地形网格下边界");
+                }
+
+                // ── 上半网格（背景区）完整格子 + 右侧高度标注 ─────────────────
+                if (bgGrid.x > 0.001f && bgGrid.y > 0.001f)
+                {
+                    // 竖线
+                    for (float x = std::floor(minX / bgGrid.x) * bgGrid.x; x <= maxX + bgGrid.x; x += bgGrid.x)
                     {
-                        const ImVec2 s0 = logicalToImGuiScreen(_context, cam.worldToScreen({x, minY}));
-                        const ImVec2 s1 = logicalToImGuiScreen(_context, cam.worldToScreen({x, maxY}));
-                        fg->AddLine(s0, s1, IM_COL32(120, 190, 255, 44), 1.0f);
+                        const ImVec2 s0 = logicalToImGuiScreen(_context, cam.worldToScreen({x, bgTopY}));
+                        const ImVec2 s1 = logicalToImGuiScreen(_context, cam.worldToScreen({x, bgBottomY}));
+                        fg->AddLine(s0, s1, IM_COL32(130, 190, 255, 28), 1.0f);
+                    }
+                    // 横线 + 右侧高度标注
+                    for (int row = 0; row <= m_backgroundGridRows; ++row)
+                    {
+                        const float worldY = bgTopY + static_cast<float>(row) * bgGrid.y;
+                        if (worldY > bgBottomY + bgGrid.y * 0.05f) break;
+                        const ImVec2 s0 = logicalToImGuiScreen(_context, cam.worldToScreen({minX, worldY}));
+                        const ImVec2 s1 = logicalToImGuiScreen(_context, cam.worldToScreen({maxX, worldY}));
+                        fg->AddLine(s0, s1, IM_COL32(130, 190, 255, 28), 1.0f);
+                        // 高度标注：以地平线(groundTopY)为0，向上为正
+                        const int heightInt = static_cast<int>(std::round((groundTopY - worldY) / bgGrid.y));
+                        char hlabel[12];
+                        snprintf(hlabel, sizeof(hlabel), "%d", heightInt);
+                        fg->AddText(ImVec2(s1.x - 30.0f, s1.y - 13.0f), IM_COL32(165, 210, 255, 200), hlabel);
                     }
                 }
 
-                if (m_groundMakerSnapY)
+                // ── 下半网格（地形区）完整格子 + 右侧高度标注 ─────────────────
+                if (groundGrid.x > 0.001f && groundGrid.y > 0.001f)
                 {
-                    const float startY = std::floor(minY / gridY) * gridY;
-                    for (float y = startY; y <= maxY + gridY; y += gridY)
+                    // 竖线
+                    for (float x = std::floor(minX / groundGrid.x) * groundGrid.x; x <= maxX + groundGrid.x; x += groundGrid.x)
                     {
-                        const ImVec2 s0 = logicalToImGuiScreen(_context, cam.worldToScreen({minX, y}));
-                        const ImVec2 s1 = logicalToImGuiScreen(_context, cam.worldToScreen({maxX, y}));
-                        fg->AddLine(s0, s1, IM_COL32(120, 190, 255, 44), 1.0f);
+                        const ImVec2 s0 = logicalToImGuiScreen(_context, cam.worldToScreen({x, groundTopY}));
+                        const ImVec2 s1 = logicalToImGuiScreen(_context, cam.worldToScreen({x, groundBottomY}));
+                        fg->AddLine(s0, s1, IM_COL32(120, 220, 130, 48), 1.4f);
+                    }
+                    // 横线 + 右侧高度标注（地平线以下为负）
+                    for (int row = 0; row <= m_groundGridRows; ++row)
+                    {
+                        const float worldY = groundTopY + static_cast<float>(row) * groundGrid.y;
+                        if (worldY > groundBottomY + groundGrid.y * 0.05f) break;
+                        const ImVec2 s0 = logicalToImGuiScreen(_context, cam.worldToScreen({minX, worldY}));
+                        const ImVec2 s1 = logicalToImGuiScreen(_context, cam.worldToScreen({maxX, worldY}));
+                        fg->AddLine(s0, s1, IM_COL32(120, 220, 130, 48), 1.4f);
+                        // 高度标注：用背景格子高度作单位，0 = 地平线，向下为负
+                        const float heightF = (groundTopY - worldY) / (bgGrid.y > 0.001f ? bgGrid.y : groundGrid.y);
+                        const int heightInt = static_cast<int>(std::round(heightF));
+                        char hlabel[12];
+                        snprintf(hlabel, sizeof(hlabel), "%d", heightInt);
+                        fg->AddText(ImVec2(s1.x - 30.0f, s1.y - 13.0f), IM_COL32(175, 245, 180, 200), hlabel);
                     }
                 }
             }
@@ -1826,7 +2404,8 @@ void GameScene::snapSelectedGroundActorsToGrid()
 
             auto *ctrl = actor->getComponent<engine::component::ControllerComponent>();
             const float posZ = ctrl ? ctrl->getPosZ() : 0.0f;
-            const glm::vec2 groundPos = transform->getPosition() + glm::vec2(0.0f, posZ);
+            const float mechYOff = (actor == m_player) ? m_playerMechHeightPx * 0.5f : 0.0f;
+            const glm::vec2 groundPos = transform->getPosition() + glm::vec2(0.0f, posZ + mechYOff);
 
             glm::vec2 spriteSize = sprite->getSpriteSize();
             if (spriteSize.x <= 0.0f || spriteSize.y <= 0.0f)
@@ -1836,27 +2415,47 @@ void GameScene::snapSelectedGroundActorsToGrid()
                 std::clamp(spriteSize.x * 0.35f, 14.0f, 42.0f),
                 std::clamp(spriteSize.y * 0.11f, 4.5f, 12.0f)
             };
-            float baseAlpha = 0.16f;
+            float baseAlpha = 0.22f;
 
             if (actor == m_mech)
             {
                 baseSize = glm::vec2{38.0f, 11.0f};
-                baseAlpha = 0.20f;
+                baseAlpha = 0.26f;
             }
             else if (tag == "monster")
             {
-                baseAlpha = 0.15f;
+                baseAlpha = 0.20f;
             }
 
             const float zFactor = 1.0f / (1.0f + std::max(posZ, 0.0f) * 0.007f);
-            const glm::vec2 size = baseSize * zFactor;
+            glm::vec2 size = baseSize * zFactor;
             const float alpha = baseAlpha * zFactor;
-            const glm::vec2 shadowCenter = groundPos + glm::vec2(0.0f, std::max(10.0f, spriteSize.y * 0.12f));
+            glm::vec2 shadowCenter = groundPos + glm::vec2(0.0f, std::max(10.0f, spriteSize.y * 0.12f));
+
+            // 玩家影子与橘色碰撞框严格重合：同中心、同尺寸。
+            if (actor == m_player)
+            {
+                shadowCenter = groundPos;
+                size = {
+                    std::max(2.0f, m_playerCollisionHalfW * 2.0f),
+                    std::max(1.0f, m_playerCollisionHalfD * 2.0f)
+                };
+            }
 
             if (!camera.isBoxInView(shadowCenter - size * 0.5f, size))
                 continue;
 
             drawWorldShadow(_context, shadowCenter, size, alpha);
+
+            if (actor == getControlledActor())
+            {
+                const glm::ivec2 tileSize = chunk_manager ? chunk_manager->getTileSize() : glm::ivec2{16, 16};
+                const glm::vec2 markerSize = {
+                    std::max(size.x * 1.55f, static_cast<float>(tileSize.x) * 0.95f),
+                    std::max(size.y * 1.75f, static_cast<float>(tileSize.y) * 0.40f)
+                };
+                drawWorldGroundMarker(_context, shadowCenter, markerSize, std::clamp(alpha * 1.15f, 0.18f, 0.38f));
+            }
         }
     }
 
@@ -2074,7 +2673,7 @@ void GameScene::snapSelectedGroundActorsToGrid()
             {
                 const glm::vec2 dragEnd = snappedHoveredCenter;
                 const glm::vec2 delta = dragEnd - m_groundMakerDragStartWorld;
-                const float gridX = static_cast<float>(std::max(1, m_groundMakerGridSize.x));
+                const float gridX = std::max(1.0f, groundMakerGridSizeFor(m_groundMakerDragStartWorld).x);
                 const float baseWidthPx = m_groundMakerUseGridSnap ? gridX : 32.0f;
                 const float widthPx = snapGroundMakerWidth(std::max(baseWidthPx, std::abs(delta.x) + baseWidthPx));
                 m_groundMakerLengthCells = std::max(1, static_cast<int>(std::round(widthPx / gridX)));
@@ -2109,6 +2708,10 @@ void GameScene::snapSelectedGroundActorsToGrid()
                             continue;
                         const int tx = m_hoveredTile.x + dx;
                         const int ty = m_hoveredTile.y + dy;
+                        const glm::vec2 tileCenter = chunk_manager->tileToWorld({tx, ty})
+                            + glm::vec2(chunk_manager->getTileSize()) * 0.5f;
+                        if (m_groundCollisionLowerHalfOnly && !isGroundZoneAt(tileCenter))
+                            continue;
                         chunk_manager->setTileSilent(tx, ty, engine::world::TileData(paintType));
                     }
                 }
@@ -2335,18 +2938,13 @@ void GameScene::snapSelectedGroundActorsToGrid()
 
         shutdownFlightAmbientSound();
 
-        saveBoolSetting("show_editor_toolbar", m_showEditorToolbar);
-        saveBoolSetting("show_hierarchy_panel", m_showHierarchyPanel);
-        saveBoolSetting("show_inspector_panel", m_showInspectorPanel);
-        saveBoolSetting("toolbar_show_play_controls", m_toolbarShowPlayControls);
-        saveBoolSetting("toolbar_show_window_controls", m_toolbarShowWindowControls);
-        saveBoolSetting("toolbar_show_debug_controls", m_toolbarShowDebugControls);
-        saveBoolSetting("hierarchy_group_by_tag", m_hierarchyGroupByTag);
-        saveBoolSetting("hierarchy_favorites_only", m_hierarchyFavoritesOnly);
-        saveBoolSetting("enable_play_rollback", m_enablePlayRollback);
+        persistEditorUiSettings();
+        saveStringSetting("editor_layout_preset", m_editorLayoutPreset);
 
         if (m_glContext)
         {
+            const std::string layoutPath = editorLayoutIniPath(m_editorLayoutPreset);
+            ImGui::SaveIniSettingsToDisk(layoutPath.c_str());
             ImGui::SaveIniSettingsToDisk("imgui.ini");
             ImGui_ImplOpenGL3_Shutdown();
             ImGui_ImplSDL3_Shutdown();
@@ -2748,10 +3346,8 @@ void GameScene::snapSelectedGroundActorsToGrid()
         {
             if (auto* ctrl = m_player->getComponent<engine::component::ControllerComponent>())
             {
-                constexpr float BASE_SPEED = 12.0f;
-                constexpr float BASE_JUMP  = 8.0f;
-                ctrl->setSpeed(BASE_SPEED * attr->get(game::component::StatType::Speed));
-                ctrl->setJumpSpeed(BASE_JUMP * attr->get(game::component::StatType::JumpPower));
+                ctrl->setSpeed(m_playerBaseMoveSpeed * attr->get(game::component::StatType::Speed));
+                ctrl->setJumpSpeed(m_playerBaseJumpSpeed * attr->get(game::component::StatType::JumpPower));
             }
         }
     }
@@ -2860,6 +3456,183 @@ void GameScene::snapSelectedGroundActorsToGrid()
         }
     }
 
+    void GameScene::renderPlayerConfigPanel()
+    {
+        if (!m_showPlayerConfigPanel || !m_player)
+            return;
+
+        auto* controller = m_player->getComponent<engine::component::ControllerComponent>();
+        auto* physics    = m_player->getComponent<engine::component::PhysicsComponent>();
+        if (m_editorDockspaceId != 0)
+            ImGui::SetNextWindowDockID(static_cast<ImGuiID>(m_editorDockspaceId), ImGuiCond_Always);
+        ImGui::SetNextWindowSize({460.0f, 420.0f}, ImGuiCond_FirstUseEver);
+        if (!ImGui::Begin("玩家配置", &m_showPlayerConfigPanel))
+        {
+            ImGui::End();
+            return;
+        }
+
+        // ─── 1. 基本信息 ──────────────────────────────────────────────────────
+        ImGui::SeparatorText("基本信息");
+
+        if (ImGui::InputText("玩家名字", m_playerConfigNameBuffer.data(), m_playerConfigNameBuffer.size()))
+        {
+            m_player->setName(std::string(m_playerConfigNameBuffer.data()));
+            saveConfigValue("actor_roles", "hud_player_text", std::string(m_playerConfigNameBuffer.data()));
+        }
+
+        if (ImGui::InputText("机甲名字", m_mechConfigNameBuffer.data(), m_mechConfigNameBuffer.size()))
+        {
+            m_hudMechName = std::string(m_mechConfigNameBuffer.data());
+            saveConfigValue("actor_roles", "hud_mech_name", m_hudMechName);
+            saveMechProfileConfig();
+        }
+
+        // 帧动画 JSON（包含贴图路径 + 动画剪辑）
+        ImGui::InputText("帧动画JSON", m_playerConfigFrameJsonBuffer.data(), m_playerConfigFrameJsonBuffer.size());
+        if (ImGui::Button("加载精灵"))
+        {
+            const std::string fjPath = m_playerConfigFrameJsonBuffer.data();
+            if (!fjPath.empty())
+            {
+                game::animation::FrameAnimationSet animSet;
+                if (game::animation::loadFrameAnimationSet(fjPath, animSet) && !animSet.texturePath.empty())
+                {
+                    m_playerFrameJsonPath = fjPath;
+                    if (auto* spr = m_player->getComponent<engine::component::SpriteComponent>())
+                        spr->setSpriteById(animSet.texturePath);
+                    if (auto* anim = m_player->getComponent<engine::component::AnimationComponent>())
+                    {
+                        for (const auto& [name, clip] : animSet.clips)
+                            anim->addClip(name, clip);
+                        anim->play("idle");
+                    }
+                    saveConfigValue("gameplay", "player_frame_json_path", fjPath);
+                    saveMechProfileConfig();
+                }
+            }
+        }
+        ImGui::SameLine();
+        if (auto* spr = m_player->getComponent<engine::component::SpriteComponent>())
+            ImGui::TextDisabled("%s", spr->getTextureId().c_str());
+
+        // 状态机
+        ImGui::InputText("状态机路径", m_playerConfigSmPathBuffer.data(), m_playerConfigSmPathBuffer.size());
+        if (ImGui::Button("加载状态机"))
+        {
+            const std::string path = m_playerConfigSmPathBuffer.data();
+            if (!path.empty())
+            {
+                loadPlayerSM(path);
+                saveConfigValue("gameplay", "player_sm_path", path);
+                saveMechProfileConfig();
+            }
+        }
+        ImGui::SameLine();
+        ImGui::TextDisabled("当前: %s", m_playerSM.getCurrentState().c_str());
+
+        // ─── 2. 碰撞大小（映射到下半网格）──────────────────────────────────
+        ImGui::SeparatorText("碰撞大小 (映射下半网格)");
+
+        float halfW = m_playerCollisionHalfW;
+        float halfD = m_playerCollisionHalfD;
+        bool sizeChanged = false;
+        if (ImGui::SliderFloat("半宽 W (px)", &halfW, 2.0f, 64.0f, "%.1f"))
+        {
+            m_playerCollisionHalfW = std::max(1.0f, halfW);
+            sizeChanged = true;
+        }
+        if (ImGui::SliderFloat("半深 D (px)", &halfD, 1.0f, 32.0f, "%.1f"))
+        {
+            m_playerCollisionHalfD = std::max(0.5f, halfD);
+            sizeChanged = true;
+        }
+        if (sizeChanged && physics)
+        {
+            physics->reshapeBox({m_playerCollisionHalfW, m_playerCollisionHalfD}, {0.0f, m_playerMechHeightPx * 0.5f});
+            saveConfigValue("gameplay", "player_collision_half_w_px", m_playerCollisionHalfW);
+            saveConfigValue("gameplay", "player_collision_half_d_px", m_playerCollisionHalfD);
+            saveMechProfileConfig();
+        }
+
+        // 碰撞矩形屏幕预览（叠加在玩家位置上）
+        if (controller)
+        {
+            auto* transform = m_player->getComponent<engine::component::TransformComponent>();
+            if (transform)
+            {
+                const float mechYOff = m_playerMechHeightPx * 0.5f;
+                const glm::vec2 footWorld = transform->getPosition()
+                    + glm::vec2(0.0f, controller->getPosZ() + mechYOff);
+                const glm::vec2 footScreen = _context.getCamera().worldToScreen(footWorld);
+                const ImVec2    footImGui  = logicalToImGuiScreen(_context, footScreen);
+                const float     zoom       = _context.getCamera().getZoom();
+                const float     pxW = m_playerCollisionHalfW * 2.0f * zoom;
+                const float     pxD = m_playerCollisionHalfD * 2.0f * zoom;
+                ImDrawList* dl = ImGui::GetForegroundDrawList();
+                dl->AddRect(
+                    {footImGui.x - pxW * 0.5f, footImGui.y - pxD * 0.5f},
+                    {footImGui.x + pxW * 0.5f, footImGui.y + pxD * 0.5f},
+                    IM_COL32(255, 165, 60, 220), 0.0f, 0, 1.8f);
+                ImGui::TextDisabled("碰撞矩形已以橘色高亮显示在玩家脚下");
+            }
+        }
+
+        // ─── 3. 机甲高度 ─────────────────────────────────────────────────────
+        ImGui::SeparatorText("机甲高度");
+
+        float mechH = m_playerMechHeightPx;
+        if (ImGui::SliderFloat("机甲高度 (px)", &mechH, 0.0f, 400.0f, "%.1f"))
+        {
+            m_playerMechHeightPx = std::max(0.0f, mechH);
+            if (physics)
+                physics->reshapeBox({m_playerCollisionHalfW, m_playerCollisionHalfD}, {0.0f, m_playerMechHeightPx * 0.5f});
+            saveConfigValue("gameplay", "player_mech_height_px", m_playerMechHeightPx);
+            saveMechProfileConfig();
+        }
+        ImGui::TextDisabled("碰撞矩形沿 Y 轴下移: %.1f px", m_playerMechHeightPx * 0.5f);
+
+        if (controller)
+            ImGui::TextDisabled("当前离地高度: %.1f px  (%.2f m)",
+                                controller->getPosZ(), controller->getPosZ() / 32.0f);
+
+        ImGui::End();
+    }
+
+    void GameScene::renderPlayerAltitudeMeter()
+    {
+        auto* actor = getControlledActor();
+        if (!actor)
+            return;
+
+
+        auto* transform = actor->getComponent<engine::component::TransformComponent>();
+        auto* controller = actor->getComponent<engine::component::ControllerComponent>();
+        if (!transform || !controller)
+            return;
+
+        const float zPx = std::max(0.0f, controller->getPosZ());
+        const float zMeters = zPx / 32.0f;
+        glm::vec2 logicalPos = _context.getCamera().worldToScreen(transform->getPosition());
+        ImVec2 center = logicalToImGuiScreen(_context, logicalPos);
+
+        ImDrawList* dl = ImGui::GetForegroundDrawList();
+        const float radius = 28.0f;
+        const float ratio = std::clamp(zMeters / 20.0f, 0.0f, 1.0f);
+        dl->AddCircle(center, radius, IM_COL32(40, 60, 80, 180), 28, 2.0f);
+        constexpr float kPi = 3.1415926f;
+        dl->PathArcTo(center, radius, -kPi * 0.5f, -kPi * 0.5f + kPi * 2.0f * ratio, 32);
+        dl->PathStroke(IM_COL32(90, 230, 140, 230), false, 3.0f);
+
+        char buf[48];
+        std::snprintf(buf, sizeof(buf), "%.1fm", zMeters);
+        ImVec2 ts = ImGui::CalcTextSize(buf);
+        dl->AddRectFilled({center.x - ts.x * 0.5f - 5.0f, center.y - radius - 22.0f},
+                          {center.x + ts.x * 0.5f + 5.0f, center.y - radius - 4.0f},
+                          IM_COL32(8, 14, 22, 200), 4.0f);
+        dl->AddText({center.x - ts.x * 0.5f, center.y - radius - 20.0f}, IM_COL32(220, 245, 230, 245), buf);
+    }
+
     void GameScene::renderSettingsPage()
     {
         if (!m_showSettings) return;
@@ -2882,6 +3655,8 @@ void GameScene::snapSelectedGroundActorsToGrid()
         size_t dropCount  = m_treeManager.getDrops().size();
         size_t dropMemEst = dropCount * 256;
 
+        if (m_editorDockspaceId != 0)
+            ImGui::SetNextWindowDockID(static_cast<ImGuiID>(m_editorDockspaceId), ImGuiCond_Always);
         ImGui::SetNextWindowSize({600.0f, 560.0f}, ImGuiCond_Appearing);
         ImGui::SetNextWindowPos(
             {ImGui::GetIO().DisplaySize.x * 0.5f - 300.0f,
@@ -2909,6 +3684,12 @@ void GameScene::snapSelectedGroundActorsToGrid()
             ImGui::PopStyleColor(2);
         }
         ImGui::Separator();
+        if (ImGui::Checkbox("启动清洁界面模式", &m_cleanStartupUi))
+            saveBoolSetting("clean_startup_ui", m_cleanStartupUi);
+        ImGui::SameLine();
+        if (ImGui::Checkbox("显示玩家配置窗口", &m_showPlayerConfigPanel))
+            saveBoolSetting("show_player_config_panel", m_showPlayerConfigPanel);
+
         if (ImGui::CollapsingHeader("字体试显", ImGuiTreeNodeFlags_DefaultOpen))
         {
             const char *fontName = (ImGui::GetFont() && ImGui::GetFont()->GetDebugName() && ImGui::GetFont()->GetDebugName()[0] != '\0')
@@ -3524,13 +4305,46 @@ void GameScene::snapSelectedGroundActorsToGrid()
         const ImGuiWindowFlags flags =
             ImGuiWindowFlags_NoDecoration  | ImGuiWindowFlags_NoMove        |
             ImGuiWindowFlags_NoNav         | ImGuiWindowFlags_NoSavedSettings|
-            ImGuiWindowFlags_AlwaysAutoResize;
+            ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_MenuBar;
 
         if (!ImGui::Begin("##dev_overlay", nullptr, flags))
         { ImGui::End(); return; }
 
         ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.2f, 1.0f), "[开发模式]");
         ImGui::Separator();
+
+        if (ImGui::BeginMenuBar())
+        {
+            if (ImGui::BeginMenu("显示"))
+            {
+                ImGui::MenuItem("编辑器工具分区", nullptr, &m_devOverlayShowEditorTools);
+                ImGui::MenuItem("状态机调试分区", nullptr, &m_devOverlayShowStateMachineDebug);
+                ImGui::MenuItem("玩家状态分区", nullptr, &m_devOverlayShowPlayerRuntimeState);
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("编辑器窗口"))
+            {
+                ImGui::MenuItem("编辑器工具条", nullptr, &m_showEditorToolbar);
+                ImGui::MenuItem("层级面板", nullptr, &m_showHierarchyPanel);
+                ImGui::MenuItem("检视器", nullptr, &m_showInspectorPanel);
+                ImGui::MenuItem("地图编辑器", nullptr, &m_showMapEditor);
+                ImGui::MenuItem("设置窗口", nullptr, &m_showSettings);
+                ImGui::MenuItem("性能浮层", nullptr, &m_showFpsOverlay);
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("调试"))
+            {
+                ImGui::MenuItem("技能调试", nullptr, &m_showSkillDebugOverlay);
+                ImGui::MenuItem("Chunk 边框", nullptr, &m_showActiveChunkHighlights);
+                ImGui::MenuItem("物理调试", nullptr, &m_showPhysicsDebug);
+                ImGui::MenuItem("脚底碰撞框", nullptr, &m_showFootCollisionDebug);
+                ImGui::MenuItem("编辑器碰撞箱", nullptr, &m_showEditorColliderBoxes);
+                ImGui::EndMenu();
+            }
+            ImGui::EndMenuBar();
+        }
 
         // ── 角色下拉 ────────────────────────────────────────────────────────
         if (m_characters.empty()) scanCharacters();
@@ -3569,30 +4383,80 @@ void GameScene::snapSelectedGroundActorsToGrid()
         if (ImGui::Checkbox("角色朝向反向##dev", &m_invertPlayerFacing))
             saveBoolSetting("invert_player_facing", m_invertPlayerFacing);
 
-        ImGui::Spacing();
-        ImGui::Separator();
-        ImGui::TextColored(ImVec4(0.55f, 0.80f, 1.0f, 1.0f), "[状态机调试]");
-        ImGui::Text("状态机已加载: %s", m_playerSMLoaded ? "true" : "false");
-        ImGui::Text("当前控制对象: %s", getControlledActor() == m_player ? "player" : "other");
-        ImGui::Text("当前状态: %s", m_playerSM.getCurrentState().empty()
-            ? "<empty>" : m_playerSM.getCurrentState().c_str());
-        if (!m_playerSM.getCurrentState().empty())
+        if (m_devOverlayShowEditorTools)
         {
-            auto it = m_playerSMData.states.find(m_playerSM.getCurrentState());
-            ImGui::Text("状态绑定动画ID: %s", (it != m_playerSMData.states.end() && !it->second.animationId.empty())
-                ? it->second.animationId.c_str() : "<empty>");
+            ImGui::Spacing();
+            ImGui::Separator();
+            ImGui::TextColored(ImVec4(0.70f, 0.86f, 1.0f, 1.0f), "[编辑器工具]");
+
+            if (ImGui::Button(m_gameplayRunning ? "停止运行 [F5]" : "启动游戏 [F5]", ImVec2(130.0f, 0.0f)))
+                setGameplayRunning(!m_gameplayRunning);
+            ImGui::SameLine();
+            ImGui::BeginDisabled(!m_gameplayRunning);
+            if (ImGui::Button(m_gameplayPaused ? "继续 [F6]" : "暂停 [F6]", ImVec2(85.0f, 0.0f)))
+                m_gameplayPaused = !m_gameplayPaused;
+            ImGui::EndDisabled();
+
+            ImGui::Checkbox("层级面板", &m_showHierarchyPanel);
+            ImGui::SameLine();
+            ImGui::Checkbox("检视器", &m_showInspectorPanel);
+            ImGui::SameLine();
+            ImGui::Checkbox("地图编辑", &m_showMapEditor);
+
+            ImGui::Checkbox("显示编辑器碰撞箱", &m_showEditorColliderBoxes);
+            ImGui::SameLine();
+            ImGui::Checkbox("显示脚底碰撞框", &m_showFootCollisionDebug);
+
+            if (ImGui::Button("打开帧编辑器", ImVec2(130.0f, 0.0f)))
+                m_frameEditor.open();
+            ImGui::SameLine();
+            if (ImGui::Button("打开状态机编辑器", ImVec2(130.0f, 0.0f)))
+                m_smEditor.open();
         }
-        if (auto* anim = m_player
-                ? m_player->getComponent<engine::component::AnimationComponent>()
-                : nullptr)
+
+        if (m_devOverlayShowStateMachineDebug)
         {
-            ImGui::Text("当前动画 Clip: %s", anim->currentClip().empty()
-                ? "<empty>" : anim->currentClip().c_str());
-            ImGui::Text("当前动画帧: %d  计时: %.3f", anim->currentFrame(), anim->currentTimer());
+            ImGui::Spacing();
+            ImGui::Separator();
+            ImGui::TextColored(ImVec4(0.55f, 0.80f, 1.0f, 1.0f), "[状态机调试]");
+            ImGui::Text("状态机已加载: %s", m_playerSMLoaded ? "true" : "false");
+            ImGui::Text("当前控制对象: %s", getControlledActor() == m_player ? "player" : "other");
+            ImGui::Text("当前状态: %s", m_playerSM.getCurrentState().empty()
+                ? "<empty>" : m_playerSM.getCurrentState().c_str());
+            if (!m_playerSM.getCurrentState().empty())
+            {
+                auto it = m_playerSMData.states.find(m_playerSM.getCurrentState());
+                ImGui::Text("状态绑定动画ID: %s", (it != m_playerSMData.states.end() && !it->second.animationId.empty())
+                    ? it->second.animationId.c_str() : "<empty>");
+            }
+            if (auto* anim = m_player
+                    ? m_player->getComponent<engine::component::AnimationComponent>()
+                    : nullptr)
+            {
+                ImGui::Text("当前动画 Clip: %s", anim->currentClip().empty()
+                    ? "<empty>" : anim->currentClip().c_str());
+                ImGui::Text("当前动画帧: %d  计时: %.3f", anim->currentFrame(), anim->currentTimer());
+            }
+            ImGui::Text("初始状态: %s", m_playerSMData.initialState.empty()
+                ? "<empty>" : m_playerSMData.initialState.c_str());
+            ImGui::Text("状态数: %d", static_cast<int>(m_playerSMData.states.size()));
         }
-        ImGui::Text("初始状态: %s", m_playerSMData.initialState.empty()
-            ? "<empty>" : m_playerSMData.initialState.c_str());
-        ImGui::Text("状态数: %d", static_cast<int>(m_playerSMData.states.size()));
+
+        if (m_devOverlayShowPlayerRuntimeState)
+        {
+            ImGui::Spacing();
+            ImGui::Separator();
+            ImGui::TextColored(ImVec4(0.75f, 0.95f, 0.70f, 1.0f), "[玩家状态]");
+            if (auto* ctrl = m_player ? m_player->getComponent<engine::component::ControllerComponent>() : nullptr)
+            {
+                const auto ms = ctrl->getMovementState();
+                const bool grounded = (ms == engine::component::ControllerComponent::MovementState::Idle ||
+                                       ms == engine::component::ControllerComponent::MovementState::Run);
+                ImGui::Text("地面状态: %s", grounded ? "在地面" : "在空中");
+                ImGui::Text("移动状态: %s", ctrl->getMovementStateName());
+                ImGui::Text("高度 Z: %.1f", ctrl->getPosZ());
+            }
+        }
 
         if (auto* sprite = m_player
                 ? m_player->getComponent<engine::component::SpriteComponent>()
@@ -4280,6 +5144,7 @@ void GameScene::snapSelectedGroundActorsToGrid()
     {
         m_playerActorKey = loadConfigString("actor_roles", "player_actor_key", m_playerActorKey);
         m_mechActorKey = loadConfigString("actor_roles", "mech_actor_key", m_mechActorKey);
+        m_mechProfilePath = loadConfigString("actor_roles", "mech_profile_path", m_mechProfilePath);
         m_controlLabelPlayer = loadConfigString("actor_roles", "control_label_player", m_controlLabelPlayer);
         m_controlLabelMech = loadConfigString("actor_roles", "control_label_mech", m_controlLabelMech);
         m_controlLabelPossessed = loadConfigString("actor_roles", "control_label_possessed", m_controlLabelPossessed);
@@ -4299,6 +5164,90 @@ void GameScene::snapSelectedGroundActorsToGrid()
         if (m_hudPlayerText.empty()) m_hudPlayerText = "player";
         if (m_hudMechPrefix.empty()) m_hudMechPrefix = "机甲：";
         if (m_hudMechName.empty()) m_hudMechName = "gundom";
+        if (m_mechProfilePath.empty()) m_mechProfilePath = "assets/mechs/default_mech.json";
+    }
+
+    void GameScene::loadMechProfileConfig()
+    {
+        const nlohmann::json profile = loadJsonObjectFromFile(m_mechProfilePath);
+        if (!profile.is_object() || profile.empty())
+        {
+            saveMechProfileConfig();
+            return;
+        }
+
+        m_hudMechName = profile.value("mech_name", m_hudMechName);
+        m_mechActorKey = profile.value("mech_actor_key", m_mechActorKey);
+        m_controlLabelMech = profile.value("control_label_mech", m_controlLabelMech);
+        m_playerFrameJsonPath = profile.value("player_frame_json_path", m_playerFrameJsonPath);
+        m_playerSMPath = profile.value("player_sm_path", m_playerSMPath);
+        m_playerMechHeightPx = std::max(0.0f, profile.value("player_mech_height_px", m_playerMechHeightPx));
+        m_playerCollisionHalfW = std::max(1.0f, profile.value("player_collision_half_w_px", m_playerCollisionHalfW));
+        m_playerCollisionHalfD = std::max(0.5f, profile.value("player_collision_half_d_px", m_playerCollisionHalfD));
+    }
+
+    void GameScene::loadSelectedCharacterProfileConfig()
+    {
+        const nlohmann::json profile = loadJsonObjectFromFile(m_selectedCharacterProfilePath);
+        if (!profile.is_object() || profile.empty())
+            return;
+
+        m_playerActorKey = profile.value("id", m_playerActorKey);
+        m_hudPlayerText = profile.value("display_name", m_hudPlayerText);
+        m_playerFrameJsonPath = profile.value("frame_json", m_playerFrameJsonPath);
+        m_playerSMPath = profile.value("state_machine_json", m_playerSMPath);
+
+        if (profile.contains("collision") && profile["collision"].is_object())
+        {
+            const auto& c = profile["collision"];
+            m_playerCollisionHalfW = std::max(1.0f, c.value("half_w_px", m_playerCollisionHalfW));
+            m_playerCollisionHalfD = std::max(0.5f, c.value("half_d_px", m_playerCollisionHalfD));
+            m_playerMechHeightPx = std::max(0.0f, c.value("mech_height_px", m_playerMechHeightPx));
+        }
+
+        if (profile.contains("stats") && profile["stats"].is_object())
+        {
+            const auto& s = profile["stats"];
+            const float moveSpeed = s.value("move_speed", m_playerBaseMoveSpeed);
+            const float jumpVelocity = s.value("jump_velocity", -420.0f);
+            m_playerBaseMoveSpeed = std::max(1.0f, moveSpeed / 18.0f);
+            // 角色文件里 jump_velocity 约定是像素/秒（通常为负），转换到控制器跳速标量。
+            m_playerBaseJumpSpeed = std::clamp(std::abs(jumpVelocity) / 52.5f, 2.0f, 24.0f);
+            m_playerBaseMaxHp = std::max(1.0f, s.value("max_hp", m_playerBaseMaxHp));
+            m_playerBaseMaxEnergy = std::max(1.0f, s.value("max_energy", m_playerBaseMaxEnergy));
+        }
+
+        // 将当前选择角色写回全局配置，保证编辑器/加载场景/运行时一致。
+        saveConfigValue("gameplay", "selected_character_profile_path", m_selectedCharacterProfilePath);
+        saveConfigValue("gameplay", "player_frame_json_path", m_playerFrameJsonPath);
+        saveConfigValue("gameplay", "player_sm_path", m_playerSMPath);
+        saveConfigValue("gameplay", "player_mech_height_px", m_playerMechHeightPx);
+        saveConfigValue("gameplay", "player_collision_half_w_px", m_playerCollisionHalfW);
+        saveConfigValue("gameplay", "player_collision_half_d_px", m_playerCollisionHalfD);
+        saveConfigValue("gameplay", "player_base_move_speed", m_playerBaseMoveSpeed);
+        saveConfigValue("gameplay", "player_base_jump_speed", m_playerBaseJumpSpeed);
+        saveConfigValue("gameplay", "player_base_max_hp", m_playerBaseMaxHp);
+        saveConfigValue("gameplay", "player_base_max_energy", m_playerBaseMaxEnergy);
+    }
+
+    void GameScene::saveMechProfileConfig() const
+    {
+        nlohmann::json profile = nlohmann::json::object();
+        profile["profile_version"] = 1;
+        profile["mech_name"] = m_hudMechName;
+        profile["mech_actor_key"] = m_mechActorKey;
+        profile["control_label_mech"] = m_controlLabelMech;
+        profile["player_frame_json_path"] = m_playerFrameJsonPath;
+        profile["player_sm_path"] = m_playerSMPath;
+        profile["player_mech_height_px"] = m_playerMechHeightPx;
+        profile["player_collision_half_w_px"] = m_playerCollisionHalfW;
+        profile["player_collision_half_d_px"] = m_playerCollisionHalfD;
+        profile["player_collision_offset_px"] = {
+            {"x", 0.0f},
+            {"y", m_playerMechHeightPx * 0.5f}
+        };
+
+        saveJsonObjectToFile(m_mechProfilePath, profile);
     }
 
     // ------------------------------------------------------------------
@@ -5316,7 +6265,7 @@ void GameScene::snapSelectedGroundActorsToGrid()
 
         auto* transform = m_player->addComponent<engine::component::TransformComponent>(startPos);
 
-        const std::string frameJsonPath = "assets/textures/Characters/gundom.json";
+        const std::string frameJsonPath = m_playerFrameJsonPath;
         game::animation::FrameAnimationSet animationSet;
         if (!game::animation::loadFrameAnimationSet(frameJsonPath, animationSet))
             animationSet = game::animation::makeDefaultGundomAnimationSet();
@@ -5333,9 +6282,10 @@ void GameScene::snapSelectedGroundActorsToGrid()
             engine::utils::Alignment::CENTER,
             initialRect);
 
-        auto* ctrl = m_player->addComponent<engine::component::ControllerComponent>(20.0f, 28.0f);
+        auto* ctrl = m_player->addComponent<engine::component::ControllerComponent>(m_playerBaseMoveSpeed, 28.0f);
         ctrl->setGroundAcceleration(80.0f);
         ctrl->setAirAcceleration(12.0f);
+        ctrl->setJumpSpeed(m_playerBaseJumpSpeed);
         ctrl->setGroundBand(16.0f, 96.0f);
         ctrl->setJetpackEnabled(false);
 
@@ -5346,17 +6296,23 @@ void GameScene::snapSelectedGroundActorsToGrid()
 
         anim->play("idle");
 
-        // 物理体（shadow footprint）
+        // 物理体（shadow footprint）- 使用配置的碰撞半宽/半深
         constexpr float PPM = engine::world::WorldConfig::PIXELS_PER_METER;
-        constexpr float kShadowHalfW = 24.0f * 0.5f / PPM;
-        constexpr float kShadowHalfD = 7.0f  * 0.5f / PPM;
         b2BodyId bodyId = physics_manager->createDynamicBody(
-            {startPos.x / PPM, startPos.y / PPM}, {kShadowHalfW, kShadowHalfD}, m_player);
-        m_player->addComponent<engine::component::PhysicsComponent>(bodyId, physics_manager.get());
+            {startPos.x / PPM, startPos.y / PPM},
+            {m_playerCollisionHalfW / PPM, m_playerCollisionHalfD / PPM}, m_player);
+        auto* physics = m_player->addComponent<engine::component::PhysicsComponent>(bodyId, physics_manager.get());
+        physics->reshapeBox({m_playerCollisionHalfW, m_playerCollisionHalfD}, {0.0f, m_playerMechHeightPx * 0.5f});
 
-        m_player->addComponent<game::component::AttributeComponent>();
+        game::component::BaseStats baseStats;
+        baseStats.maxHp = m_playerBaseMaxHp;
+        baseStats.maxStarEnergy = m_playerBaseMaxEnergy;
+        baseStats.speed = 1.0f;
+        baseStats.jumpPower = 1.0f;
+        m_player->addComponent<game::component::AttributeComponent>(baseStats);
 
         _context.getCamera().setFollowTarget(&transform->getPosition(), 5.0f);
+        _context.getCamera().setFollowDeadzone(m_cameraFollowDeadzonePx);
         m_zoomSliderValue = 2.5f;
         _context.getCamera().setZoom(2.5f);
         _context.getCamera().setPseudo3DVerticalScale(1.0f);
@@ -5368,6 +6324,15 @@ void GameScene::snapSelectedGroundActorsToGrid()
                 40.0f - vp.y * 0.5f
             });
         }
+
+        const std::string playerName = m_player->getName();
+        std::snprintf(m_playerConfigNameBuffer.data(),      m_playerConfigNameBuffer.size(),      "%s", playerName.c_str());
+        std::snprintf(m_mechConfigNameBuffer.data(),        m_mechConfigNameBuffer.size(),        "%s", m_hudMechName.c_str());
+        std::snprintf(m_playerConfigSmPathBuffer.data(),    m_playerConfigSmPathBuffer.size(),    "%s", m_playerSMPath.c_str());
+        std::snprintf(m_playerConfigFrameJsonBuffer.data(), m_playerConfigFrameJsonBuffer.size(), "%s", frameJsonPath.c_str());
+
+        if (!m_playerSMPath.empty())
+            loadPlayerSM(m_playerSMPath);
     }
 
     void GameScene::executeCommand()
@@ -5414,7 +6379,7 @@ void GameScene::snapSelectedGroundActorsToGrid()
             mechTransform->setScale({1.0f, 1.0f});
 
             // 机甲展示改为使用 gundom.json 动画资源（与人物同源，动作可配置）。
-            const std::string frameJsonPath = "assets/textures/Characters/gundom.json";
+            const std::string frameJsonPath = m_playerFrameJsonPath;
             game::animation::FrameAnimationSet animationSet;
             if (!game::animation::loadFrameAnimationSet(frameJsonPath, animationSet))
                 animationSet = game::animation::makeDefaultGundomAnimationSet();
@@ -5456,7 +6421,7 @@ void GameScene::snapSelectedGroundActorsToGrid()
                 sprite->setHidden(false);
             if (!m_mech->getComponent<engine::component::AnimationComponent>())
             {
-                const std::string frameJsonPath = "assets/textures/Characters/gundom.json";
+                const std::string frameJsonPath = m_playerFrameJsonPath;
                 game::animation::FrameAnimationSet animationSet;
                 if (!game::animation::loadFrameAnimationSet(frameJsonPath, animationSet))
                     animationSet = game::animation::makeDefaultGundomAnimationSet();
@@ -5568,6 +6533,7 @@ void GameScene::snapSelectedGroundActorsToGrid()
 
         mechController->setEnabled(true);
         _context.getCamera().setFollowTarget(&mechTransform->getPosition(), 4.2f);
+        _context.getCamera().setFollowDeadzone(m_cameraFollowDeadzonePx);
         m_isPlayerInMech = true;
         updateMechFlightCapability();
         spdlog::info("驾驶员已进入机甲");
@@ -5594,6 +6560,7 @@ void GameScene::snapSelectedGroundActorsToGrid()
         playerPhysics->setVelocity({0.0f, 0.0f});
         playerController->setEnabled(true);
         _context.getCamera().setFollowTarget(&playerTransform->getPosition(), 5.0f);
+        _context.getCamera().setFollowDeadzone(m_cameraFollowDeadzonePx);
         m_isPlayerInMech = false;
         updateMechFlightCapability();
         spdlog::info("驾驶员已离开机甲");
@@ -5627,6 +6594,7 @@ void GameScene::snapSelectedGroundActorsToGrid()
         playerSprite->setHidden(true);
 
         _context.getCamera().setFollowTarget(&targetTransform->getPosition(), 4.0f);
+        _context.getCamera().setFollowDeadzone(m_cameraFollowDeadzonePx);
         m_possessedMonster = candidate;
         m_possessionEnergy = 12.0f;
         m_possessionFxTimer = 0.5f;
@@ -5657,6 +6625,7 @@ void GameScene::snapSelectedGroundActorsToGrid()
 
         m_monsterManager->releasePossessedMonster();
         _context.getCamera().setFollowTarget(&playerTransform->getPosition(), 5.0f);
+        _context.getCamera().setFollowDeadzone(m_cameraFollowDeadzonePx);
         m_possessedMonster = nullptr;
         m_possessionEnergy = 0.0f;
         m_possessionFxTimer = forced ? 0.0f : 0.35f;
@@ -6385,6 +7354,17 @@ void GameScene::snapSelectedGroundActorsToGrid()
             : nullptr;
         if (!attr) return;
 
+        auto* playerCtrl = m_player
+            ? m_player->getComponent<engine::component::ControllerComponent>()
+            : nullptr;
+        bool playerGrounded = true;
+        if (playerCtrl)
+        {
+            const auto ms = playerCtrl->getMovementState();
+            playerGrounded = (ms == engine::component::ControllerComponent::MovementState::Idle ||
+                              ms == engine::component::ControllerComponent::MovementState::Run);
+        }
+
         const ImVec2 disp   = ImGui::GetIO().DisplaySize;
         const float  T      = static_cast<float>(ImGui::GetTime());
         const float  hpRatio = std::clamp(attr->getHpRatio(), 0.0f, 1.0f);
@@ -6579,6 +7559,11 @@ void GameScene::snapSelectedGroundActorsToGrid()
             adl->AddText({ap.x + PANEL_W - vs.x - 10, ry2 + 3},
                 IM_COL32(240, 215, 140, 255), rowVals[ri]);
         }
+
+            const char* landState = playerGrounded ? "在地面" : "在空中";
+            ImU32 landStateColor = playerGrounded ? IM_COL32(120, 230, 150, 235) : IM_COL32(255, 200, 110, 235);
+            adl->AddText({ap.x + 10, ap.y + PANEL_H - 36}, IM_COL32(190, 172, 126, 220), "状态");
+            adl->AddText({ap.x + 58, ap.y + PANEL_H - 36}, landStateColor, landState);
 
         // 危机/星能不足提示
         if (hpRatio < 0.25f)

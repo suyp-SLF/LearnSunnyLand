@@ -1,0 +1,41 @@
+{
+    "version": 1,
+    "kinds": [
+        {
+            "key": "ground_stone",
+            "display_name": "地形石块",
+            "tile_type": "Stone",
+            "height_px": 0.0
+        },
+        {
+            "key": "ground_dirt",
+            "display_name": "地形泥土",
+            "tile_type": "Dirt",
+            "height_px": 0.0
+        },
+        {
+            "key": "ground_grass",
+            "display_name": "地形草地",
+            "tile_type": "Grass",
+            "height_px": 0.0
+        },
+        {
+            "key": "ground_ore",
+            "display_name": "地形矿石",
+            "tile_type": "Ore",
+            "height_px": 0.0
+        },
+        {
+            "key": "decor_ground",
+            "display_name": "地板装饰",
+            "tile_type": "GroundDecor",
+            "height_px": 0.0
+        },
+        {
+            "key": "decor_wall",
+            "display_name": "墙面装饰",
+            "tile_type": "WallDecor",
+            "height_px": 0.0
+        }
+    ]
+}

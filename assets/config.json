@@ -1,24 +1,75 @@
 {
+    "actor_roles": {
+        "control_label_mech": "机甲",
+        "control_label_player": "人物",
+        "control_label_possessed": "接管体",
+        "hud_mech_name": "gundom",
+        "hud_mech_prefix": "机甲：",
+        "hud_player_text": "player",
+        "mech_actor_key": "mech_drop",
+        "player_actor_key": "player",
+        "state_prefix_mech": "机甲·",
+        "state_prefix_possessed": "接管·"
+    },
     "audio": {
         "music_volume": 0.5,
         "sfx_volume": 0.5
     },
-    "actor_roles": {
-        "player_actor_key": "player",
-        "mech_actor_key": "mech_drop",
-        "control_label_player": "人物",
-        "control_label_mech": "机甲",
-        "control_label_possessed": "接管体",
-        "state_prefix_mech": "机甲·",
-        "state_prefix_possessed": "接管·",
-        "hud_player_text": "player",
-        "hud_mech_prefix": "机甲：",
-        "hud_mech_name": "gundom"
+    "custom_development": {
+        "extension_points": "assets/dev/custom_extension_points.json",
+        "ground_tile_catalog": "assets/ground_tiles/tile_kinds.json",
+        "interaction_templates": "assets/dev/interaction_templates.json",
+        "loot_tables": "assets/dev/loot_tables.json",
+        "monster_spawn_rules": "assets/dev/monster_spawn_rules.json",
+        "weather_presets": "assets/dev/weather_presets.json"
+    },
+    "editor": {
+        "grid_layout": {
+            "background": {
+                "rows": 8,
+                "screen_ratio": 0.41999998688697815
+            },
+            "ground": {
+                "aspect": 1.8799999952316284,
+                "rows": 9,
+                "screen_ratio": 0.5
+            }
+        },
+        "ground_actors": [],
+        "imgui_ini": "[Window][Debug##Default]\nPos=60,60\nSize=400,400\nCollapsed=0\n\n[Window][编辑器工具条]\nPos=430,8\nSize=580,330\nCollapsed=0\n\n[Window][对象层级]\nPos=0,22\nSize=1440,409\nCollapsed=0\nDockId=0x00000002,2\n\n[Window][资源管理器]\nPos=0,22\nSize=1440,409\nCollapsed=0\nDockId=0x00000002,0\n\n[Window][场景视图]\nPos=0,22\nSize=1440,409\nCollapsed=0\nDockId=0x00000002,1\n\n[Window][动画编辑器]\nPos=0,433\nSize=1440,320\nCollapsed=0\nDockId=0x00000004,0\n\n[Window][设置  [ESC / ` 关闭]]\nPos=0,22\nSize=1440,409\nCollapsed=0\nDockId=0x00000002,4\n\n[Window][##weather_hud]\nPos=1224,20\nSize=200,183\nCollapsed=0\n\n[Window][背包]\nPos=360,30\nSize=720,717\nCollapsed=0\n\n[Window][玩家配置]\nPos=0,22\nSize=1440,731\nCollapsed=0\nDockId=0x00000002,2\n\n[Window][地图编辑器 [F8]]\nPos=0,22\nSize=1440,409\nCollapsed=0\nDockId=0x00000002,3\n\n[Docking][Data]\nDockSpace     ID=0xC8C39591 Window=0xEC3422A7 Pos=0,22 Size=1440,731 Split=Y\n  DockNode    ID=0x00000003 Parent=0xC8C39591 SizeRef=1440,409 Split=X\n    DockNode  ID=0x00000001 Parent=0x00000003 SizeRef=331,731 Selected=0xD17D4FD3\n    DockNode  ID=0x00000002 Parent=0x00000003 SizeRef=1107,731 CentralNode=1 Selected=0x35D77073\n  DockNode    ID=0x00000004 Parent=0xC8C39591 SizeRef=1440,320 Selected=0x567D321F\n\n"
     },
     "game": {
         "chunk_view_distance": 3,
         "player_start_x": 0.0,
         "player_start_y": 0.0
+    },
+    "gameplay": {
+        "camera_follow_deadzone_px": {
+            "x": 140.0,
+            "y": 56.0
+        },
+        "ground_collision_lower_half_only": true,
+        "player_base_jump_speed": 7.61904764175415,
+        "player_base_max_energy": 100,
+        "player_base_max_hp": 100,
+        "player_base_move_speed": 12.222222328186035,
+        "player_collision_half_d_px": 10.0,
+        "player_collision_half_w_px": 35.0,
+        "player_frame_json_path": "assets/textures/Characters/gundom.json",
+        "player_mech_height_px": 20.0,
+        "player_sm_path": "assets/textures/Characters/GUNDOM.sm.json",
+        "selected_character_profile_path": "assets/characters/gundom.character.json",
+        "tile_height_px": {
+            "dirt": 0.0,
+            "grass": 0.0,
+            "gravel": 0.0,
+            "ground_decor": 0.0,
+            "leaves": 0.0,
+            "ore": 0.0,
+            "stone": 0.0,
+            "wall_decor": 0.0,
+            "wood": 0.0
+        }
     },
     "graphics": {
         "render_type": 1,
@@ -89,7 +140,7 @@
         "logical_height": 720,
         "logical_width": 1280,
         "resizable": true,
-        "title": "SunnyLand",
+        "title": "星能",
         "width": 1920
     }
 }

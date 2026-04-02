@@ -21,6 +21,7 @@ namespace engine::render
 
         glm::vec2* _follow_target = nullptr; // 跟随目标
         float _follow_smoothness = 5.0f; // 跟随平滑度
+        glm::vec2 _follow_deadzone = {0.0f, 0.0f};
 
         // DNF 横版卷轴：锁定 Y 轴，仅在 X 方向跟随
         bool  _lock_y = false;
@@ -33,6 +34,7 @@ namespace engine::render
 
         void update(float delta_timer);
         void setFollowTarget(const glm::vec2* target, float smoothness = 5.0f);
+        void setFollowDeadzone(const glm::vec2& deadzone);
         void move(const glm::vec2 &offset);
 
         // DNF 模式：锁定相机 Y 轴固定值（传入世界坐标的 Y，相机会居中显示该行）

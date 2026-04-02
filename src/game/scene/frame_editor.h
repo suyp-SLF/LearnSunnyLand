@@ -57,6 +57,22 @@ public:
     /** 每帧在 ImGui NewFrame/Render 之间调用 */
     void render(engine::resource::ResourceManager &resMgr);
 
+    /** 打开并加载指定帧 JSON，可选覆盖纹理路径 */
+    void openWithJson(const std::string &jsonPath, const std::string &texturePath = "");
+
+    /** 在当前 ImGui 上下文（Tab/ChildWindow）内联渲染，无独立浮动窗口 */
+    void renderInline(engine::resource::ResourceManager& resMgr);
+
+    /** 外部预览面板所需的当前帧信息 */
+    struct FrameViewInfo {
+        unsigned int glTex = 0;
+        float texW = 0.0f, texH = 0.0f;
+        int sx = 0, sy = 0, sw = 64, sh = 64;
+        int anchorX = 32, anchorY = 56;
+        bool valid = false;
+    };
+    FrameViewInfo peekCurrentFrame() const;
+
     /** 外部查询：用户是否点击了"状态机编辑器"按钮 */
     bool wantsSmEditor() const { return m_wantsSmEditor; }
     void clearSmEditorRequest()    { m_wantsSmEditor = false; }

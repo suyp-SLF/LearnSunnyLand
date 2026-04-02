@@ -128,13 +128,8 @@ namespace engine::core
             return false;
         if (!initSceneManager())
             return false;
-        // 直接启动 DNF 走廊场景（调试用，跳过菜单）
-        game::route::RouteData rd;
-        rd.path = { {0,0}, {1,0}, {2,0} };
-        rd.terrain[0][0] = game::route::CellTerrain::Plains;
-        rd.terrain[0][1] = game::route::CellTerrain::Plains;
-        rd.terrain[0][2] = game::route::CellTerrain::Plains;
-        auto menuScene = std::make_unique<game::scene::GameScene>("GameScene", *_context, *_scene_manager, rd);
+        // 启动主菜单
+        auto menuScene = std::make_unique<game::scene::MenuScene>("MenuScene", *_context, *_scene_manager);
         _scene_manager->requestPushScene(std::move(menuScene));
 
         _is_running = true;

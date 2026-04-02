@@ -16,6 +16,7 @@ namespace engine::object
 
     void GameObject::update(float delta_time)
     {
+        if (!_enabled) return;
         for (auto &pair : _components)
         {
             pair.second->update(delta_time);
@@ -24,6 +25,7 @@ namespace engine::object
 
     void GameObject::render()
     {
+        if (!_visible) return;
         for (auto &pair : _components)
         {
             pair.second->render();
