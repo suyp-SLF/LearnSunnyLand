@@ -173,8 +173,8 @@ namespace game::scene
                 {
                     json cj;
                     charIn >> cj;
-                    const std::string frameJson = cj.value("frame_json", std::string{"assets/textures/Characters/gundom.json"});
-                    const std::string smJson = cj.value("state_machine_json", std::string{"assets/textures/Characters/GUNDOM.sm.json"});
+                    const std::string frameJson = cj.value("frame_json", std::string{"assets/textures/Characters/gundom.frame.json"});
+                    const std::string smJson = cj.value("state_machine_json", std::string{"assets/textures/Characters/gundom.sm.json"});
 
                     std::ifstream cfgIn("assets/config.json");
                     if (cfgIn.is_open())

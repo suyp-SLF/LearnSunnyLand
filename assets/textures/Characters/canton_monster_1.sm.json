@@ -1,0 +1,40 @@
+{
+  "character_id": "canton_monster_1",
+  "initial_state": "IDLE",
+  "states": {
+    "IDLE": {
+      "animation_id": "idle",
+      "frame_events": [],
+      "loop": true,
+      "root_motion": [],
+      "total_frames": 8,
+      "transitions": [
+        {
+          "priority": 5,
+          "require_window": false,
+          "target": "ATTACK_1",
+          "trigger": "KEY_ATTACK",
+          "window_type": 0
+        }
+      ],
+      "windows": []
+    },
+    "MOVE": {
+      "animation_id": "walk",
+      "frame_events": [],
+      "loop": true,
+      "root_motion": [],
+      "total_frames": 8,
+      "transitions": [
+        {
+          "priority": 5,
+          "require_window": false,
+          "target": "IDLE",
+          "trigger": "NO_INPUT",
+          "window_type": 0
+        }
+      ],
+      "windows": []
+    }
+  }
+}

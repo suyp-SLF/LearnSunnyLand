@@ -110,13 +110,20 @@ namespace
 // ─────────────────────────────────────────────────────────────────────────────
 //  公共入口
 // ─────────────────────────────────────────────────────────────────────────────
-void FrameEditor::openWithJson(const std::string &jsonPath, const std::string &texturePath)
+void FrameEditor::openWithJson(const std::string &jsonPath, const std::string &texturePath,
+                               const std::string &suggestedSavePath)
 {
     open();
     if (!jsonPath.empty())
     {
         loadJSONFrom(jsonPath);
         m_showLauncher = false;
+    }
+    else if (!suggestedSavePath.empty())
+    {
+        // 没有已有文件，但设置合理的默认保存路径（不加载）
+        std::strncpy(m_savePath, suggestedSavePath.c_str(), sizeof(m_savePath) - 1);
+        m_savePath[sizeof(m_savePath) - 1] = '\0';
     }
     if (!texturePath.empty())
         std::snprintf(m_texturePath, sizeof(m_texturePath), "%s", texturePath.c_str());
@@ -1594,6 +1601,7 @@ void FrameEditor::saveJSON()
         ofs << root.dump(2);
         snprintf(m_statusMsg, sizeof(m_statusMsg), "已保存: %s", m_savePath);
         spdlog::info("[FrameEditor] JSON 保存到 {}", m_savePath);
+        m_justSaved = true;
     }
     else
     {

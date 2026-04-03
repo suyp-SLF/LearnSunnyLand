@@ -1496,6 +1496,30 @@ src/game/scene/state_machine_editor.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/state_machine_editor.cpp.s
 .PHONY : src/game/scene/state_machine_editor.cpp.s
 
+src/game/scene/universe_editor.o: src/game/scene/universe_editor.cpp.o
+.PHONY : src/game/scene/universe_editor.o
+
+# target to build an object file
+src/game/scene/universe_editor.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/universe_editor.cpp.o
+.PHONY : src/game/scene/universe_editor.cpp.o
+
+src/game/scene/universe_editor.i: src/game/scene/universe_editor.cpp.i
+.PHONY : src/game/scene/universe_editor.i
+
+# target to preprocess a source file
+src/game/scene/universe_editor.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/universe_editor.cpp.i
+.PHONY : src/game/scene/universe_editor.cpp.i
+
+src/game/scene/universe_editor.s: src/game/scene/universe_editor.cpp.s
+.PHONY : src/game/scene/universe_editor.s
+
+# target to generate assembly for a file
+src/game/scene/universe_editor.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LearnSunnyLand-Darwin.dir/build.make CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/universe_editor.cpp.s
+.PHONY : src/game/scene/universe_editor.cpp.s
+
 src/game/scene/voxel_scene.o: src/game/scene/voxel_scene.cpp.o
 .PHONY : src/game/scene/voxel_scene.o
 
@@ -2057,6 +2081,9 @@ help:
 	@echo "... src/game/scene/state_machine_editor.o"
 	@echo "... src/game/scene/state_machine_editor.i"
 	@echo "... src/game/scene/state_machine_editor.s"
+	@echo "... src/game/scene/universe_editor.o"
+	@echo "... src/game/scene/universe_editor.i"
+	@echo "... src/game/scene/universe_editor.s"
 	@echo "... src/game/scene/voxel_scene.o"
 	@echo "... src/game/scene/voxel_scene.i"
 	@echo "... src/game/scene/voxel_scene.s"

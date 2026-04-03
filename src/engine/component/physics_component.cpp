@@ -80,6 +80,7 @@ namespace engine::component
             for (int i = 0; i < actual; i++)
                 b2DestroyShape(shapes[i], false);
         }
+        m_cachedHalfExtentsPx = halfExtentsPx;
         const float halfW = std::max(0.01f, halfExtentsPx.x / PPM);
         const float halfH = std::max(0.01f, halfExtentsPx.y / PPM);
         const b2Vec2 localCenter = {localOffsetPx.x / PPM, localOffsetPx.y / PPM};

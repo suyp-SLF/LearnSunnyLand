@@ -1,0 +1,12 @@
+{
+    "id": "milky_way",
+    "display_name": "银河系",
+    "star_count": 200,
+    "arm_count": 4,
+    "planets": [
+        "verdant",
+        "emberfall",
+        "frostveil",
+        "hollowreach"
+    ]
+}

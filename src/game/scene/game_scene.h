@@ -1,6 +1,7 @@
 #pragma once
 #include "frame_editor.h"
 #include "state_machine_editor.h"
+#include "universe_editor.h"
 #include "../statemachine/state_controller.h"
 #include "../../engine/scene/scene.h"
 #include "../../engine/world/chunk_manager.h"
@@ -145,6 +146,7 @@ namespace game::scene
         bool m_showFpsOverlay = true;   // 由 config.json performance.show_fps 控制
         bool m_showMapEditor = false;
         bool m_startInMapEditor = false;
+        game::scene::UniverseEditor m_universeEditor;
         bool m_invertPlayerFacing = false;
         bool m_screenRainOverlay = false;
         float m_screenRainOverlayStrength = 1.0f;
@@ -177,8 +179,6 @@ namespace game::scene
         bool m_toolbarShowWindowControls = true;
         bool m_toolbarShowDebugControls = false;
         bool m_devOverlayShowEditorTools = true;
-        bool m_devOverlayShowStateMachineDebug = true;
-        bool m_devOverlayShowPlayerRuntimeState = true;
         bool m_sceneViewportShowGrid = true;
         bool m_sceneViewportShowAxes = true;
         bool m_sceneViewportShowCameraInfo = true;
@@ -310,7 +310,6 @@ namespace game::scene
             bool showInventory = false;
             bool showSettings = false;
             bool showMapEditor = false;
-            bool showCommandInput = false;
             bool missionWindow = false;
             bool showSettlement = false;
             bool showHierarchyPanel = true;
@@ -497,7 +496,6 @@ namespace game::scene
         void persistEditorUiSettings() const;
         void applyEditorLayoutPreset(const std::string& presetKey, bool loadImGuiLayout);
         std::string editorLayoutIniPath(const std::string& presetKey) const;
-        void renderCommandTerminal();
         void renderSettingsPage();
         void renderPlayerConfigPanel();
         void renderMapEditor();
@@ -537,8 +535,6 @@ namespace game::scene
         void saveMechProfileConfig() const;
         void updateMechFlightCapability();
         void updateEquipmentAttributeBonuses();
-        void executeCommand();
-        void spawnMechDrop();
         void tryEnterMech();
         void exitMech();
         void tryPossessNearestMonster();
@@ -560,12 +556,10 @@ namespace game::scene
 
         // 撤离结算状态
         bool m_showSettlement = false;
-        bool m_showCommandInput = false;
-        bool m_focusCommandInput = false;
         bool m_isPlayerInMech = false;
         std::string m_mechProfilePath = "assets/mechs/default_mech.json";
         std::string m_selectedCharacterProfilePath = "assets/characters/gundom.character.json";
-        std::string m_playerFrameJsonPath = "assets/textures/Characters/gundom.json";
+        std::string m_playerFrameJsonPath = "assets/textures/Characters/gundom.frame.json";
         std::string m_playerActorKey = "player";
         std::string m_mechActorKey = "mech_drop";
         std::string m_controlLabelPlayer = "人物";
@@ -576,7 +570,7 @@ namespace game::scene
         std::string m_hudPlayerText = "player";
         std::string m_hudMechPrefix = "机甲：";
         std::string m_hudMechName = "gundom";
-        std::array<char, 16> m_commandBuffer{};
+        std::array<char, 16> m_commandBuffer{};  // 保留，避免 config 序列化引用
         engine::object::GameObject* m_mech = nullptr;
         engine::object::GameObject* m_possessedMonster = nullptr;
         float m_possessionEnergy = 0.0f;
@@ -645,10 +639,25 @@ namespace game::scene
         struct CharacterEntry {
             std::string id;           // e.g. "gundom"
             std::string displayName;  // e.g. "冈达姆"
+            std::string frameJsonPath; // e.g. "assets/textures/Characters/gundom.frame.json"
+            std::string texturePath;  // e.g. "assets/textures/Characters/gundom.png"
             std::string smPath;       // e.g. "assets/textures/Characters/gundom.sm.json"
+            // 碰撞参数
+            float collisionHalfW = 12.0f;
+            float collisionHalfD = 3.5f;
+            float mechHeightPx   = 0.0f;
+            float moveSpeed      = 220.0f;
+            float jumpVelocity   = -420.0f;
+            std::string profilePath; // assets/characters/xxx.character.json
         };
         std::vector<CharacterEntry> m_characters;
         int m_selectedCharacter = 0;
+
+        // ── 开发模式：实体管理面板 ────────────────────────────────────────
+        int  m_selectedWorldEntity   = -1;      // 实体列表中当前高亮行
+        int  m_selectedSpawnChar     = 0;       // 生成列表中的选中项（基于过滤后索引）
+        bool m_showEntityManagerPanel = true;   // 实体管理面板可见性
+        engine::object::GameObject* m_devControlledActor = nullptr; // dev 模式下指定控制的实体（null = 玩家）
 
         // ── 玩家状态机控制器 ─────────────────────────────────────────────
         // 用法：
@@ -665,7 +674,11 @@ namespace game::scene
         void loadPlayerSM(const std::string& smJsonPath);  // 加载并 init
         void tickPlayerSM(float dt);                        // 每帧驱动状态机
 
-        void scanCharacters();        // 扫描 *.sm.json 填充 m_characters
-        void renderDevModeOverlay();  // 右上角角色选择覆盖层（仅 dev 模式）
+        void scanCharacters();        // 扫描 character profile 文件填充 m_characters
+        void reloadPlayerAnimation(const std::string& frameJsonPath); // 切换角色动画（不重建物理体）
+        void spawnCharacterFromProfile(const CharacterEntry& ce); // 在玩家附近生成非玩家角色实体
+        void setDevControlledActor(engine::object::GameObject* actor); // 切换 dev 控制对象，自动禁用其他实体的输入
+        void renderDevModeOverlay();      // 右上角调试覆盖层（仅 dev 模式）
+        void renderEntityManagerPanel();  // 实体管理面板（编辑器工作台内，dev 模式均可显示）
     }; // class GameScene
 } // namespace game::scene

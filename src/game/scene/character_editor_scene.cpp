@@ -237,21 +237,49 @@ namespace game::scene
                     if (m_editingProfile != m_selectedProfile)
                         syncEditBuffersFromSelection();
 
+                    // 根据角色 ID 计算建议的默认保存路径（无文件时使用）
+                    const std::string suggestedFramePath = p.frameJsonPath.empty()
+                        ? ("assets/textures/Characters/" + p.id + ".json")
+                        : p.frameJsonPath;
+                    const std::string suggestedSmPath = p.stateMachineJsonPath.empty()
+                        ? ("assets/textures/Characters/" + p.id + ".sm.json")
+                        : p.stateMachineJsonPath;
+
                     auto bindEditorsFromBaseFields = [&]() {
                         const std::string framePath = m_editFrameJsonBuf.data();
                         const std::string texPath   = m_editTextureBuf.data();
                         const std::string smPath    = m_editSmJsonBuf.data();
 
-                        if (!framePath.empty() && (framePath != m_boundFrameJsonPath || texPath != m_boundTexturePath))
+                        if (framePath != m_boundFrameJsonPath || texPath != m_boundTexturePath)
                         {
                             m_boundFrameJsonPath = framePath;
                             m_boundTexturePath   = texPath;
-                            m_frameEditor.openWithJson(framePath, texPath);
+                            m_frameEditor.openWithJson(framePath, texPath, suggestedFramePath);
                         }
-                        if (!smPath.empty() && smPath != m_boundSmJsonPath)
+                        if (smPath != m_boundSmJsonPath)
                         {
                             m_boundSmJsonPath = smPath;
-                            m_smEditor.openWithJson(smPath);
+                            m_smEditor.openWithJson(smPath, suggestedSmPath);
+                        }
+                    };
+
+                    // 保存后自动回写路径到 profile
+                    auto syncSavedPaths = [&]() {
+                        if (m_frameEditor.popJustSaved())
+                        {
+                            const std::string sp = m_frameEditor.getSavePath();
+                            p.frameJsonPath = sp;
+                            std::snprintf(m_editFrameJsonBuf.data(), m_editFrameJsonBuf.size(), "%s", sp.c_str());
+                            m_boundFrameJsonPath = sp;
+                            saveCurrentProfile();
+                        }
+                        if (m_smEditor.popJustSaved())
+                        {
+                            const std::string sp = m_smEditor.getSavePath();
+                            p.stateMachineJsonPath = sp;
+                            std::snprintf(m_editSmJsonBuf.data(), m_editSmJsonBuf.size(), "%s", sp.c_str());
+                            m_boundSmJsonPath = sp;
+                            saveCurrentProfile();
                         }
                     };
 
@@ -263,7 +291,28 @@ namespace game::scene
                             m_activeTabIndex = 0;
                             m_hasUnsavedChanges |= ImGui::InputText("ID", m_editIdBuf.data(), m_editIdBuf.size());
                             m_hasUnsavedChanges |= ImGui::InputText("显示名", m_editNameBuf.data(), m_editNameBuf.size());
-                            m_hasUnsavedChanges |= ImGui::InputText("地图角色标签", m_editMapRoleBuf.data(), m_editMapRoleBuf.size());
+                            {
+                                static const char* kRoleLabels[] = {"玩家", "机甲", "傀儡", "怪物"};
+                                static const char* kRoleValues[] = {"player", "mech", "puppet", "monster"};
+                                const std::string curRole = m_editMapRoleBuf.data();
+                                int curIdx = 0;
+                                for (int ri = 0; ri < 4; ++ri)
+                                    if (curRole == kRoleValues[ri]) { curIdx = ri; break; }
+                                if (ImGui::BeginCombo("角色标签##ce_role", kRoleLabels[curIdx]))
+                                {
+                                    for (int ri = 0; ri < 4; ++ri)
+                                    {
+                                        bool sel = (ri == curIdx);
+                                        if (ImGui::Selectable(kRoleLabels[ri], sel))
+                                        {
+                                            std::snprintf(m_editMapRoleBuf.data(), m_editMapRoleBuf.size(), "%s", kRoleValues[ri]);
+                                            m_hasUnsavedChanges = true;
+                                        }
+                                        if (sel) ImGui::SetItemDefaultFocus();
+                                    }
+                                    ImGui::EndCombo();
+                                }
+                            }
                             ImGui::Separator();
 
                             // 贴图字段 + 选择图片按钮
@@ -363,6 +412,7 @@ namespace game::scene
                                 m_activeTabIndex = 3;
                                 bindEditorsFromBaseFields();
                                 m_frameEditor.renderInline(_context.getResourceManager());
+                                syncSavedPaths();
                                 if (m_frameEditor.wantsSmEditor())
                                 {
                                     m_frameEditor.clearSmEditorRequest();
@@ -382,6 +432,7 @@ namespace game::scene
                                 m_activeTabIndex = 4;
                                 bindEditorsFromBaseFields();
                                 m_smEditor.renderInline();
+                                syncSavedPaths();
                                 ImGui::EndTabItem();
                             }
                         }
@@ -535,6 +586,7 @@ namespace game::scene
 
     void CharacterEditorScene::loadPreviewFromProfile(const CharacterProfile& p)
     {
+        m_previewActions.clear();
         m_previewActionIndex = 0;
         m_previewFrameIndex = 0;
         m_previewTimerSec = 0.0f;
@@ -914,8 +966,8 @@ namespace game::scene
         CharacterProfile p;
         p.id = id;
         p.displayName = displayName;
-        p.frameJsonPath = "assets/textures/Characters/gundom.json";
-        p.stateMachineJsonPath = "assets/textures/Characters/GUNDOM.sm.json";
+        p.frameJsonPath = "assets/textures/Characters/gundom.frame.json";
+        p.stateMachineJsonPath = "assets/textures/Characters/gundom.sm.json";
         p.texturePath = "assets/textures/Characters/gundom.png";
         p.mapRole = "npc";
         p.filePath = filePath.generic_string();

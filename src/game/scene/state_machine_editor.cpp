@@ -117,13 +117,18 @@ void StateMachineEditor::toggle()
         open();
 }
 
-    void StateMachineEditor::openWithJson(const std::string& path)
+    void StateMachineEditor::openWithJson(const std::string& path, const std::string& suggestedSavePath)
     {
         open();
         if (!path.empty())
         {
             loadJsonFrom(path);
             m_showLauncher = false;
+        }
+        else if (!suggestedSavePath.empty() && m_savePath.empty())
+        {
+            // 没有已有文件，但设置合理的默认保存路径
+            m_savePath = suggestedSavePath;
         }
     }
 
@@ -977,6 +982,7 @@ void StateMachineEditor::saveJson()
     if (p.has_parent_path()) fs::create_directories(p.parent_path());
 
     SmLoader::save(m_data, m_savePath);
+    m_justSaved = true;
 }
 
 } // namespace game::scene

@@ -1072,8 +1072,6 @@ void GameScene::updateActorFootTileContact(engine::object::GameObject* actor)
         m_toolbarShowWindowControls = loadBoolSetting("toolbar_show_window_controls", true);
         m_toolbarShowDebugControls = loadBoolSetting("toolbar_show_debug_controls", false);
         m_devOverlayShowEditorTools = loadBoolSetting("dev_overlay_show_editor_tools", true);
-        m_devOverlayShowStateMachineDebug = loadBoolSetting("dev_overlay_show_sm_debug", true);
-        m_devOverlayShowPlayerRuntimeState = loadBoolSetting("dev_overlay_show_player_state", true);
         m_showEditorColliderBoxes = loadBoolSetting("show_editor_collider_boxes", false);
         m_showFootCollisionDebug = loadBoolSetting("show_foot_collision_debug", true);
         m_hierarchyGroupByTag = loadBoolSetting("hierarchy_group_by_tag", false);
@@ -1199,7 +1197,6 @@ void GameScene::updateActorFootTileContact(engine::object::GameObject* actor)
 
         actor_manager = std::make_unique<engine::actor::ActorManager>(_context);
     loadGroundActorsFromConfig(false);
-        createPlayer();
         // 专注地面玩法：暂时禁用天空/建筑背景层。
 
         m_monsterManager = std::make_unique<game::monster::MonsterManager>(
@@ -1263,6 +1260,15 @@ void GameScene::updateActorFootTileContact(engine::object::GameObject* actor)
         warmupSceneTextures();
         initializeGroundChunksAndTrees();
         preallocateRuntimeBuffers();
+
+        // 注入宇宙编辑器纹理加载器
+        m_universeEditor.setTexLoader([this](const std::string& path) -> unsigned int {
+            return _context.getResourceManager().getGLTexture(path);
+        });
+
+        // 从路线选择进入时直接启动游戏玩法（跳过编辑器）
+        if (m_routeData.isValid())
+            m_gameplayRunning = true;
     }
 
     void GameScene::setupGroundTileScene(const engine::world::WorldConfig& config)
@@ -1827,33 +1833,15 @@ void GameScene::updateActorFootTileContact(engine::object::GameObject* actor)
             ImGui_ImplSDL3_NewFrame();
             ImGui::NewFrame();
 
-            if (m_showFpsOverlay)
+            if (m_showFpsOverlay && m_gameplayRunning)
                 renderPerformanceOverlay();
 
             const bool allowEditorWindows = !m_gameplayRunning;
-            const bool showIntegratedWorkbench = allowEditorWindows && !m_cleanStartupUi;
-            if (showIntegratedWorkbench)
-            {
-                renderEditorWorkbenchShell();
-
-                renderEditorToolbar();
-                renderHierarchyPanel();
-                renderInspectorPanel();
-                renderResourceExplorerPanel();
-                renderSceneViewportPanel();
-                renderConsolePanel();
-                renderAnimationEditorPanel();
-                renderShaderEditorPanel();
-                renderProfilerPanel();
-            }
-
-            if (allowEditorWindows && (showIntegratedWorkbench || m_showSettings))
-                renderSettingsPage();
-            if (allowEditorWindows && (showIntegratedWorkbench || m_showMapEditor))
-                renderMapEditor();
             if (allowEditorWindows)
-                renderPlayerConfigPanel();
+                m_universeEditor.render();
 
+            if (m_gameplayRunning)
+            {
             float displayW = ImGui::GetIO().DisplaySize.x;
             float displayH = ImGui::GetIO().DisplaySize.y;
 
@@ -1986,7 +1974,6 @@ void GameScene::updateActorFootTileContact(engine::object::GameObject* actor)
 
             // 撤离结算界面
             renderSettlementUI();
-            renderCommandTerminal();
             renderMechPrompt();
 
             // ── 动作序列帧编辑器 ─────────────────────────────────────────────
@@ -2004,8 +1991,14 @@ void GameScene::updateActorFootTileContact(engine::object::GameObject* actor)
             if (m_smEditor.takeJustLoaded())
                 loadPlayerSM(m_smEditor.getSavePath());
 
-            // 开发模式：右上角角色选择器覆盖层
+            // 开发模式：右上角调试覆盖层 + 编辑器面板
             if (m_devMode) renderDevModeOverlay();
+            if (m_devMode)
+            {
+                if (m_showHierarchyPanel)     renderHierarchyPanel();
+                if (m_showInspectorPanel)     renderInspectorPanel();
+                if (m_showEntityManagerPanel) renderEntityManagerPanel();
+            }
 
             // 星球任务规划 UI
             {
@@ -2371,6 +2364,8 @@ void GameScene::updateActorFootTileContact(engine::object::GameObject* actor)
                 }
             }
 
+            } // end if (m_gameplayRunning)
+
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         }
@@ -2431,6 +2426,22 @@ void GameScene::updateActorFootTileContact(engine::object::GameObject* actor)
             glm::vec2 size = baseSize * zFactor;
             const float alpha = baseAlpha * zFactor;
             glm::vec2 shadowCenter = groundPos + glm::vec2(0.0f, std::max(10.0f, spriteSize.y * 0.12f));
+
+            // 优先使用 PhysicsComponent 中缓存的碰撞盒半尺寸来绘制影子，
+            // 保证影子落在脚底而不是精灵中央（避免被精灵自身遮住）。
+            if (actor != m_player)
+            {
+                auto* phys = actor->getComponent<engine::component::PhysicsComponent>();
+                const glm::vec2 cachedHalf = phys ? phys->getBodyHalfExtentsPx() : glm::vec2{0.0f, 0.0f};
+                if (cachedHalf.x > 0.0f)
+                {
+                    shadowCenter = groundPos;
+                    size = {
+                        std::max(2.0f, cachedHalf.x * 2.0f * zFactor),
+                        std::max(1.0f, cachedHalf.y * 2.0f * zFactor)
+                    };
+                }
+            }
 
             // 玩家影子与橘色碰撞框严格重合：同中心、同尺寸。
             if (actor == m_player)
@@ -2496,17 +2507,6 @@ void GameScene::updateActorFootTileContact(engine::object::GameObject* actor)
             s_stepToggleWas = stepToggleDown;
         }
 
-        if (input.isActionPressed("command_mode"))
-        {
-            m_showCommandInput = !m_showCommandInput;
-            m_focusCommandInput = m_showCommandInput;
-            if (!m_showCommandInput)
-                m_commandBuffer[0] = '\0';
-        }
-
-        if (m_showCommandInput)
-            return;
-
         if (m_frameEditor.isOpen())
             return;
 
@@ -2546,6 +2546,9 @@ void GameScene::updateActorFootTileContact(engine::object::GameObject* actor)
                 tryPossessNearestMonster();
         }
 
+        // 仅当玩家是控制对象时才处理玩家专属双击跑步输入
+        const bool playerIsControlled = (!m_devControlledActor || m_devControlledActor == m_player);
+        if (playerIsControlled)
         {
             auto* ctrl = m_player
                 ? m_player->getComponent<engine::component::ControllerComponent>()
@@ -3352,36 +3355,6 @@ void GameScene::updateActorFootTileContact(engine::object::GameObject* actor)
         }
     }
 
-    void GameScene::renderCommandTerminal()
-    {
-        if (!m_showCommandInput)
-            return;
-
-        ImGuiIO &io = ImGui::GetIO();
-        const float width = 420.0f;
-        ImGui::SetNextWindowPos({(io.DisplaySize.x - width) * 0.5f, 40.0f}, ImGuiCond_Always);
-        ImGui::SetNextWindowSize({width, 118.0f}, ImGuiCond_Always);
-        ImGui::SetNextWindowBgAlpha(0.94f);
-        ImGui::Begin("指令终端", nullptr,
-            ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings);
-        ImGui::TextUnformatted("输入 001 或 r001 呼叫空投机甲。再次按 R 可退出指令模式。");
-        ImGui::Spacing();
-        if (m_focusCommandInput)
-        {
-            ImGui::SetKeyboardFocusHere();
-            m_focusCommandInput = false;
-        }
-
-        bool submitted = ImGui::InputText("##command", m_commandBuffer.data(), m_commandBuffer.size(),
-                                          ImGuiInputTextFlags_EnterReturnsTrue);
-        ImGui::SameLine();
-        if (ImGui::Button("执行") || submitted)
-            executeCommand();
-
-        ImGui::TextDisabled("当前可用指令: 001 / r001");
-        ImGui::End();
-    }
-
     void GameScene::updateSettingsParticles(float dt)
     {
         // FPS 历史采样：每 0.25s 记录一次实时帧率
@@ -4156,6 +4129,42 @@ void GameScene::updateActorFootTileContact(engine::object::GameObject* actor)
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    //  重新加载玩家动画（切换角色外观，不重建物理体）
+    // ─────────────────────────────────────────────────────────────────────────
+    void GameScene::reloadPlayerAnimation(const std::string& frameJsonPath)
+    {
+        if (!m_player || frameJsonPath.empty()) return;
+
+        game::animation::FrameAnimationSet animSet;
+        if (!game::animation::loadFrameAnimationSet(frameJsonPath, animSet))
+        {
+            spdlog::warn("[GameScene] reloadPlayerAnimation: 加载帧 JSON 失败: {}", frameJsonPath);
+            return;
+        }
+
+        m_playerFrameJsonPath = frameJsonPath;
+
+        // 更新精灵纹理
+        if (!animSet.texturePath.empty())
+        {
+            if (auto* sprite = m_player->getComponent<engine::component::SpriteComponent>())
+                sprite->setSpriteById(animSet.texturePath);
+        }
+
+        // 重置动画剪辑
+        auto* anim = m_player->getComponent<engine::component::AnimationComponent>();
+        if (anim)
+        {
+            anim->clearClips();
+            for (const auto& [clipName, clip] : animSet.clips)
+                anim->addClip(clipName, clip);
+            anim->forcePlay("idle");
+        }
+
+        spdlog::info("[GameScene] 玩家动画已切换至: {}", frameJsonPath);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     //  每帧驱动玩家状态机
     //
     //  activeInputs 构成规则：
@@ -4272,40 +4281,366 @@ void GameScene::updateActorFootTileContact(engine::object::GameObject* actor)
     void GameScene::scanCharacters()
     {
         m_characters.clear();
-        const std::filesystem::path dir = "assets/textures/Characters";
-        if (!std::filesystem::exists(dir)) return;
 
-        for (const auto& entry : std::filesystem::directory_iterator(dir))
+        // 优先从 assets/characters/*.character.json 读取完整 profile
+        const std::filesystem::path profileDir = "assets/characters";
+        if (std::filesystem::exists(profileDir))
         {
-            const auto& p = entry.path();
-            if (p.extension() == ".json" && p.stem().extension() == ".sm")
+            for (const auto& entry : std::filesystem::directory_iterator(profileDir))
             {
+                const auto& p = entry.path();
+                if (!entry.is_regular_file()) continue;
+                if (p.extension() != ".json") continue;
+                if (p.filename().string().find(".character.") == std::string::npos) continue;
+
+                std::ifstream in(p);
+                if (!in.is_open()) continue;
+                nlohmann::json j;
+                try { in >> j; } catch (...) { continue; }
+
                 CharacterEntry ce;
-                ce.id          = p.stem().stem().string(); // "gundom"
-                ce.displayName = ce.id;
-                ce.smPath      = p.string();
-                m_characters.push_back(ce);
+                ce.id           = j.value("id", p.stem().stem().string());
+                ce.displayName  = j.value("display_name", ce.id);
+                ce.frameJsonPath = j.value("frame_json", std::string{});
+                ce.texturePath  = j.value("texture", std::string{});
+                ce.smPath       = j.value("state_machine_json", std::string{});
+                ce.profilePath  = p.string();
+                if (j.contains("collision") && j["collision"].is_object())
+                {
+                    const auto& c = j["collision"];
+                    ce.collisionHalfW = c.value("half_w_px", ce.collisionHalfW);
+                    ce.collisionHalfD = c.value("half_d_px", ce.collisionHalfD);
+                    ce.mechHeightPx   = c.value("mech_height_px", ce.mechHeightPx);
+                }
+                if (j.contains("stats") && j["stats"].is_object())
+                {
+                    const auto& s = j["stats"];
+                    ce.moveSpeed    = s.value("move_speed", ce.moveSpeed);
+                    ce.jumpVelocity = s.value("jump_velocity", ce.jumpVelocity);
+                }
+                m_characters.push_back(std::move(ce));
             }
         }
+
+        // 兜底：扫描 assets/textures/Characters/*.sm.json 补充未被 profile 覆盖的条目
+        const std::filesystem::path texDir = "assets/textures/Characters";
+        if (std::filesystem::exists(texDir))
+        {
+            for (const auto& entry : std::filesystem::directory_iterator(texDir))
+            {
+                const auto& p = entry.path();
+                if (p.extension() != ".json") continue;
+                if (p.stem().extension() != ".sm") continue;
+
+                const std::string smId = p.stem().stem().string();
+                const bool alreadyHave = std::any_of(m_characters.begin(), m_characters.end(),
+                    [&](const CharacterEntry& ce){ return ce.id == smId; });
+                if (alreadyHave) continue;
+
+                CharacterEntry ce;
+                ce.id          = smId;
+                ce.displayName = smId;
+                ce.smPath      = p.string();
+                // 猜测 frame JSON 路径
+                const std::filesystem::path guessFrame = p.parent_path() / (smId + ".json");
+                if (std::filesystem::exists(guessFrame))
+                    ce.frameJsonPath = guessFrame.string();
+                m_characters.push_back(std::move(ce));
+            }
+        }
+
         std::sort(m_characters.begin(), m_characters.end(),
                   [](const CharacterEntry& a, const CharacterEntry& b){ return a.id < b.id; });
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    //  开发模式右上角：角色选择器覆盖层
+    //  从角色配置 profile 在玩家附近生成一个新的实体
+    // ─────────────────────────────────────────────────────────────────────────
+    void GameScene::spawnCharacterFromProfile(const CharacterEntry& ce)
+    {
+        if (ce.frameJsonPath.empty()) { spdlog::warn("[GameScene] spawn: 角色 {} 没有帧动画路径", ce.id); return; }
+
+        glm::vec2 spawnPos = {0.0f, 56.0f};
+        if (m_player)
+        {
+            if (auto* t = m_player->getComponent<engine::component::TransformComponent>())
+                spawnPos = {t->getPosition().x + 80.0f, t->getPosition().y};
+        }
+
+        constexpr float PPM = engine::world::WorldConfig::PIXELS_PER_METER;
+
+        auto* actor = actor_manager->createActor(ce.id + "_spawned_" + std::to_string(actor_manager->getActors().size()));
+        actor->setTag("character");
+
+        actor->addComponent<engine::component::TransformComponent>(spawnPos);
+
+        game::animation::FrameAnimationSet animSet;
+        if (!game::animation::loadFrameAnimationSet(ce.frameJsonPath, animSet))
+        {
+            spdlog::warn("[GameScene] spawn: 帧 JSON 加载失败: {}", ce.frameJsonPath);
+            return;
+        }
+        if (animSet.texturePath.empty() && !ce.texturePath.empty())
+            animSet.texturePath = ce.texturePath;
+
+        const auto initRect = animSet.initialSourceRect().value_or(
+            engine::utils::FRect{{0.0f, 0.0f}, {64.0f, 64.0f}});
+        actor->addComponent<engine::component::SpriteComponent>(animSet.texturePath, engine::utils::Alignment::CENTER, initRect);
+
+        auto* anim = actor->addComponent<engine::component::AnimationComponent>(initRect.size.x, initRect.size.y);
+        for (const auto& [clipName, clip] : animSet.clips)
+            anim->addClip(clipName, clip);
+        anim->play("idle");
+
+        auto* ctrl = actor->addComponent<engine::component::ControllerComponent>(
+            std::max(1.0f, ce.moveSpeed / 18.0f), 28.0f);
+        ctrl->setJumpSpeed(std::clamp(std::abs(ce.jumpVelocity) / 52.5f, 2.0f, 24.0f));
+        ctrl->setEnabled(false); // 生成后默认不接受输入，需在实体管理面板中设为控制对象
+
+        b2BodyId bodyId = physics_manager->createDynamicBody(
+            {spawnPos.x / PPM, spawnPos.y / PPM},
+            {ce.collisionHalfW / PPM, ce.collisionHalfD / PPM},
+            actor);
+        auto* physics = actor->addComponent<engine::component::PhysicsComponent>(bodyId, physics_manager.get());
+        physics->reshapeBox({ce.collisionHalfW, ce.collisionHalfD}, {0.0f, ce.mechHeightPx * 0.5f});
+
+        spdlog::info("[GameScene] 已生成角色: {} @ ({:.1f}, {:.1f})", ce.displayName, spawnPos.x, spawnPos.y);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  切换 Dev 模式控制对象：只允许一个实体接受玩家输入
+    // ─────────────────────────────────────────────────────────────────────────
+    void GameScene::setDevControlledActor(engine::object::GameObject* actor)
+    {
+        m_devControlledActor = actor;
+        if (!actor_manager) return;
+
+        // 先禁用所有实体的 ControllerComponent
+        for (auto& holder : actor_manager->getActors())
+        {
+            if (auto* ctrl = holder->getComponent<engine::component::ControllerComponent>())
+                ctrl->setEnabled(false);
+        }
+
+        // 再只启用目标实体（null → 默认回到玩家）
+        auto* target = actor ? actor : m_player;
+        if (target)
+        {
+            if (auto* ctrl = target->getComponent<engine::component::ControllerComponent>())
+                ctrl->setEnabled(true);
+            // 更新相机跟随目标
+            if (auto* tf = target->getComponent<engine::component::TransformComponent>())
+            {
+                _context.getCamera().setFollowTarget(&tf->getPosition(), 5.0f);
+                _context.getCamera().setFollowDeadzone(m_cameraFollowDeadzonePx);
+            }
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  实体管理面板：编辑器工作台内的可停靠窗口（dev 模式也可浮窗显示）
+    // ─────────────────────────────────────────────────────────────────────────
+    void GameScene::renderEntityManagerPanel()
+    {
+        if (!m_showEntityManagerPanel) return;
+
+        if (m_editorDockspaceId != 0)
+            ImGui::SetNextWindowDockID(static_cast<ImGuiID>(m_editorDockspaceId), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(300.0f, 440.0f), ImGuiCond_FirstUseEver);
+
+        if (!ImGui::Begin("实体管理##entity_mgr", &m_showEntityManagerPanel))
+        {
+            ImGui::End();
+            return;
+        }
+
+        // ── 当前控制对象状态栏 ────────────────────────────────────────────
+        if (m_devControlledActor)
+        {
+            ImGui::TextColored(ImVec4(0.40f, 0.85f, 0.45f, 1.0f),
+                "控制: %s", m_devControlledActor->getName().c_str());
+            ImGui::SameLine();
+            if (ImGui::SmallButton("重置##reset_ctrl"))
+                setDevControlledActor(nullptr);
+        }
+        else
+        {
+            ImGui::TextColored(ImVec4(1.0f, 0.75f, 0.20f, 1.0f), "控制: 玩家 (默认)");
+        }
+        ImGui::Separator();
+
+        // ── 世界实体列表 ──────────────────────────────────────────────────
+        if (actor_manager)
+        {
+            const auto& actors = actor_manager->getActors();
+            ImGui::TextColored(ImVec4(0.90f, 0.90f, 0.55f, 1.0f),
+                "世界实体 (%d)", static_cast<int>(actors.size()));
+            if (m_selectedWorldEntity >= static_cast<int>(actors.size()))
+                m_selectedWorldEntity = -1;
+
+            // 用实际行高计算列表高度，避免被裁剪
+            const float itemH = ImGui::GetTextLineHeightWithSpacing();
+            const float listH = std::clamp(
+                itemH * static_cast<float>(std::max(1, static_cast<int>(actors.size()))) + 8.0f,
+                itemH + 8.0f,
+                itemH * 8.0f + 8.0f);
+            if (ImGui::BeginListBox("##em_world", ImVec2(-1.0f, listH)))
+            {
+                for (int i = 0; i < static_cast<int>(actors.size()); ++i)
+                {
+                    auto* a = actors[i].get();
+                    if (!a) continue;
+                    const bool isSel   = (i == m_selectedWorldEntity);
+                    const bool isPlayer = (a == m_player);
+                    const bool isCtrl   = (a == m_devControlledActor);
+
+                    ImGui::PushID(i);
+                    const std::string rawName = a->getName();
+                    const std::string displayName = rawName.empty() ? std::string("未命名") : rawName;
+                    char label[256];
+                    std::snprintf(label, sizeof(label), "%s%s%s###em_we_%d",
+                        displayName.c_str(),
+                        isPlayer ? " [玩家]" : "",
+                        isCtrl   ? " ●"     : "",
+                        i);
+
+                    // Selectable：显式算出正数宽度（Selectable 不支持负数宽度）
+                    const float delBtnW = ImGui::CalcTextSize("删").x
+                                         + ImGui::GetStyle().FramePadding.x * 2.0f
+                                         + ImGui::GetStyle().ItemSpacing.x;
+                    const float selW = std::max(1.0f, ImGui::GetContentRegionAvail().x - delBtnW);
+                    if (ImGui::Selectable(label, isSel, 0, ImVec2(selW, 0.0f)))
+                        m_selectedWorldEntity = isSel ? -1 : i;
+                    if (isSel) ImGui::SetItemDefaultFocus();
+
+                    ImGui::SameLine();
+                    ImGui::BeginDisabled(isPlayer);
+                    if (ImGui::SmallButton("删"))
+                    {
+                        if (m_devControlledActor == a)
+                            setDevControlledActor(nullptr);
+                        a->setNeedRemove(true);
+                        m_selectedWorldEntity = -1;
+                    }
+                    ImGui::EndDisabled();
+                    ImGui::PopID();
+                }
+                ImGui::EndListBox();
+            }
+
+            // 操作按钮（仅在有选中时启用）
+            const bool hasSel = (m_selectedWorldEntity >= 0 &&
+                                  m_selectedWorldEntity < static_cast<int>(actors.size()));
+            ImGui::BeginDisabled(!hasSel);
+            if (ImGui::Button("设为控制对象##em_ctrl", ImVec2(-1.0f, 0.0f)) && hasSel)
+            {
+                auto* selActor = actors[static_cast<size_t>(m_selectedWorldEntity)].get();
+                if (selActor == m_player)
+                    setDevControlledActor(nullptr);
+                else
+                    setDevControlledActor(selActor);
+            }
+            ImGui::EndDisabled();
+
+            // ── 若选中的是玩家，显示切换角色外观选项（合并原"玩家角色"功能）──
+            if (hasSel && actors[static_cast<size_t>(m_selectedWorldEntity)].get() == m_player)
+            {
+                ImGui::Spacing();
+                ImGui::TextColored(ImVec4(0.90f, 0.90f, 0.55f, 1.0f), "切换玩家角色");
+                if (m_characters.empty()) scanCharacters();
+
+                const char* curName = m_characters.empty() ? "（无可用角色）"
+                                    : m_characters[m_selectedCharacter].displayName.c_str();
+                ImGui::SetNextItemWidth(-1.0f);
+                if (ImGui::BeginCombo("##em_char_sel", curName))
+                {
+                    for (int ci = 0; ci < static_cast<int>(m_characters.size()); ++ci)
+                    {
+                        bool sel = (ci == m_selectedCharacter);
+                        if (ImGui::Selectable(m_characters[ci].displayName.c_str(), sel))
+                        {
+                            m_selectedCharacter = ci;
+                            const auto& ce = m_characters[ci];
+                            if (!ce.frameJsonPath.empty() && ce.frameJsonPath != m_playerFrameJsonPath)
+                                reloadPlayerAnimation(ce.frameJsonPath);
+                            if (!ce.smPath.empty())
+                                loadPlayerSM(ce.smPath);
+                        }
+                        if (sel) ImGui::SetItemDefaultFocus();
+                    }
+                    ImGui::EndCombo();
+                }
+                if (!m_characters.empty())
+                {
+                    const auto& ce = m_characters[m_selectedCharacter];
+                    const bool active = (!m_playerSMPath.empty() && m_playerSMPath == ce.smPath);
+                    if (active)
+                        ImGui::TextColored(ImVec4(0.40f, 0.85f, 0.45f, 1.0f), "✓ 已激活");
+                    else
+                        ImGui::TextColored(ImVec4(1.0f, 0.65f, 0.25f, 1.0f), "当前: %s",
+                            m_playerSMPath.empty() ? "<无>"
+                            : std::filesystem::path(m_playerSMPath).stem().string().c_str());
+                }
+            }
+        }
+        ImGui::Separator();
+
+        // ── 生成实体（只列出有状态机文件的角色）────────────────────────────
+        ImGui::TextColored(ImVec4(0.90f, 0.90f, 0.55f, 1.0f), "生成实体");
+        if (m_characters.empty()) scanCharacters();
+
+        // 按需计算可生成列表（有 frameJsonPath 即可生成）
+        std::vector<int> spawnableIdx;
+        spawnableIdx.reserve(m_characters.size());
+        for (int i = 0; i < static_cast<int>(m_characters.size()); ++i)
+        {
+            const auto& ce = m_characters[i];
+            if (!ce.frameJsonPath.empty())
+                spawnableIdx.push_back(i);
+        }
+
+        if (m_selectedSpawnChar >= static_cast<int>(spawnableIdx.size()))
+            m_selectedSpawnChar = 0;
+
+        const char* spawnPreview = spawnableIdx.empty() ? "（无可生成角色）"
+            : m_characters[spawnableIdx[m_selectedSpawnChar]].displayName.c_str();
+        ImGui::SetNextItemWidth(-82.0f);
+        if (ImGui::BeginCombo("##em_spawn_sel", spawnPreview))
+        {
+            for (int si = 0; si < static_cast<int>(spawnableIdx.size()); ++si)
+            {
+                const int ci = spawnableIdx[si];
+                bool sel = (si == m_selectedSpawnChar);
+                if (ImGui::Selectable(m_characters[ci].displayName.c_str(), sel))
+                    m_selectedSpawnChar = si;
+                if (sel) ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+        ImGui::SameLine();
+        ImGui::BeginDisabled(spawnableIdx.empty());
+        if (ImGui::Button("生成##em_spawn", ImVec2(-1.0f, 0.0f)) && !spawnableIdx.empty())
+            spawnCharacterFromProfile(m_characters[spawnableIdx[m_selectedSpawnChar]]);
+        ImGui::EndDisabled();
+
+        ImGui::End();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  开发模式右上角：调试信息覆盖层
     // ─────────────────────────────────────────────────────────────────────────
     void GameScene::renderDevModeOverlay()
     {
-        const float w = 280.0f;
+        const float w = 300.0f;
         const ImGuiIO& io = ImGui::GetIO();
         ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x - w - 8.0f, 8.0f), ImGuiCond_Always);
         ImGui::SetNextWindowSize(ImVec2(w, 0.0f), ImGuiCond_Always);
-        ImGui::SetNextWindowBgAlpha(0.80f);
+        ImGui::SetNextWindowBgAlpha(0.85f);
 
         const ImGuiWindowFlags flags =
-            ImGuiWindowFlags_NoDecoration  | ImGuiWindowFlags_NoMove        |
-            ImGuiWindowFlags_NoNav         | ImGuiWindowFlags_NoSavedSettings|
-            ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_MenuBar;
+            ImGuiWindowFlags_NoDecoration  | ImGuiWindowFlags_NoMove |
+            ImGuiWindowFlags_NoNav         | ImGuiWindowFlags_NoSavedSettings |
+            ImGuiWindowFlags_AlwaysAutoResize;
 
         if (!ImGui::Begin("##dev_overlay", nullptr, flags))
         { ImGui::End(); return; }
@@ -4313,150 +4648,47 @@ void GameScene::updateActorFootTileContact(engine::object::GameObject* actor)
         ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.2f, 1.0f), "[开发模式]");
         ImGui::Separator();
 
-        if (ImGui::BeginMenuBar())
+        // ── 游戏运行控制 ────────────────────────────────────────────────────
+        if (ImGui::Button(m_gameplayRunning ? "停止运行 [F5]" : "启动游戏 [F5]", ImVec2(148.0f, 0.0f)))
+            setGameplayRunning(!m_gameplayRunning);
+        ImGui::SameLine();
+        ImGui::BeginDisabled(!m_gameplayRunning);
+        if (ImGui::Button(m_gameplayPaused ? "继续 [F6]" : "暂停 [F6]", ImVec2(-1.0f, 0.0f)))
+            m_gameplayPaused = !m_gameplayPaused;
+        ImGui::EndDisabled();
+
+        // ── 编辑器窗口 & 调试（合并区）──────────────────────────────────────
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::TextColored(ImVec4(0.70f, 0.86f, 1.0f, 1.0f), "[编辑器窗口 & 调试]");
+
+        ImGui::Checkbox("层级面板", &m_showHierarchyPanel);
+        ImGui::SameLine();
+        ImGui::Checkbox("检视器", &m_showInspectorPanel);
+        ImGui::SameLine();
+        ImGui::Checkbox("实体管理", &m_showEntityManagerPanel);
+
         {
-            if (ImGui::BeginMenu("显示"))
-            {
-                ImGui::MenuItem("编辑器工具分区", nullptr, &m_devOverlayShowEditorTools);
-                ImGui::MenuItem("状态机调试分区", nullptr, &m_devOverlayShowStateMachineDebug);
-                ImGui::MenuItem("玩家状态分区", nullptr, &m_devOverlayShowPlayerRuntimeState);
-                ImGui::EndMenu();
-            }
-
-            if (ImGui::BeginMenu("编辑器窗口"))
-            {
-                ImGui::MenuItem("编辑器工具条", nullptr, &m_showEditorToolbar);
-                ImGui::MenuItem("层级面板", nullptr, &m_showHierarchyPanel);
-                ImGui::MenuItem("检视器", nullptr, &m_showInspectorPanel);
-                ImGui::MenuItem("地图编辑器", nullptr, &m_showMapEditor);
-                ImGui::MenuItem("设置窗口", nullptr, &m_showSettings);
-                ImGui::MenuItem("性能浮层", nullptr, &m_showFpsOverlay);
-                ImGui::EndMenu();
-            }
-
-            if (ImGui::BeginMenu("调试"))
-            {
-                ImGui::MenuItem("技能调试", nullptr, &m_showSkillDebugOverlay);
-                ImGui::MenuItem("Chunk 边框", nullptr, &m_showActiveChunkHighlights);
-                ImGui::MenuItem("物理调试", nullptr, &m_showPhysicsDebug);
-                ImGui::MenuItem("脚底碰撞框", nullptr, &m_showFootCollisionDebug);
-                ImGui::MenuItem("编辑器碰撞箱", nullptr, &m_showEditorColliderBoxes);
-                ImGui::EndMenu();
-            }
-            ImGui::EndMenuBar();
+            bool _ueOpen = m_universeEditor.isOpen();
+            if (ImGui::Checkbox("宇宙编辑器", &_ueOpen)) m_universeEditor.setOpen(_ueOpen);
         }
-
-        // ── 角色下拉 ────────────────────────────────────────────────────────
-        if (m_characters.empty()) scanCharacters();
-
-        const char* curName = m_characters.empty() ? "（无）"
-                            : m_characters[m_selectedCharacter].displayName.c_str();
-        ImGui::SetNextItemWidth(-1.0f);
-        if (ImGui::BeginCombo("##char_sel", curName))
-        {
-            for (int i = 0; i < (int)m_characters.size(); i++)
-            {
-                bool sel = (i == m_selectedCharacter);
-                if (ImGui::Selectable(m_characters[i].displayName.c_str(), sel))
-                {
-                    m_selectedCharacter = i;
-                    loadPlayerSM(m_characters[i].smPath);
-                }
-                if (sel) ImGui::SetItemDefaultFocus();
-            }
-            ImGui::EndCombo();
-        }
-
-        // ── 当前 SM 文件提示 ────────────────────────────────────────────────
-        if (!m_characters.empty())
-        {
-            const std::string& selectedPath = m_characters[m_selectedCharacter].smPath;
-            ImGui::TextDisabled("选择的 SM: %s", selectedPath.c_str());
-
-            const bool sameAsPlayer = (!m_playerSMPath.empty() && m_playerSMPath == selectedPath);
-            if (sameAsPlayer)
-                ImGui::TextColored(ImVec4(0.40f, 0.85f, 0.45f, 1.0f), "玩家当前 SM: %s", m_playerSMPath.c_str());
-            else if (!m_playerSMPath.empty())
-                ImGui::TextColored(ImVec4(1.0f, 0.65f, 0.25f, 1.0f), "玩家当前 SM: %s", m_playerSMPath.c_str());
-        }
+        ImGui::SameLine();
+        ImGui::Checkbox("性能浮层", &m_showFpsOverlay);
+        ImGui::SameLine();
+        ImGui::Checkbox("设置", &m_showSettings);
 
         if (ImGui::Checkbox("角色朝向反向##dev", &m_invertPlayerFacing))
             saveBoolSetting("invert_player_facing", m_invertPlayerFacing);
+        ImGui::SameLine();
+        ImGui::Checkbox("物理调试", &m_showPhysicsDebug);
+        ImGui::SameLine();
+        ImGui::Checkbox("技能调试", &m_showSkillDebugOverlay);
 
-        if (m_devOverlayShowEditorTools)
-        {
-            ImGui::Spacing();
-            ImGui::Separator();
-            ImGui::TextColored(ImVec4(0.70f, 0.86f, 1.0f, 1.0f), "[编辑器工具]");
-
-            if (ImGui::Button(m_gameplayRunning ? "停止运行 [F5]" : "启动游戏 [F5]", ImVec2(130.0f, 0.0f)))
-                setGameplayRunning(!m_gameplayRunning);
-            ImGui::SameLine();
-            ImGui::BeginDisabled(!m_gameplayRunning);
-            if (ImGui::Button(m_gameplayPaused ? "继续 [F6]" : "暂停 [F6]", ImVec2(85.0f, 0.0f)))
-                m_gameplayPaused = !m_gameplayPaused;
-            ImGui::EndDisabled();
-
-            ImGui::Checkbox("层级面板", &m_showHierarchyPanel);
-            ImGui::SameLine();
-            ImGui::Checkbox("检视器", &m_showInspectorPanel);
-            ImGui::SameLine();
-            ImGui::Checkbox("地图编辑", &m_showMapEditor);
-
-            ImGui::Checkbox("显示编辑器碰撞箱", &m_showEditorColliderBoxes);
-            ImGui::SameLine();
-            ImGui::Checkbox("显示脚底碰撞框", &m_showFootCollisionDebug);
-
-            if (ImGui::Button("打开帧编辑器", ImVec2(130.0f, 0.0f)))
-                m_frameEditor.open();
-            ImGui::SameLine();
-            if (ImGui::Button("打开状态机编辑器", ImVec2(130.0f, 0.0f)))
-                m_smEditor.open();
-        }
-
-        if (m_devOverlayShowStateMachineDebug)
-        {
-            ImGui::Spacing();
-            ImGui::Separator();
-            ImGui::TextColored(ImVec4(0.55f, 0.80f, 1.0f, 1.0f), "[状态机调试]");
-            ImGui::Text("状态机已加载: %s", m_playerSMLoaded ? "true" : "false");
-            ImGui::Text("当前控制对象: %s", getControlledActor() == m_player ? "player" : "other");
-            ImGui::Text("当前状态: %s", m_playerSM.getCurrentState().empty()
-                ? "<empty>" : m_playerSM.getCurrentState().c_str());
-            if (!m_playerSM.getCurrentState().empty())
-            {
-                auto it = m_playerSMData.states.find(m_playerSM.getCurrentState());
-                ImGui::Text("状态绑定动画ID: %s", (it != m_playerSMData.states.end() && !it->second.animationId.empty())
-                    ? it->second.animationId.c_str() : "<empty>");
-            }
-            if (auto* anim = m_player
-                    ? m_player->getComponent<engine::component::AnimationComponent>()
-                    : nullptr)
-            {
-                ImGui::Text("当前动画 Clip: %s", anim->currentClip().empty()
-                    ? "<empty>" : anim->currentClip().c_str());
-                ImGui::Text("当前动画帧: %d  计时: %.3f", anim->currentFrame(), anim->currentTimer());
-            }
-            ImGui::Text("初始状态: %s", m_playerSMData.initialState.empty()
-                ? "<empty>" : m_playerSMData.initialState.c_str());
-            ImGui::Text("状态数: %d", static_cast<int>(m_playerSMData.states.size()));
-        }
-
-        if (m_devOverlayShowPlayerRuntimeState)
-        {
-            ImGui::Spacing();
-            ImGui::Separator();
-            ImGui::TextColored(ImVec4(0.75f, 0.95f, 0.70f, 1.0f), "[玩家状态]");
-            if (auto* ctrl = m_player ? m_player->getComponent<engine::component::ControllerComponent>() : nullptr)
-            {
-                const auto ms = ctrl->getMovementState();
-                const bool grounded = (ms == engine::component::ControllerComponent::MovementState::Idle ||
-                                       ms == engine::component::ControllerComponent::MovementState::Run);
-                ImGui::Text("地面状态: %s", grounded ? "在地面" : "在空中");
-                ImGui::Text("移动状态: %s", ctrl->getMovementStateName());
-                ImGui::Text("高度 Z: %.1f", ctrl->getPosZ());
-            }
-        }
+        ImGui::Checkbox("Chunk边框", &m_showActiveChunkHighlights);
+        ImGui::SameLine();
+        ImGui::Checkbox("脚底碰撞框", &m_showFootCollisionDebug);
+        ImGui::SameLine();
+        ImGui::Checkbox("碰撞箱", &m_showEditorColliderBoxes);
 
         if (auto* sprite = m_player
                 ? m_player->getComponent<engine::component::SpriteComponent>()
@@ -4504,23 +4736,16 @@ void GameScene::updateActorFootTileContact(engine::object::GameObject* actor)
         }
 
         ImGui::Spacing();
+        ImGui::Separator();
 
         // ── 快捷打开按钮 ────────────────────────────────────────────────────
-        if (ImGui::Button("帧编辑器", ImVec2(-1, 0)))
+        if (ImGui::Button("帧编辑器", ImVec2(140.0f, 0.0f)))
             m_frameEditor.open();
-        if (ImGui::Button("状态机编辑器", ImVec2(-1, 0)))
-        {
-            if (!m_characters.empty())
-            {
-                // 如果编辑器当前未打开某文件，尝试用所选角色的 SM 打开
-                m_smEditor.open();
-            }
-            else
-            {
-                m_smEditor.open();
-            }
-        }
+        ImGui::SameLine();
+        if (ImGui::Button("状态机编辑器", ImVec2(-1.0f, 0.0f)))
+            m_smEditor.open();
 
+        ImGui::Spacing();
         ImGui::End();
     }
 
@@ -6335,126 +6560,6 @@ void GameScene::updateActorFootTileContact(engine::object::GameObject* actor)
             loadPlayerSM(m_playerSMPath);
     }
 
-    void GameScene::executeCommand()
-    {
-        std::string command = m_commandBuffer.data();
-        command.erase(std::remove_if(command.begin(), command.end(), [](unsigned char c) {
-            return std::isspace(c) != 0;
-        }), command.end());
-
-        std::transform(command.begin(), command.end(), command.begin(), [](unsigned char c) {
-            return static_cast<char>(std::tolower(c));
-        });
-        if (!command.empty() && command.front() == 'r')
-            command.erase(command.begin());
-
-        if (command == "001")
-        {
-            spawnMechDrop();
-            m_showCommandInput = false;
-            m_commandBuffer[0] = '\0';
-            return;
-        }
-
-        spdlog::warn("未知指令: {}", command.empty() ? "<empty>" : command);
-    }
-
-    void GameScene::spawnMechDrop()
-    {
-        if (m_isPlayerInMech)
-        {
-            spdlog::info("机甲已连接驾驶员，忽略重复空投指令");
-            return;
-        }
-
-        constexpr float kPixelsPerMeter = 32.0f;
-        glm::vec2 playerPos = getActorWorldPosition(m_player);
-        // 直接生成在玩家右侧，避免高空空投导致“看不到召唤物”。
-        glm::vec2 spawnPos = {playerPos.x + 140.0f, playerPos.y};
-
-        if (!m_mech)
-        {
-            m_mech = actor_manager->createActor(m_mechActorKey);
-            auto* mechTransform = m_mech->addComponent<engine::component::TransformComponent>(spawnPos);
-            mechTransform->setScale({1.0f, 1.0f});
-
-            // 机甲展示改为使用 gundom.json 动画资源（与人物同源，动作可配置）。
-            const std::string frameJsonPath = m_playerFrameJsonPath;
-            game::animation::FrameAnimationSet animationSet;
-            if (!game::animation::loadFrameAnimationSet(frameJsonPath, animationSet))
-                animationSet = game::animation::makeDefaultGundomAnimationSet();
-            if (animationSet.texturePath.empty())
-                animationSet.texturePath = "assets/textures/Characters/gundom.png";
-
-            const auto initialRect = animationSet.initialSourceRect().value_or(
-                engine::utils::FRect{{241.0f, 1625.0f}, {241.0f, 125.0f}});
-            m_mech->addComponent<engine::component::SpriteComponent>(
-                animationSet.texturePath,
-                engine::utils::Alignment::CENTER,
-                initialRect);
-            auto* mechAnim = m_mech->addComponent<engine::component::AnimationComponent>(241.0f, 125.0f);
-            for (const auto& [clipName, clip] : animationSet.clips)
-                mechAnim->addClip(clipName, clip);
-            mechAnim->play("idle");
-
-            auto* mechController = m_mech->addComponent<engine::component::ControllerComponent>(18.0f, 8.0f);
-            mechController->setGroundAcceleration(58.0f);
-            mechController->setAirAcceleration(28.0f);
-            mechController->setJumpSpeed(10.5f);
-            mechController->setJumpCutFactor(0.78f);
-            mechController->setCoyoteTime(0.16f);
-            mechController->setGroundedThreshold(0.18f);
-            mechController->setJetpackEnabled(false);
-            mechController->setJetpackProfile(0.0f, 0.0f, 0.0f, 0.0f);
-            mechController->setEnabled(false);
-            b2BodyId bodyId = physics_manager->createDynamicBody(
-                {spawnPos.x / kPixelsPerMeter, spawnPos.y / kPixelsPerMeter},
-                {0.75f, 1.1f},
-                m_mech);
-            m_mech->addComponent<engine::component::PhysicsComponent>(bodyId, physics_manager.get());
-        }
-        else
-        {
-            if (auto* transform = m_mech->getComponent<engine::component::TransformComponent>())
-                transform->setPosition(spawnPos);
-            if (auto* sprite = m_mech->getComponent<engine::component::SpriteComponent>())
-                sprite->setHidden(false);
-            if (!m_mech->getComponent<engine::component::AnimationComponent>())
-            {
-                const std::string frameJsonPath = m_playerFrameJsonPath;
-                game::animation::FrameAnimationSet animationSet;
-                if (!game::animation::loadFrameAnimationSet(frameJsonPath, animationSet))
-                    animationSet = game::animation::makeDefaultGundomAnimationSet();
-                auto* mechAnim = m_mech->addComponent<engine::component::AnimationComponent>(241.0f, 125.0f);
-                for (const auto& [clipName, clip] : animationSet.clips)
-                    mechAnim->addClip(clipName, clip);
-                mechAnim->play("idle");
-            }
-            if (auto* physics = m_mech->getComponent<engine::component::PhysicsComponent>())
-            {
-                physics->setWorldPosition(spawnPos);
-                physics->setVelocity({0.0f, 0.0f});
-            }
-            if (auto* controller = m_mech->getComponent<engine::component::ControllerComponent>())
-            {
-                controller->setGroundAcceleration(58.0f);
-                controller->setAirAcceleration(28.0f);
-                controller->setJumpSpeed(10.5f);
-                controller->setJumpCutFactor(0.78f);
-                controller->setCoyoteTime(0.16f);
-                controller->setGroundedThreshold(0.18f);
-                controller->setJetpackEnabled(false);
-                controller->setEnabled(false);
-            }
-        }
-
-        m_mechAttackCooldown = 0.0f;
-        m_mechLastAttackHits = 0;
-        updateMechFlightCapability();
-
-        spdlog::info("指令 001 已执行：机甲已生成在玩家旁边，坐标 ({:.1f}, {:.1f})", spawnPos.x, spawnPos.y);
-    }
-
     void GameScene::updateMechFlightCapability()
     {
         if (!m_mech)
@@ -8036,6 +8141,7 @@ void GameScene::updateActorFootTileContact(engine::object::GameObject* actor)
 
     engine::object::GameObject* GameScene::getControlledActor() const
     {
+        if (m_devControlledActor) return m_devControlledActor;
         if (m_isPlayerInMech && m_mech)
             return m_mech;
         if (m_possessedMonster)

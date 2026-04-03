@@ -109,6 +109,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/ship_scene.cpp.o.d"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/state_machine_editor.cpp.o"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/state_machine_editor.cpp.o.d"
+  "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/universe_editor.cpp.o"
+  "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/universe_editor.cpp.o.d"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/voxel_scene.cpp.o"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/voxel_scene.cpp.o.d"
   "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/statemachine/input_buffer.cpp.o"

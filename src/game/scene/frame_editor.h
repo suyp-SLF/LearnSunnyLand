@@ -57,8 +57,9 @@ public:
     /** 每帧在 ImGui NewFrame/Render 之间调用 */
     void render(engine::resource::ResourceManager &resMgr);
 
-    /** 打开并加载指定帧 JSON，可选覆盖纹理路径 */
-    void openWithJson(const std::string &jsonPath, const std::string &texturePath = "");
+    /** 打开并加载指定帧 JSON，可选覆盖纹理路径；suggestedSavePath 用于路径为空时设定合理默认保存名 */
+    void openWithJson(const std::string &jsonPath, const std::string &texturePath = "",
+                      const std::string &suggestedSavePath = "");
 
     /** 在当前 ImGui 上下文（Tab/ChildWindow）内联渲染，无独立浮动窗口 */
     void renderInline(engine::resource::ResourceManager& resMgr);
@@ -77,11 +78,18 @@ public:
     bool wantsSmEditor() const { return m_wantsSmEditor; }
     void clearSmEditorRequest()    { m_wantsSmEditor = false; }
 
+    /** 当前保存路径 */
+    std::string getSavePath() const { return std::string(m_savePath); }
+
+    /** 若上次 renderInline 期间用户执行了保存，返回 true 并清除标志（一次性消费） */
+    bool popJustSaved() { bool v = m_justSaved; m_justSaved = false; return v; }
+
 private:
     // ── 窗口状态 ──────────────────────────────────────────────────────────
     bool         m_open        = false;
     bool         m_firstOpen   = true;   // 首次打开时定位到屏幕中央
     bool         m_wantsSmEditor = false; // 用户请求打开状态机编辑器
+    bool         m_justSaved   = false;  // 本帧执行了保存
 
     // ── 当前项目数据 ──────────────────────────────────────────────────────
     char         m_texturePath[512] = "assets/textures/Characters/gundom.png";

@@ -27,10 +27,13 @@ namespace engine::component
         glm::vec2 getPosition() const;
 
         b2BodyId getBodyId() const { return m_bodyId; }
+        /** 返回上次 reshapeBox 设置的碰撞半尺寸(px)，未调用时为 {0,0} */
+        glm::vec2 getBodyHalfExtentsPx() const { return m_cachedHalfExtentsPx; }
 
     private:
         b2BodyId m_bodyId;
         ::engine::physics::PhysicsManager *m_physicsManager = nullptr;
+        glm::vec2 m_cachedHalfExtentsPx{0.0f, 0.0f};
 
         void update(float delta_time) override;
         void render() override {}

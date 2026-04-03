@@ -354,8 +354,6 @@ void GameScene::persistEditorUiSettings() const
     saveBoolSetting("toolbar_show_window_controls", m_toolbarShowWindowControls);
     saveBoolSetting("toolbar_show_debug_controls", m_toolbarShowDebugControls);
     saveBoolSetting("dev_overlay_show_editor_tools", m_devOverlayShowEditorTools);
-    saveBoolSetting("dev_overlay_show_sm_debug", m_devOverlayShowStateMachineDebug);
-    saveBoolSetting("dev_overlay_show_player_state", m_devOverlayShowPlayerRuntimeState);
     saveBoolSetting("show_editor_collider_boxes", m_showEditorColliderBoxes);
     saveBoolSetting("show_foot_collision_debug", m_showFootCollisionDebug);
     saveBoolSetting("hierarchy_group_by_tag", m_hierarchyGroupByTag);
@@ -593,7 +591,6 @@ void GameScene::capturePlaySnapshot()
     m_playUiSnapshot.showInventory = m_showInventory;
     m_playUiSnapshot.showSettings = m_showSettings;
     m_playUiSnapshot.showMapEditor = m_showMapEditor;
-    m_playUiSnapshot.showCommandInput = m_showCommandInput;
     m_playUiSnapshot.missionWindow = m_missionUI.showWindow;
     m_playUiSnapshot.showSettlement = m_showSettlement;
     m_playUiSnapshot.showHierarchyPanel = m_showHierarchyPanel;
@@ -706,7 +703,6 @@ bool GameScene::restorePlaySnapshot()
     m_showInventory = m_playUiSnapshot.showInventory;
     m_showSettings = m_playUiSnapshot.showSettings;
     m_showMapEditor = m_playUiSnapshot.showMapEditor;
-    m_showCommandInput = m_playUiSnapshot.showCommandInput;
     m_missionUI.showWindow = m_playUiSnapshot.missionWindow;
     m_showSettlement = m_playUiSnapshot.showSettlement;
     m_showHierarchyPanel = m_playUiSnapshot.showHierarchyPanel;
@@ -796,7 +792,10 @@ void GameScene::renderEditorToolbar()
         ImGui::SameLine();
         persistUiState |= ImGui::Checkbox("检视器", &m_showInspectorPanel);
         ImGui::SameLine();
-        persistUiState |= ImGui::Checkbox("地图编辑", &m_showMapEditor);
+        {
+            bool _ueOpen = m_universeEditor.isOpen();
+            if (ImGui::Checkbox("宇宙编辑器", &_ueOpen)) m_universeEditor.setOpen(_ueOpen);
+        }
         ImGui::SameLine();
         persistUiState |= ImGui::Checkbox("设置", &m_showSettings);
         persistUiState |= ImGui::Checkbox("开发覆盖", &m_devMode);
@@ -940,12 +939,12 @@ void GameScene::renderEditorMainMenuBar()
 
     if (ImGui::BeginMenu("视图"))
     {
-        persistUiState |= ImGui::MenuItem("资源管理器", nullptr, &m_showResourceExplorerPanel);
         persistUiState |= ImGui::MenuItem("场景视图", nullptr, &m_showSceneViewportPanel);
         persistUiState |= ImGui::MenuItem("层级面板", nullptr, &m_showHierarchyPanel);
         persistUiState |= ImGui::MenuItem("属性面板", nullptr, &m_showInspectorPanel);
         persistUiState |= ImGui::MenuItem("控制台", nullptr, &m_showConsolePanel);
-        persistUiState |= ImGui::MenuItem("地图编辑器", nullptr, &m_showMapEditor);
+        if (ImGui::MenuItem("宇宙编辑器", nullptr, m_universeEditor.isOpen()))
+            m_universeEditor.setOpen(!m_universeEditor.isOpen());
         ImGui::EndMenu();
     }
 
@@ -961,7 +960,6 @@ void GameScene::renderEditorMainMenuBar()
     if (ImGui::BeginMenu("窗口"))
     {
         persistUiState |= ImGui::MenuItem("设置", nullptr, &m_showSettings);
-        persistUiState |= ImGui::MenuItem("编辑器工具条", nullptr, &m_showEditorToolbar);
         persistUiState |= ImGui::MenuItem("主工具栏", nullptr, &m_showMainToolbar);
         persistUiState |= ImGui::MenuItem("性能浮层", nullptr, &m_showFpsOverlay);
         if (ImGui::BeginMenu("布局预设"))
@@ -1090,8 +1088,6 @@ void GameScene::renderEditorMainToolbar()
 
         if (m_toolbarShowWindowControls)
         {
-            persistUiState |= ImGui::Checkbox("资源", &m_showResourceExplorerPanel);
-            ImGui::SameLine();
             persistUiState |= ImGui::Checkbox("层级", &m_showHierarchyPanel);
             ImGui::SameLine();
             persistUiState |= ImGui::Checkbox("属性", &m_showInspectorPanel);
@@ -2883,7 +2879,7 @@ void GameScene::renderMapEditor()
         ImGui::SetNextWindowDockID(static_cast<ImGuiID>(m_editorDockspaceId), ImGuiCond_Always);
     ImGui::SetNextWindowPos({16.0f, 140.0f}, ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize({308.0f, 300.0f}, ImGuiCond_FirstUseEver);
-    if (!ImGui::Begin("地图编辑器 [F8]", &m_showMapEditor,
+    if (!ImGui::Begin("宇宙编辑器", &m_showMapEditor,
                       ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize))
     {
         ImGui::End();

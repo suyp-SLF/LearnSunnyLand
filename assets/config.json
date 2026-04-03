@@ -36,7 +36,7 @@
             }
         },
         "ground_actors": [],
-        "imgui_ini": "[Window][Debug##Default]\nPos=60,60\nSize=400,400\nCollapsed=0\n\n[Window][编辑器工具条]\nPos=430,8\nSize=580,330\nCollapsed=0\n\n[Window][对象层级]\nPos=0,22\nSize=1440,409\nCollapsed=0\nDockId=0x00000002,2\n\n[Window][资源管理器]\nPos=0,22\nSize=1440,409\nCollapsed=0\nDockId=0x00000002,0\n\n[Window][场景视图]\nPos=0,22\nSize=1440,409\nCollapsed=0\nDockId=0x00000002,1\n\n[Window][动画编辑器]\nPos=0,433\nSize=1440,320\nCollapsed=0\nDockId=0x00000004,0\n\n[Window][设置  [ESC / ` 关闭]]\nPos=0,22\nSize=1440,409\nCollapsed=0\nDockId=0x00000002,4\n\n[Window][##weather_hud]\nPos=1224,20\nSize=200,183\nCollapsed=0\n\n[Window][背包]\nPos=360,30\nSize=720,717\nCollapsed=0\n\n[Window][玩家配置]\nPos=0,22\nSize=1440,731\nCollapsed=0\nDockId=0x00000002,2\n\n[Window][地图编辑器 [F8]]\nPos=0,22\nSize=1440,409\nCollapsed=0\nDockId=0x00000002,3\n\n[Docking][Data]\nDockSpace     ID=0xC8C39591 Window=0xEC3422A7 Pos=0,22 Size=1440,731 Split=Y\n  DockNode    ID=0x00000003 Parent=0xC8C39591 SizeRef=1440,409 Split=X\n    DockNode  ID=0x00000001 Parent=0x00000003 SizeRef=331,731 Selected=0xD17D4FD3\n    DockNode  ID=0x00000002 Parent=0x00000003 SizeRef=1107,731 CentralNode=1 Selected=0x35D77073\n  DockNode    ID=0x00000004 Parent=0xC8C39591 SizeRef=1440,320 Selected=0x567D321F\n\n"
+        "imgui_ini": "[Window][Debug##Default]\nPos=60,60\nSize=400,400\nCollapsed=0\n\n[Window][编辑器工具条]\nPos=430,8\nSize=580,330\nCollapsed=0\n\n[Window][对象层级]\nPos=0,22\nSize=1440,409\nCollapsed=0\nDockId=0x00000002,2\n\n[Window][资源管理器]\nPos=0,22\nSize=1440,409\nCollapsed=0\nDockId=0x00000002,0\n\n[Window][场景视图]\nPos=0,22\nSize=1440,409\nCollapsed=0\nDockId=0x00000002,1\n\n[Window][动画编辑器]\nPos=0,433\nSize=1440,320\nCollapsed=0\nDockId=0x00000004,0\n\n[Window][设置  [ESC / ` 关闭]]\nPos=0,22\nSize=1440,409\nCollapsed=0\nDockId=0x00000002,4\n\n[Window][##weather_hud]\nPos=1224,20\nSize=200,183\nCollapsed=0\n\n[Window][背包]\nPos=360,30\nSize=720,717\nCollapsed=0\n\n[Window][玩家配置]\nPos=0,22\nSize=1440,731\nCollapsed=0\nDockId=0x00000002,2\n\n[Window][地图编辑器 [F8]]\nPos=0,22\nSize=1440,409\nCollapsed=0\nDockId=0x00000002,3\n\n[Window][实体管理##entity_mgr]\nPos=0,22\nSize=1440,409\nCollapsed=0\nDockId=0x00000002,4\n\n[Window][宇宙编辑器##universe_editor]\nPos=318,-3\nSize=580,330\nCollapsed=0\n\n[Docking][Data]\nDockSpace     ID=0xC8C39591 Window=0xEC3422A7 Pos=0,22 Size=1440,731 Split=Y\n  DockNode    ID=0x00000003 Parent=0xC8C39591 SizeRef=1440,409 Split=X\n    DockNode  ID=0x00000001 Parent=0x00000003 SizeRef=331,731 Selected=0xD17D4FD3\n    DockNode  ID=0x00000002 Parent=0x00000003 SizeRef=1107,731 CentralNode=1 Selected=0x3A2E05C3\n  DockNode    ID=0x00000004 Parent=0xC8C39591 SizeRef=1440,320 Selected=0x567D321F\n\n"
     },
     "game": {
         "chunk_view_distance": 3,
@@ -50,14 +50,14 @@
         },
         "ground_collision_lower_half_only": true,
         "player_base_jump_speed": 7.61904764175415,
-        "player_base_max_energy": 100,
-        "player_base_max_hp": 100,
+        "player_base_max_energy": 100.0,
+        "player_base_max_hp": 100.0,
         "player_base_move_speed": 12.222222328186035,
         "player_collision_half_d_px": 10.0,
         "player_collision_half_w_px": 35.0,
-        "player_frame_json_path": "assets/textures/Characters/gundom.json",
+        "player_frame_json_path": "assets/textures/Characters/gundom.frame.json",
         "player_mech_height_px": 20.0,
-        "player_sm_path": "assets/textures/Characters/GUNDOM.sm.json",
+        "player_sm_path": "assets/textures/Characters/gundom.sm.json",
         "selected_character_profile_path": "assets/characters/gundom.character.json",
         "tile_height_px": {
             "dirt": 0.0,
@@ -79,9 +79,6 @@
         "attack": [
             "K",
             "MouseLeft"
-        ],
-        "command_mode": [
-            "R"
         ],
         "evacuate": [
             "B"

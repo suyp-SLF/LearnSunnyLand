@@ -235,6 +235,12 @@
 },
 {
   "directory": "/Users/suyp/C++/Projects/LearnSunnyLand/build",
+  "command": "/usr/bin/c++ -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/Users/suyp/C++/Projects/LearnSunnyLand/third_party/imgui -I/Users/suyp/C++/Projects/LearnSunnyLand/third_party/imgui/backends -I/Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/tinygltf-src -isystem /Users/suyp/C++/Library/build/include -isystem /opt/homebrew/include -iframework /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include/freetype2 -isystem /opt/homebrew/include/harfbuzz -g -std=gnu++20 -arch arm64 -Wall -Wextra -Wpedantic -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/universe_editor.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/universe_editor.cpp",
+  "file": "/Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/universe_editor.cpp",
+  "output": "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/universe_editor.cpp.o"
+},
+{
+  "directory": "/Users/suyp/C++/Projects/LearnSunnyLand/build",
   "command": "/usr/bin/c++ -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/Users/suyp/C++/Projects/LearnSunnyLand/third_party/imgui -I/Users/suyp/C++/Projects/LearnSunnyLand/third_party/imgui/backends -I/Users/suyp/C++/Projects/LearnSunnyLand/build/_deps/tinygltf-src -isystem /Users/suyp/C++/Library/build/include -isystem /opt/homebrew/include -iframework /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include/freetype2 -isystem /opt/homebrew/include/harfbuzz -g -std=gnu++20 -arch arm64 -Wall -Wextra -Wpedantic -o CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/frame_editor.cpp.o -c /Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/frame_editor.cpp",
   "file": "/Users/suyp/C++/Projects/LearnSunnyLand/src/game/scene/frame_editor.cpp",
   "output": "CMakeFiles/LearnSunnyLand-Darwin.dir/src/game/scene/frame_editor.cpp.o"

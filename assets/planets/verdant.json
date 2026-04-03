@@ -5,5 +5,25 @@
     "tile_catalog": "assets/ground_tiles/tile_kinds.json",
     "characters": [
         "assets/characters/gundom.character.json"
-    ]
+    ],
+    "atmosphere_height": 800.0,
+    "planet_radius": 3000.0,
+    "tile_mix": [
+        { "key": "ground_grass", "weight": 0.5 },
+        { "key": "ground_dirt",  "weight": 0.35 },
+        { "key": "ground_stone", "weight": 0.15 }
+    ],
+    "monster_spawn": {
+        "enabled": true,
+        "spawn_interval_sec": 1.6,
+        "max_monsters": 10,
+        "spawn_inner_radius": 420.0,
+        "spawn_outer_radius": 960.0,
+        "cleanup_radius": 1500.0,
+        "monster_types": [
+            { "id": "slime",     "weight": 1.0 },
+            { "id": "wolf",      "weight": 1.0 },
+            { "id": "white_ape", "weight": 1.0 }
+        ]
+    }
 }

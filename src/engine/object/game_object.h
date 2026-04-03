@@ -24,7 +24,7 @@ namespace engine::object
 
     public:
         GameObject(engine::core::Context &context,
-            const std::string &name = "未定义的名字", 
+            const std::string &name = "未命名", 
             const std::string &tag = "未定义的标签");
 
         // 禁止拷贝和移动

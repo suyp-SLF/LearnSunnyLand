@@ -1,0 +1,19 @@
+{
+    "collision": {
+        "half_d_px": 0.5,
+        "half_w_px": 100.4000015258789,
+        "mech_height_px": 60.0
+    },
+    "display_name": "卡通怪兽1",
+    "frame_json": "assets/textures/Characters/caton_monster_1.frame.json",
+    "id": "caton_monster_1",
+    "map_role": "npc",
+    "state_machine_json": "assets/textures/Characters/canton_monster_1.sm.json",
+    "stats": {
+        "jump_velocity": -420.0,
+        "max_energy": 100,
+        "max_hp": 100,
+        "move_speed": 220.0
+    },
+    "texture": "assets/textures/Actors/caton_monster_1.png"
+}

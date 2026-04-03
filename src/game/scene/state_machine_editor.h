@@ -24,7 +24,8 @@ public:
     // ── 控制窗口 ──────────────────────────────────────────────────────────────
     void open();          // 打开（若已在 launcher 则保留 launcher）
     void toggle();
-    void openWithJson(const std::string& path);
+    /** suggestedSavePath：路径为空时设定合理的默认保存名 */
+    void openWithJson(const std::string& path, const std::string& suggestedSavePath = "");
     void renderInline();  // 在当前 ImGui 上下文中内联渲染（嵌入 Tab 使用）
     bool isOpen() const { return m_open; }
 
@@ -37,6 +38,9 @@ public:
 
     /** 若上次 render() 期间用户刚选了新文件，返回 true 并清除标志（每帧最多返回一次 true） */
     bool takeJustLoaded() { bool v = m_justLoaded; m_justLoaded = false; return v; }
+
+    /** 若上次 renderInline 期间用户执行了保存，返回 true 并清除标志（一次性消费） */
+    bool popJustSaved() { bool v = m_justSaved; m_justSaved = false; return v; }
 
 private:
     // ── 状态数据 ──────────────────────────────────────────────────────────────
@@ -71,6 +75,7 @@ private:
     void saveJson();
 
     bool m_justLoaded = false;  // 用户刚从启动页选了新文件
+    bool m_justSaved  = false;  // 本帧执行了保存
 
     // ── 新建状态弹窗临时缓冲区 ────────────────────────────────────────────────
     char m_newStateNameBuf[64]  = {};

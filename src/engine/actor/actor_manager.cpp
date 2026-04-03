@@ -3,6 +3,7 @@
 #include "../object/game_object.h"
 #include "../core/context.h"
 #include <algorithm>
+#include <spdlog/spdlog.h>
 
 namespace engine::actor
 {
@@ -15,9 +16,13 @@ namespace engine::actor
 
     engine::object::GameObject* ActorManager::createActor(const std::string &name)
     {
-        auto actor = std::make_unique<engine::object::GameObject>(m_context, name);
+        const std::string nameVal = name.empty() ? std::string("未命名") : name;
+        auto actor = std::make_unique<engine::object::GameObject>(m_context, nameVal);
         auto *ptr = actor.get();
         m_actors.push_back(std::move(actor));
+        try {
+            spdlog::info("ActorManager::createActor - name='{}' total={} ", nameVal, m_actors.size());
+        } catch (...) {}
         return ptr;
     }
 

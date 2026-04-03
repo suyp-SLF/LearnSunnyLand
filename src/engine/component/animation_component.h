@@ -94,6 +94,13 @@ namespace engine::component
             m_clips.erase(name);
             if (m_current == name) { m_current.clear(); m_frame = 0; m_timer = 0.0f; }
         }
+        void clearClips()
+        {
+            m_clips.clear();
+            m_current.clear();
+            m_frame = 0;
+            m_timer = 0.0f;
+        }
 
     protected:
         void init()   override;

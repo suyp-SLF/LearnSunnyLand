@@ -132,6 +132,7 @@ add_executable(
 
     src/game/scene/game_scene.cpp
     src/game/scene/game_scene_editor.cpp
+    src/game/scene/universe_editor.cpp
     src/game/scene/frame_editor.cpp
     src/game/scene/state_machine_editor.cpp
     src/game/scene/character_editor_scene.cpp

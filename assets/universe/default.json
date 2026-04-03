@@ -1,0 +1,8 @@
+{
+    "id": "default_universe",
+    "display_name": "默认宇宙",
+    "galaxy_density": 0.5,
+    "galaxies": [
+        "milky_way"
+    ]
+}
